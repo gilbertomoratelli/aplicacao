@@ -971,6 +971,9 @@ initCtx();
   renderExtras();
   load();
   aplicarTodasConfigs();
+  if (projeto?.custo_kit) {
+    document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');
+  }
   render();
 })();
 </script>

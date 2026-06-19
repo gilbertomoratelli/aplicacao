@@ -123,6 +123,16 @@
         <span class="err" id="errKwp">Informe a potência</span>
       </label>
 
+      <label class="fld">
+        <span class="lbl">Custo KIT Distribuidora <span class="req">*</span></span>
+        <div class="inwrap">
+          <span class="affix l">R$</span>
+          <input type="text" inputmode="decimal" id="custo_kit" placeholder="0,00">
+        </div>
+        <span class="hint">Valor faturado pela distribuidora para este projeto</span>
+        <span class="err" id="errKit">Informe o custo do KIT</span>
+      </label>
+
       <button class="btn-primary" type="submit" id="btnSalvar">Analisar precificação →</button>
     </form>
   </div>
@@ -151,6 +161,7 @@ function init() {
     document.getElementById('nome_projeto').value    = projetoAtual.nome_projeto        || '';
     document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
     document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
+    document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? Number(projetoAtual.custo_kit).toFixed(2).replace('.',',') : '';
     document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
   }
 }
@@ -166,6 +177,7 @@ function validar() {
     {id:'nome_projeto',err:'errNome',check:v=>v.trim().length>1},
     {id:'qtd_modulos',err:'errModulos',check:v=>parseFloat(v)>0},
     {id:'kwp_sistema',err:'errKwp',check:v=>parseFloat(v)>0},
+    {id:'custo_kit',err:'errKit',check:v=>!isNaN(parseFloat(v.replace(',','.')))},
   ];
   campos.forEach(c=>{
     const v=document.getElementById(c.id).value;
@@ -188,6 +200,7 @@ async function salvar(e) {
     nome_projeto: document.getElementById('nome_projeto').value.trim(),
     quantidade_modulos: parseInt(document.getElementById('qtd_modulos').value),
     kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
+    custo_kit: parseFloat(document.getElementById('custo_kit').value.replace(',','.')) || 0,
   };
 
   let data, error;
