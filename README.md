@@ -18,4 +18,4 @@ Repositório de estudo e prática com Git e GitHub.
 
 ## Sobre
 
-Este projeto foi criado para aprender o fluxo de trabalho com Pull Requets no GitHub.
+Este projeto foi criado para aprender o fluxo de trabalho com Pull Requests no GitHub.
