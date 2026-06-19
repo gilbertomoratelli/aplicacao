@@ -94,6 +94,14 @@
   .btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
   .btn-apply{background:var(--teal);color:#fff;border-color:var(--teal)}
   .btn-apply:hover{opacity:.9}
+
+  .extra-item{margin-bottom:12px}
+  .extra-lbl-input{border:none;outline:none;font-size:12px;color:var(--muted);font-weight:600;background:transparent;font-family:var(--sans);cursor:text;flex:1;min-width:0}
+  .extra-lbl-input:focus{outline:1px dashed var(--hair);border-radius:3px;padding:0 3px}
+  .btn-remove{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.5;transition:.15s;font-family:var(--sans)}
+  .btn-remove:hover{border-color:var(--negative);color:var(--negative)}
+  .btn-add{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin:6px 0 14px}
+  .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(232,130,12,.04)}
   .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
   .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
   .inwrap .affix.l{border-right:1px solid var(--hair)}
@@ -194,7 +202,7 @@
       <div class="card">
         <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3></div>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">Custo do KIT<span class="cfg-badge" id="badge-kit"></span></span><button class="btn-cfg" onclick="abrirConfig('kit',event)">⚙ config</button></div>
+          <span class="lbl">Custo do KIT</span>
           <div class="inwrap"><span class="affix l">R$</span><input type="number" id="kit"></div>
           <span class="hint">Faturado direto pela distribuidora</span>
         </label>
@@ -214,6 +222,8 @@
           <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="number" id="homol"></div>
         </label>
+        <div id="extrasContainer"></div>
+        <button class="btn-add" onclick="adicionarCusto()">+ Adicionar custo</button>
         <div class="total-row"><span class="lbl">Custo direto total</span><span class="val" id="cdtOut"></span></div>
       </div>
 
@@ -412,7 +422,7 @@ function cenario(tk,d){
 
 function render(){
   const d={kit:num("kit"),ca:num("ca"),inst:num("inst"),proj:num("proj"),homol:num("homol"),ticket:num("ticket"),qtd:num("qtd"),comissao:num("comissao"),tributo:num("tributo"),outras:num("outras"),despFixa:num("despFixa"),lucroAlvo:num("lucroAlvo")};
-  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol;
+  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol+totalExtras();
 
   const cPctServ=comissaoBase==="servico"?d.comissao/100:0;
   const tPctServ=tributoBase==="servico"?d.tributo/100:0;
@@ -679,17 +689,100 @@ function atualizarPreview() {
 
 function aplicarConfig() {
   const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
-  configs[campoCfgAtual] = { modo: modoAtual, taxa };
-  salvarConfigs();
-  atualizarBadges();
 
-  const val = calcValor(campoCfgAtual);
-  if (val !== null) {
-    document.getElementById(campoCfgAtual).value = parseFloat(val.toFixed(2));
-    render();
+  if (campoCfgAtual.startsWith('extra:')) {
+    const id   = campoCfgAtual.slice(6);
+    const item = custosExtras.find(e => e.id === id);
+    if (item) { item.modo = modoAtual; item.taxa = taxa; salvarExtras(); renderExtras(); }
+  } else {
+    configs[campoCfgAtual] = { modo: modoAtual, taxa };
+    salvarConfigs();
+    atualizarBadges();
+    const val = calcValor(campoCfgAtual);
+    if (val !== null) document.getElementById(campoCfgAtual).value = parseFloat(val.toFixed(2));
   }
+  render();
   fecharModal();
 }
+
+// ── Custos extras dinâmicos ─────────────────────────────────────────
+let custosExtras = [];
+
+function carregarExtras() {
+  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
+}
+function salvarExtras() {
+  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
+}
+function calcValorExtra(item) {
+  if (!item.taxa) return 0;
+  const kwp  = projeto?.kwp_sistema        || 0;
+  const mods = projeto?.quantidade_modulos || 0;
+  if (item.modo === 'fixo')   return item.taxa;
+  if (item.modo === 'modulo') return item.taxa * mods;
+  if (item.modo === 'kwp')    return item.taxa * kwp;
+  return 0;
+}
+function totalExtras() {
+  return custosExtras.reduce((s, e) => s + calcValorExtra(e), 0);
+}
+function adicionarCusto() {
+  const id = Date.now().toString();
+  custosExtras.push({ id, label: 'Novo custo', modo: 'fixo', taxa: 0 });
+  salvarExtras();
+  renderExtras();
+  abrirConfigExtra(id, null);
+}
+function removerExtra(id) {
+  custosExtras = custosExtras.filter(e => e.id !== id);
+  salvarExtras();
+  renderExtras();
+  render();
+}
+function atualizarLabelExtra(id, label) {
+  const item = custosExtras.find(e => e.id === id);
+  if (item) { item.label = label.trim() || 'Custo'; salvarExtras(); }
+}
+function renderExtras() {
+  const container = document.getElementById('extrasContainer');
+  if (!custosExtras.length) { container.innerHTML = ''; return; }
+  container.innerHTML = custosExtras.map(item => {
+    const val     = calcValorExtra(item);
+    const badge   = item.taxa > 0 ? `<span class="cfg-badge" style="display:inline">${BADGE_LABEL[item.modo]}</span>` : '';
+    return `<div class="extra-item">
+      <div class="lbl-row">
+        <input class="extra-lbl-input" value="${item.label}"
+               onblur="atualizarLabelExtra('${item.id}', this.value)"
+               onkeydown="if(event.key==='Enter')this.blur()">
+        <div style="display:flex;gap:5px;align-items:center">
+          ${badge}
+          <button class="btn-cfg" onclick="abrirConfigExtra('${item.id}',event)">⚙ config</button>
+          <button class="btn-remove" onclick="removerExtra('${item.id}')" title="Remover">×</button>
+        </div>
+      </div>
+      <div class="inwrap"><span class="affix l">R$</span>
+        <input type="number" value="${parseFloat(val.toFixed(2))}" readonly
+               style="color:${val>0?'var(--ink)':'var(--muted)'}">
+      </div>
+    </div>`;
+  }).join('');
+}
+function abrirConfigExtra(id, event) {
+  if (event) event.preventDefault();
+  const item = custosExtras.find(e => e.id === id);
+  if (!item) return;
+  campoCfgAtual = 'extra:' + id;
+  const kwp  = projeto?.kwp_sistema        || 0;
+  const mods = projeto?.quantidade_modulos || 0;
+  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + item.label;
+  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulo${mods!==1?'s':''} do projeto`;
+  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp do projeto`;
+  document.getElementById('cfgTaxa').value = item.taxa || '';
+  selecionarModo(item.modo || 'fixo');
+  document.getElementById('modalCfg').classList.add('open');
+  setTimeout(() => document.getElementById('cfgTaxa').focus(), 50);
+}
+// ────────────────────────────────────────────────────────────────────
 
 // Fechar modal com Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
@@ -698,6 +791,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(
 FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
 carregarConfigs();
+carregarExtras();
+renderExtras();
 load();
 render();
 </script>
