@@ -656,6 +656,7 @@ async function carregarConfigs() {
     localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
     atualizarBadges();
     renderExtras();
+    aplicarTodasConfigs();
     render();
   }
 }
@@ -967,6 +968,7 @@ initCtx();
   await carregarConfigs();
   renderExtras();
   load();
+  aplicarTodasConfigs();
   render();
 })();
 </script>
