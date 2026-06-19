@@ -222,24 +222,24 @@
         <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3></div>
         <label class="fld">
           <span class="lbl">Custo do KIT</span>
-          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="kit"></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="kit"></div>
           <span class="hint">Faturado direto pela distribuidora</span>
         </label>
         <label class="fld">
           <div class="lbl-row"><span class="lbl">Material adicional CA<span class="cfg-badge" id="badge-ca"></span></span><button class="btn-cfg" onclick="abrirConfig('ca',event)">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="ca"></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="ca"></div>
         </label>
         <label class="fld">
           <div class="lbl-row"><span class="lbl">Instalação<span class="cfg-badge" id="badge-inst"></span></span><button class="btn-cfg" onclick="abrirConfig('inst',event)">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="inst"></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="inst"></div>
         </label>
         <label class="fld">
           <div class="lbl-row"><span class="lbl">Projeto elétrico<span class="cfg-badge" id="badge-proj"></span></span><button class="btn-cfg" onclick="abrirConfig('proj',event)">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="proj"></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="proj"></div>
         </label>
         <label class="fld">
           <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="homol"></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="homol"></div>
         </label>
         <div id="extrasContainer"></div>
         <button class="btn-add" onclick="adicionarCusto()">+ Adicionar custo</button>
@@ -248,7 +248,7 @@
 
       <div class="card">
         <div class="sec-title"><span class="idx">02</span><h3>Comercial</h3></div>
-        <label class="fld"><span class="lbl">Ticket médio (venda ao cliente)</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="ticket"></div><span class="hint">Valor cheio: KIT + serviço</span></label>
+        <label class="fld"><span class="lbl">Ticket médio (venda ao cliente)</span><div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="ticket"></div><span class="hint">Valor cheio: KIT + serviço</span></label>
         <label class="fld"><span class="lbl">Projetos vendidos / mês</span><input class="plain" type="number" id="qtd"></label>
         <div class="total-row"><span class="lbl">Faturamento mensal aprox.</span><span class="val" id="fatOut" style="color:var(--solar)"></span></div>
       </div>
@@ -270,7 +270,7 @@
 
       <div class="card">
         <div class="sec-title"><span class="idx">04</span><h3>Estrutura &amp; meta</h3></div>
-        <label class="fld"><span class="lbl">Despesas fixas / mês</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="despFixa"></div><span class="hint">Aluguel, equipe, software, etc.</span></label>
+        <label class="fld"><span class="lbl">Despesas fixas / mês</span><div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="despFixa"></div><span class="hint">Aluguel, equipe, software, etc.</span></label>
         <label class="fld"><span class="lbl">Margem de lucro líquida alvo</span><div class="inwrap"><input type="number" step="0.1" id="lucroAlvo"><span class="affix r">%</span></div><span class="hint">Usada no preço sugerido</span></label>
       </div>
     </div>
@@ -412,6 +412,8 @@ function novoProjetoConfirm() {
 const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
 const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
 const FIELDS=["kit","ca","inst","proj","homol","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
+const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","ticket","despFixa"]);
+function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2) : v; }
 let comissaoBase="total";
 let tributoBase="servico";
 let lastCalc=null;
@@ -423,7 +425,7 @@ const num=id=>parseFloat(document.getElementById(id).value)||0;
 function load(){
   let s={};
   try{ s=JSON.parse(localStorage.getItem("precSolar")||"{}"); }catch(e){}
-  FIELDS.forEach(f=>document.getElementById(f).value = (s[f]!==undefined?s[f]:DEFAULTS[f]));
+  FIELDS.forEach(f=>document.getElementById(f).value = fmtField(f, s[f]!==undefined?s[f]:DEFAULTS[f]));
   comissaoBase = s.comissaoBase || DEFAULTS.comissaoBase;
   tributoBase = s.tributoBase || DEFAULTS.tributoBase;
   syncBaseButtons();
@@ -433,7 +435,7 @@ function save(){
   try{ localStorage.setItem("precSolar",JSON.stringify(s)); }catch(e){}
 }
 function resetDefaults(){
-  FIELDS.forEach(f=>document.getElementById(f).value=DEFAULTS[f]);
+  FIELDS.forEach(f=>document.getElementById(f).value=fmtField(f,DEFAULTS[f]));
   comissaoBase=DEFAULTS.comissaoBase; tributoBase=DEFAULTS.tributoBase;
   syncBaseButtons(); render();
 }
@@ -701,7 +703,7 @@ function calcValor(campo) {
 function aplicarTodasConfigs() {
   Object.keys(CAMPOS_CFG).forEach(campo => {
     const val = calcValor(campo);
-    if (val !== null) document.getElementById(campo).value = parseFloat(val.toFixed(2));
+    if (val !== null) document.getElementById(campo).value = val.toFixed(2);
   });
   render();
 }
@@ -931,7 +933,7 @@ function renderExtras() {
         </div>
       </div>
       <div class="inwrap"><span class="affix l">R$</span>
-        <input type="number" value="${parseFloat(val.toFixed(2))}" readonly
+        <input type="text" value="${val.toFixed(2)}" readonly
                style="color:${val>0?'var(--ink)':'var(--muted)'}">
       </div>
     </div>`;
