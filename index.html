@@ -30,6 +30,14 @@
   .btn.save:hover{opacity:.9}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
+  .ctx-bar{background:var(--teal);border-radius:12px;padding:12px 18px;margin-bottom:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ctx-item{display:flex;flex-direction:column;gap:1px}
+  .ctx-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .ctx-value{font-size:13px;font-weight:700;color:#fff}
+  .ctx-sep{color:rgba(255,255,255,.25);font-size:18px;margin:0 4px}
+  .ctx-novo{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+  .ctx-novo:hover{background:rgba(255,255,255,.22)}
+
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
   .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:16px 18px;border-top:3px solid var(--ink)}
   .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
@@ -130,6 +138,17 @@
     </div>
   </header>
 
+  <div class="ctx-bar">
+    <div class="ctx-item"><div class="ctx-label">Empresa</div><div class="ctx-value" id="ctxEmpresa">—</div></div>
+    <div class="ctx-sep">·</div>
+    <div class="ctx-item"><div class="ctx-label">Projeto</div><div class="ctx-value" id="ctxProjeto">—</div></div>
+    <div class="ctx-sep">·</div>
+    <div class="ctx-item"><div class="ctx-label">Potência</div><div class="ctx-value" id="ctxKwp">—</div></div>
+    <div class="ctx-sep">·</div>
+    <div class="ctx-item"><div class="ctx-label">Módulos</div><div class="ctx-value" id="ctxModulos">—</div></div>
+    <button class="ctx-novo" onclick="novoProjetoConfirm()">+ Novo projeto</button>
+  </div>
+
   <!-- KPIs -->
   <div class="kpis" id="kpis"></div>
 
@@ -148,7 +167,6 @@
 
       <div class="card">
         <div class="sec-title"><span class="idx">02</span><h3>Comercial</h3></div>
-        <label class="fld"><span class="lbl">Nome do cliente / projeto</span><input class="plain" type="text" id="cliente" placeholder="Ex: João Silva — 6 kWp"></label>
         <label class="fld"><span class="lbl">Ticket médio (venda ao cliente)</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="ticket"></div><span class="hint">Valor cheio: KIT + serviço</span></label>
         <label class="fld"><span class="lbl">Projetos vendidos / mês</span><input class="plain" type="number" id="qtd"></label>
         <div class="total-row"><span class="lbl">Faturamento mensal aprox.</span><span class="val" id="fatOut" style="color:var(--solar)"></span></div>
@@ -225,6 +243,27 @@ const db = createClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
+
+const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+const projeto    = JSON.parse(localStorage.getItem('projeto')||'null');
+
+function initCtx() {
+  if(!integrador?.nome_empresa || !projeto?.nome_projeto) {
+    window.location.href='cadastro.html';
+    return;
+  }
+  document.getElementById('ctxEmpresa').textContent  = integrador.nome_empresa;
+  document.getElementById('ctxProjeto').textContent  = projeto.nome_projeto;
+  document.getElementById('ctxKwp').textContent      = (projeto.kwp_sistema||'—')+' kWp';
+  document.getElementById('ctxModulos').textContent  = (projeto.quantidade_modulos||'—')+' un';
+}
+
+function novoProjetoConfirm() {
+  if(confirm('Iniciar análise de um novo projeto?')) {
+    localStorage.removeItem('projeto');
+    window.location.href='projeto.html';
+  }
+}
 
 const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
 const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
@@ -408,10 +447,9 @@ async function salvarOrcamento(){
   btn.textContent="Salvando…";
 
   const {d,a,peQtd,precoSugerido}=lastCalc;
-  const cliente=document.getElementById("cliente").value.trim()||null;
-
   const {error}=await db.from("orcamentos").insert({
-    cliente,
+    integrador_id: integrador?.id||null,
+    projeto_id:    projeto?.id||null,
     kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol,
     ticket:d.ticket, qtd_projetos:d.qtd,
     comissao_pct:d.comissao, comissao_base:comissaoBase,
@@ -442,6 +480,7 @@ function showToast(msg, erro=false){
 }
 
 FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
+initCtx();
 load();
 render();
 </script>

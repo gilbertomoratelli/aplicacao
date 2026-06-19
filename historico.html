@@ -45,7 +45,8 @@
   tbody tr:hover{background:var(--bg)}
   td{padding:12px 16px;vertical-align:middle}
   td.r{text-align:right;font-family:var(--mono);font-size:13px}
-  .cliente-cell{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .proj-cell{font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .emp-cell{font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .date-cell{color:var(--muted);font-size:12px;white-space:nowrap}
   .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono)}
   .badge.pos{background:#E8F5EE;color:var(--positive)}
@@ -116,7 +117,7 @@ let todos = [];
 async function carregar() {
   const { data, error } = await db
     .from("orcamentos")
-    .select("*")
+    .select("*, projetos(nome_projeto, quantidade_modulos, kwp_sistema), integradores(nome_empresa)")
     .order("criado_em", { ascending: false });
 
   if (error) {
@@ -138,9 +139,9 @@ function atualizarKpis(dados) {
   const margemMedia = dados.reduce((s,r) => s + (r.margem_contribuicao_pct||0), 0) / dados.length;
   const lucroMedio  = dados.reduce((s,r) => s + (r.lucro_mensal||0), 0) / dados.length;
 
-  document.getElementById("kTicket").textContent  = brl(ticketMedio);
-  document.getElementById("kMargem").textContent  = pct(margemMedia);
-  document.getElementById("kLucro").textContent   = brl(lucroMedio);
+  document.getElementById("kTicket").textContent = brl(ticketMedio);
+  document.getElementById("kMargem").textContent = pct(margemMedia);
+  document.getElementById("kLucro").textContent  = brl(lucroMedio);
 }
 
 function renderTabela(dados) {
@@ -153,9 +154,10 @@ function renderTabela(dados) {
   let html = `<table>
     <thead><tr>
       <th>Data</th>
-      <th>Cliente / Projeto</th>
+      <th>Empresa</th>
+      <th>Projeto</th>
+      <th class="r hide-sm">kWp</th>
       <th class="r hide-sm">Ticket</th>
-      <th class="r hide-sm">KIT</th>
       <th class="r hide-sm">Custo direto</th>
       <th class="r">Margem %</th>
       <th class="r">Lucro / mês</th>
@@ -164,11 +166,15 @@ function renderTabela(dados) {
 
   dados.forEach(r => {
     const lucrativo = (r.lucro_mensal || 0) >= 0;
+    const empresa   = r.integradores?.nome_empresa || '—';
+    const projeto   = r.projetos?.nome_projeto     || '—';
+    const kwp       = r.projetos?.kwp_sistema      != null ? r.projetos.kwp_sistema+' kWp' : '—';
     html += `<tr>
       <td class="date-cell">${dataFmt(r.criado_em)}</td>
-      <td class="cliente-cell" title="${r.cliente||''}">${r.cliente || '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="emp-cell" title="${empresa}">${empresa}</td>
+      <td class="proj-cell" title="${projeto}">${projeto}</td>
+      <td class="r hide-sm">${kwp}</td>
       <td class="r hide-sm">${brl(r.ticket)}</td>
-      <td class="r hide-sm">${brl(r.kit)}</td>
       <td class="r hide-sm">${brl(r.custo_direto_total)}</td>
       <td class="r"><span class="badge ${lucrativo?'pos':'neg'}">${pct(r.margem_contribuicao_pct)}</span></td>
       <td class="r" style="color:${lucrativo?'var(--positive)':'var(--negative)'};font-weight:700">${brl(r.lucro_mensal)}</td>
@@ -182,7 +188,10 @@ function renderTabela(dados) {
 
 function filtrar() {
   const termo = document.getElementById("busca").value.toLowerCase();
-  const filtrado = todos.filter(r => (r.cliente||"").toLowerCase().includes(termo));
+  const filtrado = todos.filter(r =>
+    (r.integradores?.nome_empresa||"").toLowerCase().includes(termo) ||
+    (r.projetos?.nome_projeto||"").toLowerCase().includes(termo)
+  );
   renderTabela(filtrado);
 }
 

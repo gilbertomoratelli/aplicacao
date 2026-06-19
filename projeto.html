@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dados do Projeto · Solar</title>
+<style>
+  :root{
+    --bg:#F4F2EC;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#E3DFD4;
+    --solar:#E8820C;--teal:#0F3D3E;--positive:#2F7A4D;--negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:480px}
+
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+  .logo{width:32px;height:32px;border-radius:8px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0}
+  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+
+  .stepper{display:flex;align-items:center;margin-bottom:28px}
+  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .sn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--hair);color:var(--muted)}
+  .sl{font-size:10px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .step.active .sn{background:var(--solar);color:#fff}
+  .step.active .sl{color:var(--solar)}
+  .step.done .sn{background:var(--teal);color:#fff}
+  .step.done .sl{color:var(--teal)}
+  .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
+  .sline.done{background:var(--teal)}
+
+  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .empresa-badge .nome{font-weight:700;font-size:14px}
+  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
+  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+  .btn-trocar:hover{background:rgba(255,255,255,.25)}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px}
+  .card-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
+  .card-sub{font-size:13px;color:var(--muted);margin:0 0 24px}
+
+  label.fld{display:block;margin-bottom:16px}
+  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  label.fld .req{color:var(--solar)}
+  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
+  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .inwrap .affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--mono)}
+  .inwrap .affix.l{border-right:1px solid var(--hair)}
+  .inwrap .affix.r{border-left:1px solid var(--hair)}
+  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%}
+  input.plain{width:100%;border:1px solid var(--hair);border-radius:9px;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--surface)}
+  input.plain:focus{outline:2px solid var(--solar);outline-offset:1px}
+  .err{font-size:11px;color:var(--negative);margin-top:4px;display:none}
+
+  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:4px}
+  .btn-primary:hover{opacity:.9}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">☀</div>
+    <div>
+      <div class="brand-name">Integradora Solar</div>
+      <div class="brand-sub">Precificação de Projetos</div>
+    </div>
+  </div>
+
+  <div class="stepper">
+    <div class="step done"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="sline done"></div>
+    <div class="step active"><div class="sn">2</div><div class="sl">Projeto</div></div>
+    <div class="sline"></div>
+    <div class="step"><div class="sn">3</div><div class="sl">Precificação</div></div>
+  </div>
+
+  <div class="empresa-badge" id="empresaBadge">
+    <div>
+      <div class="nome" id="empresaNome">—</div>
+      <div class="regime" id="empresaRegime">—</div>
+    </div>
+    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Dados do Projeto</h2>
+    <p class="card-sub">Informe os dados técnicos do sistema fotovoltaico.</p>
+
+    <form id="form" onsubmit="salvar(event)">
+      <label class="fld">
+        <span class="lbl">Nome do Projeto <span class="req">*</span></span>
+        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva">
+        <span class="err" id="errNome">Campo obrigatório</span>
+      </label>
+
+      <label class="fld">
+        <span class="lbl">Quantidade de Módulos <span class="req">*</span></span>
+        <div class="inwrap">
+          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1">
+          <span class="affix r">un</span>
+        </div>
+        <span class="err" id="errModulos">Informe a quantidade</span>
+      </label>
+
+      <label class="fld">
+        <span class="lbl">Potência do Sistema <span class="req">*</span></span>
+        <div class="inwrap">
+          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01">
+          <span class="affix r">kWp</span>
+        </div>
+        <span class="hint">Potência total instalada em quilowatt-pico</span>
+        <span class="err" id="errKwp">Informe a potência</span>
+      </label>
+
+      <button class="btn-primary" type="submit" id="btnSalvar">Analisar precificação →</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+
+function init() {
+  if(!integrador?.nome_empresa) {
+    window.location.href='cadastro.html';
+    return;
+  }
+  document.getElementById('empresaNome').textContent = integrador.nome_empresa;
+  document.getElementById('empresaRegime').textContent = integrador.regime_tributario||'Regime não informado';
+}
+
+function trocarEmpresa() {
+  localStorage.removeItem('integrador');
+  window.location.href='cadastro.html';
+}
+
+function validar() {
+  let ok=true;
+  const campos=[
+    {id:'nome_projeto',err:'errNome',check:v=>v.trim().length>1},
+    {id:'qtd_modulos',err:'errModulos',check:v=>parseFloat(v)>0},
+    {id:'kwp_sistema',err:'errKwp',check:v=>parseFloat(v)>0},
+  ];
+  campos.forEach(c=>{
+    const v=document.getElementById(c.id).value;
+    const valido=c.check(v);
+    document.getElementById(c.err).style.display=valido?'none':'block';
+    if(!valido) ok=false;
+  });
+  return ok;
+}
+
+async function salvar(e) {
+  e.preventDefault();
+  if(!validar()) return;
+
+  const btn=document.getElementById('btnSalvar');
+  btn.disabled=true; btn.textContent='Salvando…';
+
+  const payload={
+    integrador_id: integrador.id||null,
+    nome_projeto: document.getElementById('nome_projeto').value.trim(),
+    quantidade_modulos: parseInt(document.getElementById('qtd_modulos').value),
+    kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
+  };
+
+  const {data,error}=await db.from('projetos').insert(payload).select().single();
+
+  btn.disabled=false; btn.textContent='Analisar precificação →';
+
+  if(error){ alert('Erro ao salvar: '+error.message); return; }
+
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id}));
+  window.location.href='index.html';
+}
+
+init();
+</script>
+</body>
+</html>
