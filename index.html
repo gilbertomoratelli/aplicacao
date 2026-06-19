@@ -413,14 +413,14 @@ const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3
 const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
 const FIELDS=["kit","ca","inst","proj","homol","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
 const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","ticket","despFixa"]);
-function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2) : v; }
+function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).replace('.',',') : v; }
 let comissaoBase="total";
 let tributoBase="servico";
 let lastCalc=null;
 
 const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
 const pct=v=>isFinite(v)?(v*100).toFixed(1).replace(".",",")+"%":"—";
-const num=id=>parseFloat(document.getElementById(id).value)||0;
+const num=id=>parseFloat((document.getElementById(id).value||'0').replace(',','.'))||0;
 
 function load(){
   let s={};
@@ -703,7 +703,7 @@ function calcValor(campo) {
 function aplicarTodasConfigs() {
   Object.keys(CAMPOS_CFG).forEach(campo => {
     const val = calcValor(campo);
-    if (val !== null) document.getElementById(campo).value = val.toFixed(2);
+    if (val !== null) document.getElementById(campo).value = val.toFixed(2).replace('.',',');
   });
   render();
 }
@@ -933,7 +933,7 @@ function renderExtras() {
         </div>
       </div>
       <div class="inwrap"><span class="affix l">R$</span>
-        <input type="text" value="${val.toFixed(2)}" readonly
+        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly
                style="color:${val>0?'var(--ink)':'var(--muted)'}">
       </div>
     </div>`;
