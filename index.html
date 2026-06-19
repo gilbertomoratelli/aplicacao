@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Precificação · Integradora Solar</title>
+<style>
+  :root{
+    --bg:#F4F2EC; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#E3DFD4;
+    --solar:#E8820C; --teal:#0F3D3E; --kit:#A9AEB6; --variable:#D9663B;
+    --positive:#2F7A4D; --negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px 22px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  .mono{font-family:var(--mono)}
+
+  header.top{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .logo{width:28px;height:28px;border-radius:7px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .sub{margin:0;color:var(--muted);font-size:14px;max-width:640px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+  .btn:hover{border-color:var(--teal)}
+  .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btn.save{background:var(--solar);color:#fff;border-color:var(--solar)}
+  .btn.save:hover{opacity:.9}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:16px 18px;border-top:3px solid var(--ink)}
+  .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1}
+  .kpi .s{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:22px}
+  .col.left{gap:18px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:22px}
+  .card.teal{background:var(--teal);border-color:var(--teal)}
+
+  .sec-title{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
+  .sec-title .idx{font-family:var(--mono);font-size:11px;color:var(--solar);font-weight:700}
+  .sec-title h3{margin:0;font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+  .card.teal .sec-title h3{color:#fff}
+
+  label.fld{display:block;margin-bottom:14px}
+  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
+  .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
+  .inwrap .affix.l{border-right:1px solid var(--hair)}
+  .inwrap .affix.r{border-left:1px solid var(--hair)}
+  .inwrap input{flex:1;border:none;outline:none;padding:9px 10px;font-size:15px;font-family:var(--mono);color:var(--ink);width:100%;background:transparent}
+  input.plain{width:100%;border:1px solid var(--hair);border-radius:8px;padding:9px 10px;font-size:15px;font-family:var(--mono);color:var(--ink);outline:none;background:var(--surface)}
+  input:focus,.inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+
+  .total-row{border-top:1px solid var(--hair);padding-top:12px;margin-top:2px;display:flex;justify-content:space-between;align-items:baseline}
+  .total-row .lbl{font-size:12px;color:var(--muted)}
+  .total-row .val{font-family:var(--mono);font-weight:700;font-size:17px}
+
+  .toggle{display:flex;gap:6px;margin:-6px 0 14px}
+  .toggle button{flex:1;padding:6px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans)}
+  .toggle button.on{border-color:var(--teal);background:var(--teal);color:#fff}
+
+  .bar{display:flex;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--hair)}
+  .bar .seg{display:flex;align-items:center;justify-content:center;min-width:2px}
+  .bar .seg span{color:#fff;font-family:var(--mono);font-size:12px;font-weight:700}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+  .legend .item{display:flex;align-items:center;gap:8px}
+  .legend .dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+  .legend .lt{font-size:12px}
+  .legend .lv{font-family:var(--mono);font-size:13px;font-weight:700}
+
+  .grid-dre{display:grid;grid-template-columns:1fr auto auto;gap:0 24px;font-size:14px}
+  .grid-cmp{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:0 16px;align-items:baseline}
+  .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;font-weight:600}
+  .h.r{text-align:right}
+  .cell{padding:7px 0;font-family:var(--mono);font-size:14px;text-align:right}
+  .lbl-cell{padding:7px 0;font-size:14px}
+  .b{font-weight:700}.muted{color:var(--muted)}.div{border-top:1px solid var(--hair)}
+
+  .pe .blk{margin-bottom:14px}
+  .pe .cap{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .pe .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--teal)}
+  .pe .big small{font-size:13px;color:var(--muted);font-weight:400}
+  .pe .med{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--teal)}
+
+  .card.teal .p{font-size:13px;color:#C7D3D3;margin:0 0 14px}
+  .price{font-family:var(--mono);font-size:30px;font-weight:800;color:#fff;line-height:1}
+  .price-note{font-size:13px;color:#C7D3D3;margin-top:10px}
+
+  .foot{font-size:11px;color:var(--muted);margin:0;line-height:1.6}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+  .toast.show{opacity:1;transform:translateY(0)}
+
+  @media (max-width:880px){
+    .main{grid-template-columns:1fr}
+    .grid-2{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff;padding:0}
+    .actions{display:none}
+    .card,.kpi{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="logo">☀</div>
+        <span class="eyebrow">Integradora Solar · Gestão</span>
+      </div>
+      <h1>Dashboard de Precificação</h1>
+      <p class="sub">Modelo de venda em que o KIT é faturado pela distribuidora e o integrador fatura a prestação de serviço. O tributo incide somente sobre a parte de serviço.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
+      <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
+      <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar orçamento</button>
+      <button class="btn primary" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis"></div>
+
+  <div class="main">
+    <!-- ENTRADAS -->
+    <div class="col left">
+      <div class="card">
+        <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3></div>
+        <label class="fld"><span class="lbl">Custo do KIT</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="kit"></div><span class="hint">Faturado direto pela distribuidora</span></label>
+        <label class="fld"><span class="lbl">Material adicional CA</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="ca"></div></label>
+        <label class="fld"><span class="lbl">Instalação</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="inst"></div></label>
+        <label class="fld"><span class="lbl">Projeto</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="proj"></div></label>
+        <label class="fld"><span class="lbl">Homologação</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="homol"></div></label>
+        <div class="total-row"><span class="lbl">Custo direto total</span><span class="val" id="cdtOut"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="idx">02</span><h3>Comercial</h3></div>
+        <label class="fld"><span class="lbl">Nome do cliente / projeto</span><input class="plain" type="text" id="cliente" placeholder="Ex: João Silva — 6 kWp"></label>
+        <label class="fld"><span class="lbl">Ticket médio (venda ao cliente)</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="ticket"></div><span class="hint">Valor cheio: KIT + serviço</span></label>
+        <label class="fld"><span class="lbl">Projetos vendidos / mês</span><input class="plain" type="number" id="qtd"></label>
+        <div class="total-row"><span class="lbl">Faturamento mensal aprox.</span><span class="val" id="fatOut" style="color:var(--solar)"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="idx">03</span><h3>Despesas variáveis</h3></div>
+        <label class="fld"><span class="lbl">Comissão de vendas</span><div class="inwrap"><input type="number" step="0.1" id="comissao"><span class="affix r">%</span></div></label>
+        <div class="toggle" id="toggleComissao">
+          <button data-base="total" onclick="setBase('comissao','total')">sobre venda total</button>
+          <button data-base="servico" onclick="setBase('comissao','servico')">sobre serviço</button>
+        </div>
+        <label class="fld"><span class="lbl">Carga tributária</span><div class="inwrap"><input type="number" step="0.1" id="tributo"><span class="affix r">%</span></div><span class="hint" id="tribHint"></span></label>
+        <div class="toggle" id="toggleTributo">
+          <button data-base="total" onclick="setBase('tributo','total')">sobre venda total</button>
+          <button data-base="servico" onclick="setBase('tributo','servico')">sobre serviço</button>
+        </div>
+        <label class="fld"><span class="lbl">Outras despesas variáveis</span><div class="inwrap"><input type="number" step="0.1" id="outras"><span class="affix r">%</span></div><span class="hint">Sobre o ticket — campo flexível</span></label>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="idx">04</span><h3>Estrutura &amp; meta</h3></div>
+        <label class="fld"><span class="lbl">Despesas fixas / mês</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="despFixa"></div><span class="hint">Aluguel, equipe, software, etc.</span></label>
+        <label class="fld"><span class="lbl">Margem de lucro líquida alvo</span><div class="inwrap"><input type="number" step="0.1" id="lucroAlvo"><span class="affix r">%</span></div><span class="hint">Usada no preço sugerido</span></label>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="col">
+      <div class="card">
+        <div class="sec-title"><span class="idx">◐</span><h3>Para onde vai cada real do ticket</h3></div>
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="idx">05</span><h3>DRE gerencial</h3></div>
+        <div class="grid-dre" id="dre"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card pe">
+          <div class="sec-title"><span class="idx">06</span><h3>Ponto de equilíbrio</h3></div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Volume mínimo para cobrir as despesas fixas.</p>
+          <div class="blk"><div class="cap">Em projetos / mês</div><div class="big" id="peQtd"></div></div>
+          <div><div class="cap">Em faturamento</div><div class="med" id="peFat"></div></div>
+        </div>
+
+        <div class="card teal">
+          <div class="sec-title"><span class="idx">07</span><h3>Preço sugerido · lucro líquido</h3></div>
+          <p class="p" id="precoP"></p>
+          <div class="price" id="precoOut"></div>
+          <div class="price-note" id="precoNote"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="idx">08</span><h3>Comparativo · atual × sugerido</h3></div>
+        <div class="grid-cmp" id="cmp"></div>
+        <p class="foot" id="cmpFoot" style="margin-top:16px"></p>
+      </div>
+
+      <p class="foot">Premissas: a carga tributária e a comissão podem incidir sobre a venda total ou somente sobre o serviço (botões na seção 03). Quando incidem só sobre o serviço, o KIT escapa da base e gera um abatimento de %alíquota × KIT no numerador do preço sugerido; quando incidem sobre o total, esse abatimento deixa de existir e a alíquota é aplicada sobre o preço cheio. Ajuste os percentuais conforme seu regime tributário real.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
+const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
+const FIELDS=["kit","ca","inst","proj","homol","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
+let comissaoBase="total";
+let tributoBase="servico";
+let lastCalc=null;
+
+const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
+const pct=v=>isFinite(v)?(v*100).toFixed(1).replace(".",",")+"%":"—";
+const num=id=>parseFloat(document.getElementById(id).value)||0;
+
+function load(){
+  let s={};
+  try{ s=JSON.parse(localStorage.getItem("precSolar")||"{}"); }catch(e){}
+  FIELDS.forEach(f=>document.getElementById(f).value = (s[f]!==undefined?s[f]:DEFAULTS[f]));
+  comissaoBase = s.comissaoBase || DEFAULTS.comissaoBase;
+  tributoBase = s.tributoBase || DEFAULTS.tributoBase;
+  syncBaseButtons();
+}
+function save(){
+  const s={comissaoBase,tributoBase}; FIELDS.forEach(f=>s[f]=num(f));
+  try{ localStorage.setItem("precSolar",JSON.stringify(s)); }catch(e){}
+}
+function resetDefaults(){
+  FIELDS.forEach(f=>document.getElementById(f).value=DEFAULTS[f]);
+  comissaoBase=DEFAULTS.comissaoBase; tributoBase=DEFAULTS.tributoBase;
+  syncBaseButtons(); render();
+}
+function setBase(campo,val){
+  if(campo==="comissao") comissaoBase=val; else tributoBase=val;
+  syncBaseButtons(); render();
+}
+function syncBaseButtons(){
+  document.querySelectorAll("#toggleComissao button").forEach(b=>b.classList.toggle("on",b.dataset.base===comissaoBase));
+  document.querySelectorAll("#toggleTributo button").forEach(b=>b.classList.toggle("on",b.dataset.base===tributoBase));
+}
+
+function cenario(tk,d){
+  const baseServico=tk-d.kit;
+  const cBase=comissaoBase==="total"?tk:baseServico;
+  const tBase=tributoBase==="total"?tk:baseServico;
+  const comissaoR=d.comissao/100*cBase;
+  const tributoR=d.tributo/100*tBase;
+  const outrasR=d.outras/100*tk;
+  const dvUnit=comissaoR+tributoR+outrasR;
+  const faturamento=tk*d.qtd, dvMes=dvUnit*d.qtd;
+  const custoVariavelPct=tk>0?dvUnit/tk:0;
+  const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
+  const despFixaUnit=d.qtd>0?d.despFixa/d.qtd:0;
+  const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-d.despFixa, lucroPct=tk>0?lucroUnit/tk:0;
+  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,lucroUnit,lucroMes,lucroPct};
+}
+
+function render(){
+  const d={kit:num("kit"),ca:num("ca"),inst:num("inst"),proj:num("proj"),homol:num("homol"),ticket:num("ticket"),qtd:num("qtd"),comissao:num("comissao"),tributo:num("tributo"),outras:num("outras"),despFixa:num("despFixa"),lucroAlvo:num("lucroAlvo")};
+  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol;
+
+  const cPctServ=comissaoBase==="servico"?d.comissao/100:0;
+  const tPctServ=tributoBase==="servico"?d.tributo/100:0;
+  const abat=(cPctServ+tPctServ)*d.kit;
+  const baseVar=d.comissao/100+d.tributo/100+d.outras/100;
+
+  const fatAtual=d.ticket*d.qtd;
+  const dfPct=fatAtual>0?d.despFixa/fatAtual:Infinity;
+  const denom=1-baseVar-dfPct-d.lucroAlvo/100;
+  const precoSugerido=(fatAtual>0&&denom>0)?(d.cdt-abat)/denom:Infinity;
+
+  const a=cenario(d.ticket,d);
+  const sug=isFinite(precoSugerido)?cenario(precoSugerido,d):null;
+  const peFat=a.mcPct>0?d.despFixa/a.mcPct:Infinity;
+  const peQtd=a.mcUnit>0?d.despFixa/a.mcUnit:Infinity;
+
+  lastCalc={d,a,peQtd,peFat,precoSugerido,dfPct};
+
+  document.getElementById("cdtOut").textContent=brl(d.cdt);
+  document.getElementById("fatOut").textContent=brl(a.faturamento);
+  document.getElementById("tribHint").textContent = tributoBase==="servico"
+    ? "Incide sobre o serviço: "+brl(a.baseServico)
+    : "Incide sobre a venda total: "+brl(d.ticket);
+
+  const lucrativo=a.lucroMes>=0;
+  const kpis=[
+    {k:"Faturamento mensal",v:brl(a.faturamento),s:d.qtd+" projetos × "+brl(d.ticket),c:C.ink},
+    {k:"Despesas variáveis %",v:pct(a.custoVariavelPct),s:brl(a.dvUnit)+" por projeto",c:C.variable},
+    {k:"Margem de contribuição",v:pct(a.mcPct),s:brl(a.mcMes)+" no mês",c:C.positive},
+    {k:lucrativo?"Lucro mensal":"Prejuízo mensal",v:brl(a.lucroMes),s:pct(a.lucroPct)+" sobre o ticket",c:lucrativo?C.positive:C.negative}
+  ];
+  document.getElementById("kpis").innerHTML=kpis.map(x=>
+    `<div class="kpi" style="border-top-color:${x.c}"><div class="k">${x.k}</div><div class="v" style="color:${x.c}">${x.v}</div><div class="s">${x.s}</div></div>`).join("");
+
+  const segs=[
+    {label:"KIT (repassado)",val:d.kit,color:C.kit},
+    {label:"Custos de serviço",val:d.cdt-d.kit,color:C.solar},
+    {label:"Despesas variáveis",val:a.dvUnit,color:C.variable},
+    {label:a.mcUnit>=0?"Margem de contribuição":"Prejuízo",val:Math.abs(a.mcUnit),color:a.mcUnit>=0?C.positive:C.negative}
+  ];
+  const segTotal=segs.reduce((s,x)=>s+x.val,0)||1;
+  document.getElementById("bar").innerHTML=segs.map(s=>{
+    const w=s.val/segTotal*100;
+    return `<div class="seg" title="${s.label}: ${brl(s.val)}" style="width:${w}%;background:${s.color}">${w>9?'<span>'+w.toFixed(0)+'%</span>':''}</div>`;
+  }).join("");
+  document.getElementById("legend").innerHTML=segs.map(s=>
+    `<div class="item"><span class="dot" style="background:${s.color}"></span><div><div class="lt">${s.label}</div><div class="lv" style="color:${s.color}">${brl(s.val)}</div></div></div>`).join("");
+
+  const dreRows=[
+    ["Receita (ticket)",d.ticket,a.faturamento,{b:1}],
+    ["(−) Custo do KIT",-d.kit,-d.kit*d.qtd,{muted:1}],
+    ["(−) Custos de serviço",-(d.cdt-d.kit),-(d.cdt-d.kit)*d.qtd,{muted:1}],
+    ["(−) Despesas variáveis",-a.dvUnit,-a.dvMes,{muted:1}],
+    ["= Margem de contribuição",a.mcUnit,a.mcMes,{b:1,div:1,color:a.mcUnit>=0?C.positive:C.negative}],
+    ["(−) Despesas fixas",-a.despFixaUnit,-d.despFixa,{muted:1}],
+    ["= Resultado",a.lucroUnit,a.lucroMes,{b:1,div:1,color:a.lucroMes>=0?C.positive:C.negative}]
+  ];
+  let dreHtml=`<div class="h">Linha</div><div class="h r">Por projeto</div><div class="h r">No mês</div>`;
+  dreRows.forEach(([lbl,x,y,o])=>{
+    const col=o.color||(o.muted?C.muted:C.ink);
+    const cls=(o.b?"b ":"")+(o.div?"div":"");
+    dreHtml+=`<div class="lbl-cell ${cls}" style="color:${col}">${lbl}</div>`+
+             `<div class="cell ${cls}" style="color:${col}">${brl(x)}</div>`+
+             `<div class="cell ${cls}" style="color:${col}">${brl(y)}</div>`;
+  });
+  document.getElementById("dre").innerHTML=dreHtml;
+
+  document.getElementById("peQtd").innerHTML=(isFinite(peQtd)?Math.ceil(peQtd):"—")+` <small>de ${d.qtd}</small>`;
+  document.getElementById("peFat").textContent=brl(peFat);
+
+  const valido=isFinite(precoSugerido)&&denom>0;
+  document.getElementById("precoP").innerHTML=`Para atingir ${d.lucroAlvo}% de lucro líquido.${abat>0?" Inclui o abatimento fiscal do KIT.":""} Despesa fixa = <b style="color:#fff">${pct(dfPct)}</b> do faturamento atual (${brl(fatAtual)}).`;
+  document.getElementById("precoOut").textContent=valido?brl(precoSugerido):"ajuste a meta";
+  const note=document.getElementById("precoNote");
+  if(valido){
+    note.innerHTML = precoSugerido>d.ticket
+      ? `Ticket atual está <b style="color:${C.solar}">${brl(precoSugerido-d.ticket)}</b> abaixo do ideal.`
+      : `Ticket atual já supera o alvo em <b style="color:#8FD3A8">${brl(d.ticket-precoSugerido)}</b>.`;
+  } else { note.textContent=""; }
+
+  const cmpEl=document.getElementById("cmp");
+  if(!sug){
+    cmpEl.innerHTML=`<p style="font-size:13px;color:var(--muted);margin:0;grid-column:1/-1">Ajuste a margem de contribuição alvo (seção 04) para gerar o cenário sugerido.</p>`;
+  } else {
+    const rows=[
+      ["Preço de venda",a.ticket,sug.ticket,{b:1}],
+      ["Comissão de vendas",a.comissaoR,sug.comissaoR,{muted:1,invert:1}],
+      ["Carga tributária",a.tributoR,sug.tributoR,{muted:1,invert:1}],
+      ["Outras desp. variáveis",a.outrasR,sug.outrasR,{muted:1,invert:1}],
+      ["= Despesas variáveis",a.dvUnit,sug.dvUnit,{b:1,invert:1,div:1}],
+      ["Despesas variáveis %",a.custoVariavelPct,sug.custoVariavelPct,{pct:1,invert:1}],
+      ["Margem de contribuição",a.mcUnit,sug.mcUnit,{b:1,div:1,pos:1}],
+      ["Margem de contribuição %",a.mcPct,sug.mcPct,{pct:1,pos:1}],
+      ["Resultado mensal",a.lucroMes,sug.lucroMes,{b:1,div:1,pos:1}]
+    ];
+    let h=`<div class="h">Por projeto</div><div class="h r">Atual</div><div class="h r">Sugerido</div><div class="h r">Δ</div>`;
+    rows.forEach(([lbl,x,y,o])=>{
+      const f=o.pct?pct:brl;
+      const delta=y-x;
+      let dc=C.muted;
+      if(Math.abs(delta)>(o.pct?0.0001:0.005)){ const fav=o.invert?delta<0:delta>0; dc=fav?C.positive:C.negative; }
+      const dstr=o.pct?`${delta>=0?"+":"−"}${Math.abs(delta*100).toFixed(1).replace(".",",")} pp`
+                      :`${delta>=0?"+":"−"}${brl(Math.abs(delta)).replace("R$","").trim()}`;
+      const colL=o.pos?(y>=0?C.positive:C.negative):C.ink;
+      const colA=o.pos?(x>=0?C.positive:C.negative):(o.muted?C.muted:C.ink);
+      const colB=o.pos?(y>=0?C.positive:C.negative):(o.muted?C.muted:C.ink);
+      const cls=(o.b?"b ":"")+(o.div?"div":"");
+      h+=`<div class="lbl-cell ${cls}" style="color:${colL}">${lbl}</div>`+
+         `<div class="cell ${cls}" style="color:${colA}">${f(x)}</div>`+
+         `<div class="cell ${cls}" style="color:${colB}">${f(y)}</div>`+
+         `<div class="cell ${cls}" style="color:${dc};font-size:13px">${dstr}</div>`;
+    });
+    cmpEl.innerHTML=h;
+  }
+  document.getElementById("cmpFoot").textContent=`O preço sugerido embute a despesa fixa (${pct(dfPct)} do faturamento atual) e busca ${d.lucroAlvo}% de lucro líquido. As despesas variáveis são recalculadas em cada cenário. Como a despesa fixa é diluída sobre o volume atual, no preço sugerido o lucro efetivo (linha "Resultado mensal") pode diferir levemente da meta, pois o faturamento muda. Δ = diferença do sugerido em relação ao atual.`;
+
+  save();
+}
+
+async function salvarOrcamento(){
+  if(!lastCalc) return;
+  const btn=document.getElementById("btnSalvar");
+  btn.disabled=true;
+  btn.textContent="Salvando…";
+
+  const {d,a,peQtd,precoSugerido}=lastCalc;
+  const cliente=document.getElementById("cliente").value.trim()||null;
+
+  const {error}=await db.from("orcamentos").insert({
+    cliente,
+    kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol,
+    ticket:d.ticket, qtd_projetos:d.qtd,
+    comissao_pct:d.comissao, comissao_base:comissaoBase,
+    tributo_pct:d.tributo, tributo_base:tributoBase,
+    outras_pct:d.outras,
+    despesas_fixas:d.despFixa, lucro_alvo_pct:d.lucroAlvo,
+    custo_direto_total:d.cdt,
+    faturamento_mensal:a.faturamento,
+    margem_contribuicao_pct:parseFloat((a.mcPct*100).toFixed(2)),
+    lucro_mensal:a.lucroMes,
+    ponto_equilibrio_qtd:isFinite(peQtd)?parseFloat(peQtd.toFixed(2)):null,
+    preco_sugerido:isFinite(precoSugerido)?parseFloat(precoSugerido.toFixed(2)):null
+  });
+
+  btn.disabled=false;
+  btn.textContent="Salvar orçamento";
+
+  if(error){ showToast("Erro ao salvar: "+error.message, true); }
+  else { showToast("Orçamento salvo com sucesso!"); }
+}
+
+function showToast(msg, erro=false){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.style.background=erro?"var(--negative)":"var(--teal)";
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
+load();
+render();
+</script>
+</body>
+</html>
