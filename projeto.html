@@ -15,6 +15,8 @@
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
   .wrap{width:100%;max-width:480px}
 
+  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
+  .btn-back:hover{color:var(--ink)}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
   .logo{width:32px;height:32px;border-radius:8px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0}
   .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
@@ -62,6 +64,7 @@
 </head>
 <body>
 <div class="wrap">
+  <a class="btn-back" href="configuracoes.html?onboarding=1">← Voltar</a>
   <div class="brand">
     <div class="logo">☀</div>
     <div>
