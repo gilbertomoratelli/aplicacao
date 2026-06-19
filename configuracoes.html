@@ -359,10 +359,16 @@ function renderExtras() {
 
 function adicionarExtra() {
   const id = Date.now().toString();
-  custosExtras.push({ id, label: 'Novo custo', modo: 'fixo', taxa: 0 });
+  custosExtras.push({ id, label: '', modo: 'fixo', taxa: 0 });
   salvarConfigsDB();
   renderExtras();
-  abrirConfigExtra(id, null);
+  // Foca o campo de nome para o usuário digitar antes de configurar
+  const inputs = document.querySelectorAll('.extra-lbl-input');
+  if (inputs.length) {
+    const last = inputs[inputs.length - 1];
+    last.focus();
+    last.select();
+  }
 }
 
 function removerExtra(id) {
