@@ -137,6 +137,7 @@ const db = createClient(
 );
 
 const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+const projetoAtual = JSON.parse(localStorage.getItem('projeto')||'null');
 
 function init() {
   if(!integrador?.nome_empresa) {
@@ -145,6 +146,13 @@ function init() {
   }
   document.getElementById('empresaNome').textContent = integrador.nome_empresa;
   document.getElementById('empresaRegime').textContent = integrador.regime_tributario||'Regime não informado';
+
+  if (projetoAtual) {
+    document.getElementById('nome_projeto').value    = projetoAtual.nome_projeto        || '';
+    document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
+    document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
+    document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
+  }
 }
 
 function trocarEmpresa() {
@@ -182,9 +190,14 @@ async function salvar(e) {
     kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
   };
 
-  const {data,error}=await db.from('projetos').insert(payload).select().single();
+  let data, error;
+  if (projetoAtual?.id) {
+    ({data,error} = await db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single());
+  } else {
+    ({data,error} = await db.from('projetos').insert(payload).select().single());
+  }
 
-  btn.disabled=false; btn.textContent='Analisar precificação →';
+  btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Analisar precificação →';
 
   if(error){ alert('Erro ao salvar: '+error.message); return; }
 
