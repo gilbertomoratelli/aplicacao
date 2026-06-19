@@ -58,6 +58,42 @@
   label.fld{display:block;margin-bottom:14px}
   label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
   label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+  .lbl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+  .lbl-row .lbl{margin-bottom:0}
+  .btn-cfg{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--sans);line-height:1.6;transition:.15s}
+  .btn-cfg:hover{border-color:var(--solar);color:var(--solar)}
+  .cfg-badge{display:none;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--teal);color:#fff;margin-left:5px;font-family:var(--mono);vertical-align:middle}
+
+  /* Modal de configuração */
+  .modal-ov{position:fixed;inset:0;background:rgba(27,26,22,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:.2s;padding:20px}
+  .modal-ov.open{opacity:1;pointer-events:all}
+  .modal-card{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 12px 48px rgba(0,0,0,.2);transform:translateY(10px);transition:.2s}
+  .modal-ov.open .modal-card{transform:translateY(0)}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .modal-head h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.2px}
+  .btn-close{background:none;border:1px solid var(--hair);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
+  .btn-close:hover{border-color:var(--ink);color:var(--ink)}
+  .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+  .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
+  .opt-item:hover{border-color:var(--teal)}
+  .opt-item.sel{border-color:var(--teal);background:#EEF5F5}
+  .opt-item input[type=radio]{accent-color:var(--teal);flex-shrink:0;width:15px;height:15px}
+  .opt-texts .ot{font-size:13px;font-weight:700}
+  .opt-texts .od{font-size:11px;color:var(--muted);margin-top:1px}
+  .rate-box{background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px}
+  .rate-box .rl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .rate-inp{display:flex;align-items:center;border:1.5px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:10px}
+  .rate-inp:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .rate-inp input{flex:1;border:none;outline:none;padding:9px 10px;font-size:20px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;min-width:0}
+  .rate-inp .unit{padding:0 12px;color:var(--muted);font-size:11px;font-weight:700;border-left:1px solid var(--hair);white-space:nowrap;font-family:var(--mono)}
+  .prev-val{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--teal)}
+  .prev-desc{font-size:11px;color:var(--muted);margin-top:2px}
+  .modal-foot{display:flex;gap:8px}
+  .modal-foot button{flex:1;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);border:1px solid var(--hair);transition:.15s}
+  .btn-cancel{background:var(--surface);color:var(--muted)}
+  .btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
+  .btn-apply{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btn-apply:hover{opacity:.9}
   .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
   .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
   .inwrap .affix.l{border-right:1px solid var(--hair)}
@@ -157,11 +193,27 @@
     <div class="col left">
       <div class="card">
         <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3></div>
-        <label class="fld"><span class="lbl">Custo do KIT</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="kit"></div><span class="hint">Faturado direto pela distribuidora</span></label>
-        <label class="fld"><span class="lbl">Material adicional CA</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="ca"></div></label>
-        <label class="fld"><span class="lbl">Instalação</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="inst"></div></label>
-        <label class="fld"><span class="lbl">Projeto</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="proj"></div></label>
-        <label class="fld"><span class="lbl">Homologação</span><div class="inwrap"><span class="affix l">R$</span><input type="number" id="homol"></div></label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">Custo do KIT<span class="cfg-badge" id="badge-kit"></span></span><button class="btn-cfg" onclick="abrirConfig('kit',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="kit"></div>
+          <span class="hint">Faturado direto pela distribuidora</span>
+        </label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">Material adicional CA<span class="cfg-badge" id="badge-ca"></span></span><button class="btn-cfg" onclick="abrirConfig('ca',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="ca"></div>
+        </label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">Instalação<span class="cfg-badge" id="badge-inst"></span></span><button class="btn-cfg" onclick="abrirConfig('inst',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="inst"></div>
+        </label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">Projeto elétrico<span class="cfg-badge" id="badge-proj"></span></span><button class="btn-cfg" onclick="abrirConfig('proj',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="proj"></div>
+        </label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="number" id="homol"></div>
+        </label>
         <div class="total-row"><span class="lbl">Custo direto total</span><span class="val" id="cdtOut"></span></div>
       </div>
 
@@ -235,6 +287,46 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Modal de configuração de custo -->
+<div class="modal-ov" id="modalCfg" onclick="fecharModalFora(event)">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="cfgTitulo">Configurar</h3>
+      <button class="btn-close" onclick="fecharModal()">×</button>
+    </div>
+
+    <div class="opt-list">
+      <div class="opt-item" id="opt-fixo" onclick="selecionarModo('fixo')">
+        <input type="radio" name="cfgModo" value="fixo">
+        <div class="opt-texts"><div class="ot">Valor fixo</div><div class="od">Um valor em reais definido por você</div></div>
+      </div>
+      <div class="opt-item" id="opt-modulo" onclick="selecionarModo('modulo')">
+        <input type="radio" name="cfgModo" value="modulo">
+        <div class="opt-texts"><div class="ot">R$ por módulo</div><div class="od" id="descMod">Multiplicado pela quantidade de módulos</div></div>
+      </div>
+      <div class="opt-item" id="opt-kwp" onclick="selecionarModo('kwp')">
+        <input type="radio" name="cfgModo" value="kwp">
+        <div class="opt-texts"><div class="ot">R$ por kWp</div><div class="od" id="descKwp">Multiplicado pela potência do sistema</div></div>
+      </div>
+    </div>
+
+    <div class="rate-box">
+      <div class="rl">Taxa / valor</div>
+      <div class="rate-inp">
+        <input type="number" id="cfgTaxa" placeholder="0" min="0" step="0.01" oninput="atualizarPreview()">
+        <span class="unit" id="cfgUnit">R$</span>
+      </div>
+      <div class="prev-val" id="prevVal">R$ 0,00</div>
+      <div class="prev-desc" id="prevDesc">resultado calculado</div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-apply" onclick="aplicarConfig()">Aplicar</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -479,8 +571,133 @@ function showToast(msg, erro=false){
   setTimeout(()=>t.classList.remove("show"),3500);
 }
 
+// ── Configuração de custos ──────────────────────────────────────────
+const CAMPOS_CFG = {
+  kit:   'Custo do KIT',
+  ca:    'Material adicional CA',
+  inst:  'Instalação',
+  proj:  'Projeto elétrico',
+  homol: 'Homologação',
+};
+const BADGE_LABEL = { fixo:'fixo', modulo:'R$/mod', kwp:'R$/kWp' };
+const UNIT_LABEL  = { fixo:'R$',   modulo:'R$/módulo', kwp:'R$/kWp' };
+
+let configs = {};
+let campoCfgAtual = null;
+let modoAtual = 'fixo';
+
+function carregarConfigs() {
+  configs = JSON.parse(localStorage.getItem('configCustos') || '{}');
+  atualizarBadges();
+}
+function salvarConfigs() {
+  localStorage.setItem('configCustos', JSON.stringify(configs));
+}
+
+function calcValor(campo) {
+  const cfg = configs[campo];
+  if (!cfg || cfg.taxa == null) return null;
+  const kwp  = projeto?.kwp_sistema        || 0;
+  const mods = projeto?.quantidade_modulos || 0;
+  if (cfg.modo === 'fixo')   return cfg.taxa;
+  if (cfg.modo === 'modulo') return cfg.taxa * mods;
+  if (cfg.modo === 'kwp')    return cfg.taxa * kwp;
+  return null;
+}
+
+function aplicarTodasConfigs() {
+  Object.keys(CAMPOS_CFG).forEach(campo => {
+    const val = calcValor(campo);
+    if (val !== null) document.getElementById(campo).value = parseFloat(val.toFixed(2));
+  });
+  render();
+}
+
+function atualizarBadges() {
+  Object.keys(CAMPOS_CFG).forEach(campo => {
+    const el = document.getElementById('badge-' + campo);
+    if (!el) return;
+    const cfg = configs[campo];
+    if (cfg?.modo && cfg.taxa > 0) {
+      el.textContent = BADGE_LABEL[cfg.modo];
+      el.style.display = 'inline';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+
+function selecionarModo(modo) {
+  modoAtual = modo;
+  document.querySelector(`input[name="cfgModo"][value="${modo}"]`).checked = true;
+  ['fixo','modulo','kwp'].forEach(m =>
+    document.getElementById('opt-' + m).classList.toggle('sel', m === modo)
+  );
+  document.getElementById('cfgUnit').textContent = UNIT_LABEL[modo];
+  atualizarPreview();
+}
+
+function abrirConfig(campo, event) {
+  event.preventDefault();
+  campoCfgAtual = campo;
+  const cfg = configs[campo] || { modo: 'fixo', taxa: 0 };
+  const kwp  = projeto?.kwp_sistema        || 0;
+  const mods = projeto?.quantidade_modulos || 0;
+
+  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + CAMPOS_CFG[campo];
+  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulo${mods !== 1 ? 's' : ''} do projeto`;
+  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp do projeto`;
+  document.getElementById('cfgTaxa').value = cfg.taxa || '';
+
+  selecionarModo(cfg.modo || 'fixo');
+  document.getElementById('modalCfg').classList.add('open');
+  document.getElementById('cfgTaxa').focus();
+}
+
+function fecharModal() {
+  document.getElementById('modalCfg').classList.remove('open');
+  campoCfgAtual = null;
+}
+
+function fecharModalFora(e) {
+  if (e.target === document.getElementById('modalCfg')) fecharModal();
+}
+
+function atualizarPreview() {
+  const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+  const kwp  = projeto?.kwp_sistema        || 0;
+  const mods = projeto?.quantidade_modulos || 0;
+
+  let val = 0, desc = '';
+  if (modoAtual === 'fixo')   { val = taxa;        desc = 'valor fixo'; }
+  if (modoAtual === 'modulo') { val = taxa * mods; desc = `${brl(taxa)} × ${mods} módulo${mods!==1?'s':''}`; }
+  if (modoAtual === 'kwp')    { val = taxa * kwp;  desc = `${brl(taxa)} × ${kwp} kWp`; }
+
+  document.getElementById('prevVal').textContent  = brl(val);
+  document.getElementById('prevDesc').textContent = desc;
+}
+
+function aplicarConfig() {
+  const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+  configs[campoCfgAtual] = { modo: modoAtual, taxa };
+  salvarConfigs();
+  atualizarBadges();
+
+  const val = calcValor(campoCfgAtual);
+  if (val !== null) {
+    document.getElementById(campoCfgAtual).value = parseFloat(val.toFixed(2));
+    render();
+  }
+  fecharModal();
+}
+
+// Fechar modal com Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+// ────────────────────────────────────────────────────────────────────
+
 FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
+carregarConfigs();
 load();
 render();
 </script>
