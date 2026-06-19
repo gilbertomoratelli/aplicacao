@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurações · Integradora Solar</title>
+<style>
+  :root{
+    --bg:#F4F2EC;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#E3DFD4;
+    --solar:#E8820C;--teal:#0F3D3E;--positive:#2F7A4D;--negative:#B23A2E;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px 22px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:700px;margin:0 auto}
+
+  header.top{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .logo{width:28px;height:28px;border-radius:7px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  h1{margin:6px 0 4px;font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .sub{margin:0;color:var(--muted);font-size:14px}
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--teal)}
+  .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+  .empresa-bar{background:var(--teal);border-radius:12px;padding:12px 18px;margin-bottom:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .emp-item{display:flex;flex-direction:column;gap:1px}
+  .emp-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .emp-value{font-size:13px;font-weight:700;color:#fff}
+  .emp-sep{color:rgba(255,255,255,.25);font-size:18px;margin:0 4px}
+
+  .ref-bar{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .ref-bar strong{color:var(--ink)}
+  .ref-bar input{width:60px;border:1px solid var(--hair);border-radius:6px;padding:4px 7px;font-size:12px;font-family:var(--mono);outline:none;text-align:center;background:var(--bg)}
+  .ref-bar input:focus{outline:2px solid var(--solar);outline-offset:1px}
+  .ref-tag{font-size:10px;font-weight:700;font-family:var(--mono);background:var(--bg);border:1px solid var(--hair);border-radius:5px;padding:2px 7px;color:var(--muted);margin-left:auto}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;overflow:hidden;margin-bottom:20px}
+  .card-head{padding:16px 20px;border-bottom:1px solid var(--hair)}
+  .card-head h3{margin:0 0 2px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+  .card-head p{margin:0;font-size:12px;color:var(--muted)}
+
+  .cfg-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px;border-bottom:1px solid var(--hair)}
+  .cfg-row:last-child{border-bottom:none}
+  .cfg-info{flex:1;min-width:0}
+  .cfg-label{font-size:13px;font-weight:700;margin-bottom:3px}
+  .cfg-desc{font-size:11px;color:var(--muted)}
+  .cfg-desc.dim{font-style:italic}
+  .cfg-desc.active{color:var(--teal);font-weight:600}
+  .btn-cfg{background:none;border:1px solid var(--hair);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--muted);font-family:var(--sans);font-weight:600;white-space:nowrap;transition:.15s}
+  .btn-cfg:hover{border-color:var(--solar);color:var(--solar)}
+
+  .extras-body{padding:16px 20px}
+  .extra-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hair)}
+  .extra-row:last-of-type{border-bottom:none}
+  .extra-lbl-input{border:none;outline:none;font-size:13px;font-weight:700;background:transparent;font-family:var(--sans);cursor:text;flex:1;min-width:0;color:var(--ink)}
+  .extra-lbl-input:focus{outline:1px dashed var(--hair);border-radius:3px;padding:0 3px}
+  .extra-cfg-desc{font-size:11px;color:var(--muted);margin-right:4px;white-space:nowrap}
+  .extra-cfg-desc.active{color:var(--teal);font-weight:600}
+  .btn-remove-extra{background:none;border:1px solid var(--hair);border-radius:5px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.5;transition:.15s;font-family:var(--sans)}
+  .btn-remove-extra:hover{border-color:var(--negative);color:var(--negative)}
+  .btn-add-extra{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin-top:10px}
+  .btn-add-extra:hover{border-color:var(--solar);color:var(--solar);background:rgba(232,130,12,.04)}
+
+  /* Modal */
+  .modal-ov{position:fixed;inset:0;background:rgba(27,26,22,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:.2s;padding:20px}
+  .modal-ov.open{opacity:1;pointer-events:all}
+  .modal-card{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 12px 48px rgba(0,0,0,.2);transform:translateY(10px);transition:.2s}
+  .modal-ov.open .modal-card{transform:translateY(0)}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .modal-head h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.2px}
+  .btn-close{background:none;border:1px solid var(--hair);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
+  .btn-close:hover{border-color:var(--ink);color:var(--ink)}
+  .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+  .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
+  .opt-item:hover{border-color:var(--teal)}
+  .opt-item.sel{border-color:var(--teal);background:#EEF5F5}
+  .opt-item input[type=radio]{accent-color:var(--teal);flex-shrink:0;width:15px;height:15px}
+  .opt-texts .ot{font-size:13px;font-weight:700}
+  .opt-texts .od{font-size:11px;color:var(--muted);margin-top:1px}
+  .rate-box{background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px}
+  .rate-box .rl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .rate-inp{display:flex;align-items:center;border:1.5px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:10px}
+  .rate-inp:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .rate-inp input{flex:1;border:none;outline:none;padding:9px 10px;font-size:20px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;min-width:0}
+  .rate-inp .unit{padding:0 12px;color:var(--muted);font-size:11px;font-weight:700;border-left:1px solid var(--hair);white-space:nowrap;font-family:var(--mono)}
+  .prev-val{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--teal)}
+  .prev-desc{font-size:11px;color:var(--muted);margin-top:2px}
+  .modal-foot{display:flex;gap:8px}
+  .modal-foot button{flex:1;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);border:1px solid var(--hair);transition:.15s}
+  .btn-cancel{background:var(--surface);color:var(--muted)}
+  .btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
+  .btn-apply{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btn-apply:hover{opacity:.9}
+
+  /* Faixa editor */
+  .submodo-row{display:flex;gap:5px;margin-top:8px}
+  .smb{flex:1;padding:6px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s;text-align:center}
+  .smb.on{border-color:var(--teal);background:var(--teal);color:#fff}
+  .faixa-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:7px;background:var(--bg);border:1px solid var(--hair);border-radius:9px;padding:9px 12px}
+  .fr-label{font-size:11px;color:var(--muted);line-height:1.4}
+  .fr-label b{color:var(--ink)}
+  .fr-limit{width:52px;border:1px solid var(--hair);border-radius:5px;padding:3px 5px;font-size:13px;font-family:var(--mono);text-align:right;outline:none;background:var(--surface);color:var(--ink)}
+  .fr-limit:focus{outline:2px solid var(--solar);outline-offset:1px}
+  .fr-taxa{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface)}
+  .fr-taxa-inp{border:none;outline:none;width:64px;padding:6px 6px;font-size:13px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;text-align:right}
+  .fr-unit{padding:0 7px;font-size:9px;font-weight:700;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--hair);white-space:nowrap}
+  .faixa-active{border-color:var(--teal)!important;background:#EEF5F5!important}
+  .faixa-active .fr-label b{color:var(--teal)}
+  .btn-add-faixa{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:8px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);margin:4px 0 2px;transition:.15s}
+  .btn-add-faixa:hover{border-color:var(--solar);color:var(--solar)}
+  .btn-remove{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.5;transition:.15s;font-family:var(--sans)}
+  .btn-remove:hover{border-color:var(--negative);color:var(--negative)}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+  .toast.show{opacity:1;transform:translateY(0)}
+
+  .loading{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="logo">☀</div>
+        <span class="eyebrow">Integradora Solar · Gestão</span>
+      </div>
+      <h1>Configurações</h1>
+      <p class="sub">Estrutura de custos da empresa — aplicada automaticamente a todos os projetos.</p>
+    </div>
+    <a class="btn primary" href="index.html">← Voltar ao dashboard</a>
+  </header>
+
+  <div class="empresa-bar" id="empresaBar" style="display:none">
+    <div class="emp-item"><div class="emp-label">Empresa</div><div class="emp-value" id="empNome">—</div></div>
+    <div class="emp-sep">·</div>
+    <div class="emp-item"><div class="emp-label">Regime</div><div class="emp-value" id="empRegime">—</div></div>
+  </div>
+
+  <div class="ref-bar">
+    <span>Prévia calculada com</span>
+    <input type="number" id="refMods" value="12" min="1" oninput="renderConfigs();renderExtras()"> <strong>módulos</strong>
+    <span>e</span>
+    <input type="number" id="refKwp" value="5" min="0.1" step="0.1" oninput="renderConfigs();renderExtras()"> <strong>kWp</strong>
+    <span class="ref-tag">referência para prévia</span>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Estrutura de custos</h3>
+      <p>Configure como cada custo é calculado automaticamente a partir dos dados do projeto.</p>
+    </div>
+    <div id="configsList"><div class="loading">Carregando…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Custos extras padrão</h3>
+      <p>Custos adicionais que aparecem em todos os projetos (ex: frete, ART, laudo técnico).</p>
+    </div>
+    <div class="extras-body">
+      <div id="extrasList"></div>
+      <button class="btn-add-extra" onclick="adicionarExtra()">+ Adicionar custo extra</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal de configuração -->
+<div class="modal-ov" id="modalCfg" onclick="fecharModalFora(event)">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="cfgTitulo">Configurar</h3>
+      <button class="btn-close" onclick="fecharModal()">×</button>
+    </div>
+
+    <div class="opt-list">
+      <div class="opt-item" id="opt-fixo" onclick="selecionarModo('fixo')">
+        <input type="radio" name="cfgModo" value="fixo">
+        <div class="opt-texts"><div class="ot">Valor fixo</div><div class="od">Um valor em reais definido por você</div></div>
+      </div>
+      <div class="opt-item" id="opt-modulo" onclick="selecionarModo('modulo')">
+        <input type="radio" name="cfgModo" value="modulo">
+        <div class="opt-texts"><div class="ot">R$ por módulo</div><div class="od" id="descMod">Multiplicado pela quantidade de módulos</div></div>
+      </div>
+      <div class="opt-item" id="opt-kwp" onclick="selecionarModo('kwp')">
+        <input type="radio" name="cfgModo" value="kwp">
+        <div class="opt-texts"><div class="ot">R$ por kWp</div><div class="od" id="descKwp">Multiplicado pela potência do sistema</div></div>
+      </div>
+      <div class="opt-item" id="opt-faixa" onclick="selecionarModo('faixa')">
+        <input type="radio" name="cfgModo" value="faixa">
+        <div class="opt-texts"><div class="ot">Por faixa de kWp</div><div class="od">Taxa diferente por faixa de potência — mais preciso</div></div>
+      </div>
+    </div>
+
+    <!-- Modo simples -->
+    <div class="rate-box" id="rateBox">
+      <div class="rl">Taxa / valor</div>
+      <div class="rate-inp">
+        <input type="number" id="cfgTaxa" placeholder="0" min="0" step="0.01" oninput="atualizarPreview()">
+        <span class="unit" id="cfgUnit">R$</span>
+      </div>
+    </div>
+
+    <!-- Modo faixa -->
+    <div id="faixaEditor" style="display:none">
+      <div class="rate-box" style="margin-bottom:10px">
+        <div class="rl">Calcular cada faixa por:</div>
+        <div class="submodo-row">
+          <button class="smb" data-sm="fixo"   onclick="setSubModo('fixo')">Valor fixo</button>
+          <button class="smb" data-sm="modulo" onclick="setSubModo('modulo')">R$/módulo</button>
+          <button class="smb" data-sm="kwp"    onclick="setSubModo('kwp')">R$/kWp</button>
+        </div>
+      </div>
+      <div id="faixasList"></div>
+      <button class="btn-add-faixa" onclick="addFaixa()">+ Adicionar faixa</button>
+    </div>
+
+    <!-- Preview -->
+    <div class="rate-box" style="margin-top:10px;margin-bottom:16px">
+      <div class="prev-val" id="prevVal">R$ 0,00</div>
+      <div class="prev-desc" id="prevDesc">resultado calculado</div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-apply" onclick="aplicarConfig()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const integrador = JSON.parse(localStorage.getItem('integrador') || 'null');
+
+if (!integrador?.id) window.location.href = 'cadastro.html';
+
+const brl = v => isFinite(v) && v !== null
+  ? Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:0, maximumFractionDigits:0 })
+  : '—';
+
+const CAMPOS_CFG = {
+  ca:    'Material adicional CA',
+  inst:  'Instalação',
+  proj:  'Projeto elétrico',
+  homol: 'Homologação',
+};
+const BADGE_LABEL = { fixo:'fixo', modulo:'R$/mod', kwp:'R$/kWp', faixa:'faixas' };
+const UNIT_LABEL  = { fixo:'R$', modulo:'R$/módulo', kwp:'R$/kWp' };
+
+let configs      = {};
+let custosExtras = [];
+let campoCfgAtual = null;
+let modoAtual     = 'fixo';
+let faixasTemp    = [];
+let subModoAtual  = 'modulo';
+
+// ── Persistência ────────────────────────────────────────────────────
+async function carregarConfigs() {
+  configs      = JSON.parse(localStorage.getItem('configCustos') || '{}');
+  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
+
+  if (!integrador?.id) return;
+  const { data } = await db.from('integradores').select('configs').eq('id', integrador.id).single();
+  if (data?.configs && Object.keys(data.configs).length) {
+    configs      = data.configs.campos || {};
+    custosExtras = data.configs.extras || [];
+    localStorage.setItem('configCustos', JSON.stringify(configs));
+    localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
+  }
+}
+
+async function salvarConfigsDB() {
+  localStorage.setItem('configCustos', JSON.stringify(configs));
+  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
+  if (!integrador?.id) return;
+  await db.from('integradores')
+    .update({ configs: { campos: configs, extras: custosExtras } })
+    .eq('id', integrador.id);
+}
+
+// ── Valores de referência para prévia ───────────────────────────────
+function getRef() {
+  return {
+    kwp:  parseFloat(document.getElementById('refKwp').value)  || 5,
+    mods: parseFloat(document.getElementById('refMods').value) || 12,
+  };
+}
+
+// ── Renderização da lista de campos ────────────────────────────────
+function cfgDesc(cfg) {
+  if (!cfg?.modo) return null;
+  const { kwp, mods } = getRef();
+  if (cfg.modo === 'fixo'   && cfg.taxa) return `Valor fixo → ${brl(cfg.taxa)}`;
+  if (cfg.modo === 'modulo' && cfg.taxa) return `${brl(cfg.taxa)} / módulo → ${brl(cfg.taxa * mods)} (ref.)`;
+  if (cfg.modo === 'kwp'    && cfg.taxa) return `${brl(cfg.taxa)} / kWp → ${brl(cfg.taxa * kwp)} (ref.)`;
+  if (cfg.modo === 'faixa'  && cfg.faixas?.length) {
+    const val = calcValorFaixa(cfg, kwp, mods);
+    return `Por faixa → ${brl(val)} (ref. ${kwp} kWp)`;
+  }
+  return null;
+}
+
+function renderConfigs() {
+  const container = document.getElementById('configsList');
+  container.innerHTML = Object.entries(CAMPOS_CFG).map(([id, label]) => {
+    const cfg   = configs[id];
+    const desc  = cfgDesc(cfg);
+    return `<div class="cfg-row">
+      <div class="cfg-info">
+        <div class="cfg-label">${label}</div>
+        <div class="cfg-desc ${desc ? 'active' : 'dim'}">${desc || 'Sem configuração — preenchimento manual no projeto'}</div>
+      </div>
+      <button class="btn-cfg" onclick="abrirConfig('${id}', event)">⚙ configurar</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Extras ──────────────────────────────────────────────────────────
+function extraDesc(item) {
+  const { kwp, mods } = getRef();
+  if (item.modo === 'faixa' && item.faixas?.length) {
+    return `Por faixa → ${brl(calcValorFaixa(item, kwp, mods))} (ref. ${kwp} kWp)`;
+  }
+  if (!item.taxa) return 'Sem configuração';
+  if (item.modo === 'fixo')   return `Valor fixo → ${brl(item.taxa)}`;
+  if (item.modo === 'modulo') return `${brl(item.taxa)} / módulo → ${brl(item.taxa * mods)} (ref.)`;
+  if (item.modo === 'kwp')    return `${brl(item.taxa)} / kWp → ${brl(item.taxa * kwp)} (ref.)`;
+  return 'Sem configuração';
+}
+
+function renderExtras() {
+  const container = document.getElementById('extrasList');
+  if (!custosExtras.length) { container.innerHTML = ''; return; }
+  container.innerHTML = custosExtras.map(item => {
+    const desc = extraDesc(item);
+    const ativo = item.modo === 'faixa' ? item.faixas?.length > 0 : item.taxa > 0;
+    return `<div class="extra-row">
+      <input class="extra-lbl-input" value="${item.label}"
+             onblur="atualizarLabelExtra('${item.id}', this.value)"
+             onkeydown="if(event.key==='Enter')this.blur()">
+      <span class="extra-cfg-desc ${ativo ? 'active' : ''}">${desc}</span>
+      <button class="btn-cfg" onclick="abrirConfigExtra('${item.id}', event)">⚙</button>
+      <button class="btn-remove-extra" onclick="removerExtra('${item.id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function adicionarExtra() {
+  const id = Date.now().toString();
+  custosExtras.push({ id, label: 'Novo custo', modo: 'fixo', taxa: 0 });
+  salvarConfigsDB();
+  renderExtras();
+  abrirConfigExtra(id, null);
+}
+
+function removerExtra(id) {
+  custosExtras = custosExtras.filter(e => e.id !== id);
+  salvarConfigsDB();
+  renderExtras();
+}
+
+function atualizarLabelExtra(id, label) {
+  const item = custosExtras.find(e => e.id === id);
+  if (item) { item.label = label.trim() || 'Custo'; salvarConfigsDB(); renderExtras(); }
+}
+
+// ── Modal: abrir / fechar ───────────────────────────────────────────
+function abrirConfig(campo, event) {
+  if (event) event.preventDefault();
+  campoCfgAtual = campo;
+  const cfg  = configs[campo] || { modo: 'fixo', taxa: 0 };
+  const { kwp, mods } = getRef();
+  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + CAMPOS_CFG[campo];
+  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulos (referência)`;
+  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp (referência)`;
+  document.getElementById('cfgTaxa').value = cfg.taxa || '';
+  if (cfg.modo === 'faixa') {
+    faixasTemp   = cfg.faixas?.length ? JSON.parse(JSON.stringify(cfg.faixas)) : [{ ate: null, taxa: 0 }];
+    subModoAtual = cfg.subModo || 'modulo';
+  }
+  selecionarModo(cfg.modo || 'fixo');
+  document.getElementById('modalCfg').classList.add('open');
+  if (cfg.modo !== 'faixa') setTimeout(() => document.getElementById('cfgTaxa').focus(), 50);
+}
+
+function abrirConfigExtra(id, event) {
+  if (event) event.preventDefault();
+  const item = custosExtras.find(e => e.id === id);
+  if (!item) return;
+  campoCfgAtual = 'extra:' + id;
+  const { kwp, mods } = getRef();
+  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + item.label;
+  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulos (referência)`;
+  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp (referência)`;
+  document.getElementById('cfgTaxa').value = item.taxa || '';
+  if (item.modo === 'faixa') {
+    faixasTemp   = item.faixas?.length ? JSON.parse(JSON.stringify(item.faixas)) : [{ ate: null, taxa: 0 }];
+    subModoAtual = item.subModo || 'modulo';
+  }
+  selecionarModo(item.modo || 'fixo');
+  document.getElementById('modalCfg').classList.add('open');
+  if (item.modo !== 'faixa') setTimeout(() => document.getElementById('cfgTaxa').focus(), 50);
+}
+
+function fecharModal() {
+  document.getElementById('modalCfg').classList.remove('open');
+  campoCfgAtual = null;
+}
+function fecharModalFora(e) {
+  if (e.target === document.getElementById('modalCfg')) fecharModal();
+}
+
+// ── Modal: seleção de modo ──────────────────────────────────────────
+function selecionarModo(modo) {
+  modoAtual = modo;
+  document.querySelector(`input[name="cfgModo"][value="${modo}"]`).checked = true;
+  ['fixo','modulo','kwp','faixa'].forEach(m =>
+    document.getElementById('opt-' + m).classList.toggle('sel', m === modo)
+  );
+  const isFaixa = modo === 'faixa';
+  document.getElementById('rateBox').style.display     = isFaixa ? 'none'  : 'block';
+  document.getElementById('faixaEditor').style.display = isFaixa ? 'block' : 'none';
+  if (!isFaixa) document.getElementById('cfgUnit').textContent = UNIT_LABEL[modo] || 'R$';
+  if (isFaixa && !faixasTemp.length) faixasTemp = [{ ate: null, taxa: 0 }];
+  if (isFaixa) renderFaixaEditor();
+  atualizarPreview();
+}
+
+function atualizarPreview() {
+  const { kwp, mods } = getRef();
+  let val = 0, desc = '';
+
+  if (modoAtual === 'faixa') {
+    const cfg    = { modo:'faixa', subModo: subModoAtual, faixas: faixasTemp };
+    val          = calcValorFaixa(cfg, kwp, mods);
+    const sorted = [...faixasTemp].sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
+    const fi     = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+    const fiIdx  = sorted.indexOf(fi);
+    const de     = fiIdx === 0 ? 0 : sorted[fiIdx-1].ate;
+    const fd     = fi?.ate===null ? `acima de ${de} kWp` : `${de===0?'até':`${de}–`}${fi.ate} kWp`;
+    const smDesc = subModoAtual==='modulo' ? ` × ${mods} mod` : subModoAtual==='kwp' ? ` × ${kwp} kWp` : '';
+    desc = `${kwp} kWp → faixa ${fd} → ${brl(fi?.taxa||0)}${smDesc}`;
+  } else {
+    const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+    if (modoAtual === 'fixo')   { val = taxa;        desc = 'valor fixo'; }
+    if (modoAtual === 'modulo') { val = taxa * mods; desc = `${brl(taxa)} × ${mods} módulos (ref.)`; }
+    if (modoAtual === 'kwp')    { val = taxa * kwp;  desc = `${brl(taxa)} × ${kwp} kWp (ref.)`; }
+  }
+
+  document.getElementById('prevVal').textContent  = brl(val);
+  document.getElementById('prevDesc').textContent = desc;
+}
+
+// ── Faixas ──────────────────────────────────────────────────────────
+function calcValorFaixa(cfg, kwp, mods) {
+  const faixas = cfg.faixas;
+  if (!faixas?.length) return 0;
+  const sorted = [...faixas].sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
+  const faixa  = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+  const taxa   = faixa?.taxa || 0;
+  const sm     = cfg.subModo || 'kwp';
+  if (sm === 'fixo')   return taxa;
+  if (sm === 'modulo') return taxa * mods;
+  if (sm === 'kwp')    return taxa * kwp;
+  return 0;
+}
+
+function setSubModo(sm) {
+  subModoAtual = sm;
+  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === sm));
+  renderFaixaEditor();
+  atualizarPreview();
+}
+
+function addFaixa() {
+  const nonNull = faixasTemp.filter(f => f.ate !== null);
+  const ultimo  = nonNull.length ? nonNull[nonNull.length - 1].ate : 0;
+  const idx     = faixasTemp.findIndex(f => f.ate === null);
+  faixasTemp.splice(idx >= 0 ? idx : faixasTemp.length, 0, { ate: ultimo + 5, taxa: 0 });
+  if (!faixasTemp.find(f => f.ate === null)) faixasTemp.push({ ate: null, taxa: 0 });
+  renderFaixaEditor();
+  atualizarPreview();
+}
+
+function removeFaixa(idx) {
+  if (faixasTemp.length <= 1) return;
+  faixasTemp.splice(idx, 1);
+  if (!faixasTemp.find(f => f.ate === null)) faixasTemp[faixasTemp.length - 1].ate = null;
+  renderFaixaEditor();
+  atualizarPreview();
+}
+
+function renderFaixaEditor() {
+  const { kwp, mods } = getRef();
+  const ulMap  = { fixo:'R$', modulo:'R$/mod', kwp:'R$/kWp' };
+  const ul     = ulMap[subModoAtual];
+  const sorted = [...faixasTemp].map((f,i)=>({...f,_i:i}))
+    .sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
+  const ativo  = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+
+  document.getElementById('faixasList').innerHTML = sorted.map((f, si) => {
+    const de     = si === 0 ? 0 : (sorted[si-1].ate ?? '?');
+    const isLast = f.ate === null;
+    const isAtiv = f === ativo;
+    const canDel = sorted.length > 1;
+    const rangeHtml = isLast
+      ? `<span class="fr-label">Acima de <b>${de}</b> kWp</span>`
+      : `<span class="fr-label">${de===0?'Até':`<b>${de}</b> –`}&nbsp;<input class="fr-limit" type="number"
+           value="${f.ate}" min="0.1" step="0.5"
+           oninput="faixasTemp[${f._i}].ate=parseFloat(this.value)||0;atualizarPreview()"
+           onblur="renderFaixaEditor()">&nbsp;kWp</span>`;
+    return `<div class="faixa-row${isAtiv?' faixa-active':''}">
+      ${rangeHtml}
+      <div class="fr-taxa">
+        <input class="fr-taxa-inp" type="number" value="${f.taxa||''}" min="0" step="0.01" placeholder="0"
+               oninput="faixasTemp[${f._i}].taxa=parseFloat(this.value)||0;atualizarPreview()">
+        <span class="fr-unit">${ul}</span>
+      </div>
+      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover">×</button>`:'<span></span>'}
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === subModoAtual));
+}
+
+// ── Aplicar configuração ─────────────────────────────────────────────
+function aplicarConfig() {
+  const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+  let cfgSalva;
+  if (modoAtual === 'faixa') {
+    cfgSalva = { modo:'faixa', subModo: subModoAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
+  } else {
+    cfgSalva = { modo: modoAtual, taxa };
+  }
+
+  if (campoCfgAtual.startsWith('extra:')) {
+    const id   = campoCfgAtual.slice(6);
+    const item = custosExtras.find(e => e.id === id);
+    if (item) { Object.assign(item, cfgSalva); salvarConfigsDB(); renderExtras(); }
+  } else {
+    configs[campoCfgAtual] = cfgSalva;
+    salvarConfigsDB();
+    renderConfigs();
+  }
+  fecharModal();
+  showToast('Configuração salva!');
+}
+
+// ── Toast ────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+if (integrador?.nome_empresa) {
+  document.getElementById('empresaBar').style.display = 'flex';
+  document.getElementById('empNome').textContent   = integrador.nome_empresa;
+  document.getElementById('empRegime').textContent = integrador.regime_tributario || '—';
+}
+
+// Pré-preenche referência com o último projeto, se disponível
+const ultimoProjeto = JSON.parse(localStorage.getItem('projeto') || 'null');
+if (ultimoProjeto?.kwp_sistema)        document.getElementById('refKwp').value  = ultimoProjeto.kwp_sistema;
+if (ultimoProjeto?.quantidade_modulos) document.getElementById('refMods').value = ultimoProjeto.quantidade_modulos;
+
+(async () => {
+  await carregarConfigs();
+  renderConfigs();
+  renderExtras();
+})();
+</script>
+</body>
+</html>

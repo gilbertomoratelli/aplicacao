@@ -193,6 +193,7 @@
     </div>
     <div class="actions">
       <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
+      <button class="btn" onclick="location.href='configuracoes.html'">⚙ Configurações</button>
       <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
       <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar orçamento</button>
       <button class="btn primary" onclick="window.print()">Imprimir / PDF</button>
@@ -638,13 +639,37 @@ let modoAtual = 'fixo';
 let faixasTemp = [];
 let subModoAtual = 'modulo';
 
-function carregarConfigs() {
-  configs = JSON.parse(localStorage.getItem('configCustos') || '{}');
+async function carregarConfigs() {
+  // Carrega do cache local imediatamente (sem latência)
+  configs      = JSON.parse(localStorage.getItem('configCustos') || '{}');
+  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
   atualizarBadges();
+
+  // Sincroniza com Supabase (fonte de verdade)
+  if (!integrador?.id) return;
+  const { data } = await db.from('integradores').select('configs').eq('id', integrador.id).single();
+  if (data?.configs && Object.keys(data.configs).length) {
+    configs      = data.configs.campos || {};
+    custosExtras = data.configs.extras || [];
+    localStorage.setItem('configCustos', JSON.stringify(configs));
+    localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
+    atualizarBadges();
+    renderExtras();
+    render();
+  }
 }
-function salvarConfigs() {
+
+async function salvarConfigsDB() {
   localStorage.setItem('configCustos', JSON.stringify(configs));
+  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
+  if (!integrador?.id) return;
+  await db.from('integradores')
+    .update({ configs: { campos: configs, extras: custosExtras } })
+    .eq('id', integrador.id);
 }
+
+function salvarConfigs() { salvarConfigsDB(); }
+function salvarExtras()  { salvarConfigsDB(); }
 
 function calcValorFaixa(cfg, kwp, mods) {
   const faixas = cfg.faixas;
@@ -855,13 +880,6 @@ function aplicarConfig() {
 
 // ── Custos extras dinâmicos ─────────────────────────────────────────
 let custosExtras = [];
-
-function carregarExtras() {
-  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
-}
-function salvarExtras() {
-  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-}
 function calcValorExtra(item) {
   const kwp  = projeto?.kwp_sistema        || 0;
   const mods = projeto?.quantidade_modulos || 0;
@@ -944,11 +962,12 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(
 
 FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
-carregarConfigs();
-carregarExtras();
-renderExtras();
-load();
-render();
+(async () => {
+  await carregarConfigs();
+  renderExtras();
+  load();
+  render();
+})();
 </script>
 </body>
 </html>
