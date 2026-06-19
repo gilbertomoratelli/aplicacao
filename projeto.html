@@ -32,6 +32,8 @@
   .step.done .sl{color:var(--teal)}
   .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
   .sline.done{background:var(--teal)}
+  .step[onclick]{cursor:pointer}
+  .step[onclick]:hover .sn{opacity:.7}
 
   .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   .empresa-badge .nome{font-weight:700;font-size:14px}
@@ -74,13 +76,13 @@
   </div>
 
   <div class="stepper">
-    <div class="step done"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
-    <div class="step done"><div class="sn">✓</div><div class="sl">Configurações</div></div>
+    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Configurações</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">3</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step"><div class="sn">4</div><div class="sl">Precificação</div></div>
+    <div class="step" onclick="location.href='index.html'"><div class="sn">4</div><div class="sl">Precificação</div></div>
   </div>
 
   <div class="empresa-badge" id="empresaBadge">
