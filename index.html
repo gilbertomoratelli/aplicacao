@@ -196,7 +196,7 @@
       <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
       <button class="btn" onclick="location.href='configuracoes.html'">⚙ Custos do Projeto</button>
       <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
-      <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar orçamento</button>
+      <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar análise</button>
       <button class="btn primary" onclick="window.print()">Imprimir / PDF</button>
     </div>
   </header>
@@ -611,7 +611,7 @@ async function salvarOrcamento(){
   });
 
   btn.disabled=false;
-  btn.textContent="Salvar orçamento";
+  btn.textContent="Salvar análise";
 
   if(error){ showToast("Erro ao salvar: "+error.message, true); }
   else { showToast("Orçamento salvo com sucesso!"); }
