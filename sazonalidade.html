@@ -138,6 +138,14 @@
         <div class="resumo-val" id="resumoFat">—</div>
         <div class="resumo-hint">Total faturado ÷ 12 meses</div>
       </div>
+      <div class="resumo-item" style="grid-column:1/-1">
+        <div class="resumo-label">Peso da Despesa Fixa sobre o Faturamento</div>
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <div class="resumo-val" id="resumoDespPct">—</div>
+          <div style="font-size:13px;color:var(--muted);font-family:var(--mono)" id="resumoDespFixa">—</div>
+        </div>
+        <div class="resumo-hint">Despesa fixa mensal (tela Despesas) ÷ faturamento médio mensal</div>
+      </div>
     </div>
   </div>
 
@@ -156,21 +164,14 @@ const db = createClient(
 );
 
 const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
-const MESES_PT   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let dadosMeses  = {};
+let chavesMeses = [];
 
-let dadosMeses = {}; // key: "YYYY-MM", value: { projetos, valor }
-let chavesMeses = []; // ordered list of keys
-
-function getUltimos12Meses() {
-  const lista = [];
-  const hoje  = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const d   = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    lista.push({ key, label: `${MESES_PT[d.getMonth()]} ${d.getFullYear()}` });
-  }
-  return lista;
+function getMeses12() {
+  return Array.from({length:12}, (_,i) => ({
+    key:   `m${String(i+1).padStart(2,'0')}`,
+    label: `${i+1} / 12`
+  }));
 }
 
 const brl = v => isFinite(v) && v > 0
@@ -185,7 +186,7 @@ function init() {
   document.getElementById('empresaNome').textContent   = integrador.nome_empresa;
   document.getElementById('empresaRegime').textContent = integrador.regime_tributario || 'Regime não informado';
 
-  const meses = getUltimos12Meses();
+  const meses = getMeses12();
   chavesMeses = meses.map(m => m.key);
   meses.forEach(m => { dadosMeses[m.key] = { projetos: 0, valor: 0 }; });
 
@@ -263,8 +264,17 @@ function calcResumo() {
   const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
   const fatMedio    = totalValor / 12;
 
-  document.getElementById('resumoTicket').textContent = brl(ticketMedio);
-  document.getElementById('resumoFat').textContent    = brl(fatMedio);
+  const despesas  = JSON.parse(localStorage.getItem('despesas') || '{}');
+  const despFixa  = parseFloat(despesas.despFixa) || 0;
+  const despPct   = fatMedio > 0 ? (despFixa / fatMedio) * 100 : 0;
+
+  document.getElementById('resumoTicket').textContent  = brl(ticketMedio);
+  document.getElementById('resumoFat').textContent     = brl(fatMedio);
+  document.getElementById('resumoDespFixa').textContent = brl(despFixa);
+  document.getElementById('resumoDespPct').textContent  =
+    fatMedio > 0 ? despPct.toFixed(1).replace('.', ',') + '%' : '—';
+  document.getElementById('resumoDespPct').style.color  =
+    despPct > 30 ? 'var(--negative)' : despPct > 20 ? 'var(--solar)' : 'var(--teal)';
 }
 
 function trocarEmpresa() {
