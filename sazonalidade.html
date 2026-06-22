@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de Sazonalidade · Solar</title>
+<style>
+  :root{
+    --bg:#F4F2EC;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#E3DFD4;
+    --solar:#E8820C;--teal:#0F3D3E;--positive:#2F7A4D;--negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:640px}
+
+  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
+  .btn-back:hover{color:var(--ink)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+  .logo{width:32px;height:32px;border-radius:8px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0}
+  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+
+  .stepper{display:flex;align-items:center;margin-bottom:28px}
+  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .sn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--hair);color:var(--muted)}
+  .sl{font-size:9px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .step.active .sn{background:var(--solar);color:#fff}
+  .step.active .sl{color:var(--solar)}
+  .step.done .sn{background:var(--teal);color:#fff}
+  .step.done .sl{color:var(--teal)}
+  .sline{flex:1;height:2px;background:var(--hair);margin:0 5px;margin-bottom:16px}
+  .sline.done{background:var(--teal)}
+  .step[onclick]{cursor:pointer}
+  .step[onclick]:hover .sn{opacity:.7}
+
+  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .empresa-badge .nome{font-weight:700;font-size:14px}
+  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
+  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+  .btn-trocar:hover{background:rgba(255,255,255,.25)}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px;margin-bottom:16px}
+  .card-title{font-size:17px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
+  .card-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
+
+  /* Tabela de sazonalidade */
+  .season-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:0}
+  .sg-head{display:contents}
+  .sg-head span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px;text-align:right}
+  .sg-head span:first-child{text-align:left;padding-left:0}
+  .sg-row{display:contents}
+  .sg-row:hover .sg-cell{background:#FAFAF8}
+  .sg-cell{padding:5px 8px;border-top:1px solid var(--hair);display:flex;align-items:center}
+  .sg-cell:first-child{padding-left:0}
+  .sg-mes{font-size:13px;font-weight:600;color:var(--ink)}
+  .sg-inp-wrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface);width:100%}
+  .sg-inp-wrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .sg-inp-wrap .pfx{padding:0 7px;font-size:12px;color:var(--muted);font-family:var(--mono);border-right:1px solid var(--hair);white-space:nowrap}
+  .sg-inp{border:none;outline:none;padding:7px 8px;font-size:13px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%;text-align:right}
+  .sg-ticket{font-size:13px;font-family:var(--mono);font-weight:700;color:var(--teal);text-align:right;padding:7px 8px;width:100%}
+  .sg-ticket.vazio{color:var(--hair)}
+
+  .resumo{margin-top:20px;border-top:2px solid var(--hair);padding-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .resumo-item{background:var(--bg);border-radius:10px;padding:14px 16px}
+  .resumo-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+  .resumo-val{font-size:22px;font-weight:800;font-family:var(--mono);color:var(--teal);line-height:1}
+  .resumo-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+  .nav-row{display:flex;gap:10px;margin-top:4px}
+  .btn-nav{flex:1;border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+  .btn-nav:hover{border-color:var(--teal)}
+  .btn-nav.primary{background:var(--solar);color:#fff;border-color:var(--solar)}
+  .btn-nav.primary:hover{opacity:.9}
+  .btn-nav:disabled{opacity:.5;cursor:not-allowed}
+
+  @media(max-width:480px){
+    .season-grid{grid-template-columns:80px 1fr 1fr 90px}
+    .resumo{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="btn-back" href="despesas.html">← Voltar</a>
+  <div class="brand">
+    <div class="logo">☀</div>
+    <div>
+      <div class="brand-name">Integradora Solar</div>
+      <div class="brand-sub">Precificação de Projetos</div>
+    </div>
+  </div>
+
+  <div class="stepper">
+    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
+    <div class="sline done"></div>
+    <div class="step active"><div class="sn">4</div><div class="sl">Sazonalid.</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='projeto.html'"><div class="sn">5</div><div class="sl">Projeto</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='index.html'"><div class="sn">6</div><div class="sl">Precificação</div></div>
+  </div>
+
+  <div class="empresa-badge">
+    <div>
+      <div class="nome" id="empresaNome">—</div>
+      <div class="regime" id="empresaRegime">—</div>
+    </div>
+    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Diagnóstico de Sazonalidade</h2>
+    <p class="card-sub">Informe os projetos convertidos nos últimos 12 meses. O ticket médio é calculado automaticamente linha a linha.</p>
+
+    <div class="season-grid" id="seasonGrid">
+      <span class="sg-head" style="display:contents">
+        <span style="text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding-bottom:10px">Mês</span>
+        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Nº Projetos</span>
+        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Faturamento</span>
+        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Ticket Médio</span>
+      </span>
+    </div>
+
+    <div class="resumo">
+      <div class="resumo-item">
+        <div class="resumo-label">Ticket médio mensal</div>
+        <div class="resumo-val" id="resumoTicket">—</div>
+        <div class="resumo-hint">Total faturado ÷ total projetos</div>
+      </div>
+      <div class="resumo-item">
+        <div class="resumo-label">Faturamento médio mensal</div>
+        <div class="resumo-val" id="resumoFat">—</div>
+        <div class="resumo-hint">Total faturado ÷ 12 meses</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <a class="btn-nav" href="despesas.html">← Voltar</a>
+    <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Continuar →</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+const MESES_PT   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let dadosMeses = {}; // key: "YYYY-MM", value: { projetos, valor }
+let chavesMeses = []; // ordered list of keys
+
+function getUltimos12Meses() {
+  const lista = [];
+  const hoje  = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d   = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    lista.push({ key, label: `${MESES_PT[d.getMonth()]} ${d.getFullYear()}` });
+  }
+  return lista;
+}
+
+const brl = v => isFinite(v) && v > 0
+  ? v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2 })
+  : '—';
+
+function init() {
+  if (!integrador?.nome_empresa) {
+    window.location.href = 'cadastro.html';
+    return;
+  }
+  document.getElementById('empresaNome').textContent   = integrador.nome_empresa;
+  document.getElementById('empresaRegime').textContent = integrador.regime_tributario || 'Regime não informado';
+
+  const meses = getUltimos12Meses();
+  chavesMeses = meses.map(m => m.key);
+  meses.forEach(m => { dadosMeses[m.key] = { projetos: 0, valor: 0 }; });
+
+  renderTabela(meses);
+  carregarDados();
+}
+
+function renderTabela(meses) {
+  const grid = document.getElementById('seasonGrid');
+  // remove rows if re-rendering
+  grid.querySelectorAll('.sg-row-wrap').forEach(el => el.remove());
+
+  meses.forEach(({ key, label }) => {
+    const row = document.createElement('div');
+    row.className = 'sg-row-wrap';
+    row.style.display = 'contents';
+    row.innerHTML =
+      `<div class="sg-cell"><span class="sg-mes">${label}</span></div>` +
+
+      `<div class="sg-cell">` +
+        `<div class="sg-inp-wrap">` +
+          `<input class="sg-inp" type="number" min="0" step="1" placeholder="0"` +
+          ` id="proj_${key}" value="${dadosMeses[key]?.projetos||''}"` +
+          ` oninput="atualizar('${key}')">` +
+        `</div>` +
+      `</div>` +
+
+      `<div class="sg-cell">` +
+        `<div class="sg-inp-wrap">` +
+          `<span class="pfx">R$</span>` +
+          `<input class="sg-inp" type="text" inputmode="decimal" placeholder="0,00"` +
+          ` id="val_${key}" value="${dadosMeses[key]?.valor ? Number(dadosMeses[key].valor).toFixed(2).replace('.',',') : ''}"` +
+          ` oninput="atualizar('${key}')">` +
+        `</div>` +
+      `</div>` +
+
+      `<div class="sg-cell" style="justify-content:flex-end">` +
+        `<span class="sg-ticket vazio" id="tick_${key}">—</span>` +
+      `</div>`;
+
+    grid.appendChild(row);
+    atualizar(key); // calc ticket on render
+  });
+}
+
+function atualizar(key) {
+  const projEl = document.getElementById(`proj_${key}`);
+  const valEl  = document.getElementById(`val_${key}`);
+  const tickEl = document.getElementById(`tick_${key}`);
+
+  const proj = parseInt(projEl.value) || 0;
+  const val  = parseFloat((valEl.value || '0').replace(',', '.')) || 0;
+
+  dadosMeses[key] = { projetos: proj, valor: val };
+
+  if (proj > 0 && val > 0) {
+    const ticket = val / proj;
+    tickEl.textContent = brl(ticket);
+    tickEl.classList.remove('vazio');
+  } else {
+    tickEl.textContent = '—';
+    tickEl.classList.add('vazio');
+  }
+
+  calcResumo();
+}
+
+function calcResumo() {
+  let totalProjetos = 0, totalValor = 0;
+  chavesMeses.forEach(key => {
+    totalProjetos += dadosMeses[key]?.projetos || 0;
+    totalValor    += dadosMeses[key]?.valor    || 0;
+  });
+
+  const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
+  const fatMedio    = totalValor / 12;
+
+  document.getElementById('resumoTicket').textContent = brl(ticketMedio);
+  document.getElementById('resumoFat').textContent    = brl(fatMedio);
+}
+
+function trocarEmpresa() {
+  localStorage.removeItem('integrador');
+  window.location.href = 'cadastro.html';
+}
+
+async function carregarDados() {
+  const local = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+  if (local.meses) aplicarDados(local.meses);
+
+  if (!integrador?.id) return;
+  const { data } = await db.from('integradores').select('sazonalidade').eq('id', integrador.id).single();
+  if (data?.sazonalidade?.meses) {
+    localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
+    aplicarDados(data.sazonalidade.meses);
+  }
+}
+
+function aplicarDados(meses) {
+  Object.entries(meses).forEach(([key, v]) => {
+    if (!chavesMeses.includes(key)) return;
+    dadosMeses[key] = { projetos: v.projetos || 0, valor: v.valor || 0 };
+    const projEl = document.getElementById(`proj_${key}`);
+    const valEl  = document.getElementById(`val_${key}`);
+    if (projEl) projEl.value = v.projetos || '';
+    if (valEl)  valEl.value  = v.valor ? Number(v.valor).toFixed(2).replace('.', ',') : '';
+    atualizar(key);
+  });
+}
+
+async function salvar() {
+  const btn = document.getElementById('btnContinuar');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+
+  const payload = { meses: dadosMeses };
+  localStorage.setItem('sazonalidade', JSON.stringify(payload));
+
+  if (integrador?.id) {
+    await db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id);
+  }
+
+  window.location.href = 'projeto.html';
+}
+
+init();
+</script>
+</body>
+</html>

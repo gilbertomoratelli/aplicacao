@@ -103,9 +103,11 @@
     <div class="sline done"></div>
     <div class="step active"><div class="sn">3</div><div class="sl">Despesas</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">4</div><div class="sl">Projeto</div></div>
+    <div class="step" onclick="location.href='sazonalidade.html'"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">5</div><div class="sl">Precificação</div></div>
+    <div class="step" onclick="location.href='projeto.html'"><div class="sn">5</div><div class="sl">Projeto</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='index.html'"><div class="sn">6</div><div class="sl">Precificação</div></div>
   </div>
 
   <div class="empresa-badge">
@@ -167,7 +169,7 @@
 
   <div class="nav-row">
     <a class="btn-nav" href="configuracoes.html?onboarding=1">← Voltar</a>
-    <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Continuar →</button>
+    <button class="btn-nav primary" id="btnContinuar" onclick="salvar('sazonalidade.html')">Continuar →</button>
   </div>
 </div>
 
@@ -277,7 +279,7 @@ function renderExtras() {
   });
 }
 
-async function salvar() {
+async function salvar(destino = 'sazonalidade.html') {
   const btn = document.getElementById('btnContinuar');
   btn.disabled = true;
   btn.textContent = 'Salvando…';
@@ -295,7 +297,7 @@ async function salvar() {
     await db.from('integradores').update({ despesas: payload }).eq('id', integrador.id);
   }
 
-  window.location.href = 'projeto.html';
+  window.location.href = destino;
 }
 
 init();
