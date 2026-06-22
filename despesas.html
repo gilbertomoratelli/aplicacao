@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despesas Variáveis · Solar</title>
+<style>
+  :root{
+    --bg:#F4F2EC;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#E3DFD4;
+    --solar:#E8820C;--teal:#0F3D3E;--positive:#2F7A4D;--negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:520px}
+
+  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
+  .btn-back:hover{color:var(--ink)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+  .logo{width:32px;height:32px;border-radius:8px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0}
+  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+
+  .stepper{display:flex;align-items:center;margin-bottom:28px}
+  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .sn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--hair);color:var(--muted)}
+  .sl{font-size:10px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .step.active .sn{background:var(--solar);color:#fff}
+  .step.active .sl{color:var(--solar)}
+  .step.done .sn{background:var(--teal);color:#fff}
+  .step.done .sl{color:var(--teal)}
+  .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
+  .sline.done{background:var(--teal)}
+  .step[onclick]{cursor:pointer}
+  .step[onclick]:hover .sn{opacity:.7}
+
+  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .empresa-badge .nome{font-weight:700;font-size:14px}
+  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
+  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+  .btn-trocar:hover{background:rgba(255,255,255,.25)}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px;margin-bottom:16px}
+  .card-title{font-size:17px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
+  .card-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
+  .sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:22px 0 12px;display:block}
+
+  label.fld{display:block;margin-bottom:8px}
+  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
+  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .inwrap .affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--mono)}
+  .inwrap .affix.r{border-left:1px solid var(--hair)}
+  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%}
+
+  .toggle{display:flex;gap:6px;margin:6px 0 18px}
+  .toggle button{flex:1;padding:7px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s}
+  .toggle button.on{border-color:var(--teal);background:var(--teal);color:#fff}
+
+  .divider{border:none;border-top:1px solid var(--hair);margin:20px 0 0}
+
+  .extra-item{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--hair)}
+  .extra-item:first-child{border-top:1px solid var(--hair)}
+  .extra-nome{border:none;outline:none;font-size:13px;font-weight:600;background:transparent;font-family:var(--sans);flex:1;min-width:0;color:var(--ink)}
+  .extra-nome::placeholder{color:var(--muted);font-weight:400}
+  .extra-nome:focus{outline:1px dashed var(--hair);border-radius:3px;padding:0 3px}
+  .extra-pct-wrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface);width:86px;flex-shrink:0}
+  .extra-pct-wrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .extra-pct{border:none;outline:none;padding:7px 7px;font-size:14px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;width:50px;text-align:right}
+  .extra-unit{padding:0 7px;font-size:10px;font-weight:700;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--hair);white-space:nowrap}
+  .btn-extra-base{border:1px solid var(--hair);border-radius:6px;padding:5px 8px;font-size:10px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);white-space:nowrap;background:var(--surface);transition:.15s;flex-shrink:0}
+  .btn-extra-base.on{border-color:var(--teal);color:var(--teal);background:#EEF5F5}
+  .btn-remove-extra{background:none;border:1px solid var(--hair);border-radius:5px;padding:4px 8px;font-size:14px;cursor:pointer;color:var(--muted);line-height:1.4;transition:.15s;font-family:var(--sans);flex-shrink:0}
+  .btn-remove-extra:hover{border-color:var(--negative);color:var(--negative)}
+  .btn-add-extra{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin-top:12px}
+  .btn-add-extra:hover{border-color:var(--solar);color:var(--solar);background:rgba(232,130,12,.04)}
+
+  .nav-row{display:flex;gap:10px;margin-top:4px}
+  .btn-nav{flex:1;border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+  .btn-nav:hover{border-color:var(--teal)}
+  .btn-nav.primary{background:var(--solar);color:#fff;border-color:var(--solar)}
+  .btn-nav.primary:hover{opacity:.9}
+  .btn-nav:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="btn-back" href="configuracoes.html?onboarding=1">← Voltar</a>
+  <div class="brand">
+    <div class="logo">☀</div>
+    <div>
+      <div class="brand-name">Integradora Solar</div>
+      <div class="brand-sub">Precificação de Projetos</div>
+    </div>
+  </div>
+
+  <div class="stepper">
+    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="sline done"></div>
+    <div class="step active"><div class="sn">3</div><div class="sl">Despesas</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='projeto.html'"><div class="sn">4</div><div class="sl">Projeto</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='index.html'"><div class="sn">5</div><div class="sl">Precificação</div></div>
+  </div>
+
+  <div class="empresa-badge">
+    <div>
+      <div class="nome" id="empresaNome">—</div>
+      <div class="regime" id="empresaRegime">—</div>
+    </div>
+    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Despesas Variáveis</h2>
+    <p class="card-sub">Configure as despesas que variam proporcionalmente ao volume de vendas.</p>
+
+    <label class="fld">
+      <span class="lbl">Comissão de vendas</span>
+      <div class="inwrap">
+        <input type="number" step="0.1" min="0" id="comissao" placeholder="0,0">
+        <span class="affix r">%</span>
+      </div>
+    </label>
+    <div class="toggle" id="toggleComissao">
+      <button data-base="total" onclick="setBase('comissao','total')">Sobre venda total</button>
+      <button data-base="servico" onclick="setBase('comissao','servico')">Sobre serviços</button>
+    </div>
+
+    <label class="fld">
+      <span class="lbl">Carga tributária média</span>
+      <div class="inwrap">
+        <input type="number" step="0.1" min="0" id="tributo" placeholder="0,0">
+        <span class="affix r">%</span>
+      </div>
+      <span class="hint">Ex.: alíquota efetiva do Simples Nacional ou regime de tributação da empresa</span>
+    </label>
+    <div class="toggle" id="toggleTributo">
+      <button data-base="total" onclick="setBase('tributo','total')">Sobre venda total</button>
+      <button data-base="servico" onclick="setBase('tributo','servico')">Sobre serviços</button>
+    </div>
+
+    <hr class="divider">
+    <span class="sec-label">Outras despesas variáveis</span>
+    <div id="extrasContainer"></div>
+    <button class="btn-add-extra" onclick="adicionarExtra()">+ Adicionar despesa variável</button>
+  </div>
+
+  <div class="nav-row">
+    <a class="btn-nav" href="configuracoes.html?onboarding=1">← Voltar</a>
+    <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Continuar →</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+
+let comissaoBase = 'total';
+let tributoBase  = 'servico';
+let extras = [];
+
+function init() {
+  if (!integrador?.nome_empresa) {
+    window.location.href = 'cadastro.html';
+    return;
+  }
+  document.getElementById('empresaNome').textContent   = integrador.nome_empresa;
+  document.getElementById('empresaRegime').textContent = integrador.regime_tributario || 'Regime não informado';
+  carregarDespesas();
+}
+
+async function carregarDespesas() {
+  const local = JSON.parse(localStorage.getItem('despesas') || '{}');
+  if (Object.keys(local).length) aplicarDespesas(local);
+
+  if (!integrador?.id) { syncBaseButtons(); return; }
+  const { data } = await db.from('integradores').select('despesas').eq('id', integrador.id).single();
+  if (data?.despesas && Object.keys(data.despesas).length) {
+    localStorage.setItem('despesas', JSON.stringify(data.despesas));
+    aplicarDespesas(data.despesas);
+  } else {
+    syncBaseButtons();
+  }
+}
+
+function aplicarDespesas(d) {
+  if (d.comissao != null) {
+    document.getElementById('comissao').value = d.comissao.valor ?? '';
+    comissaoBase = d.comissao.base || 'total';
+  }
+  if (d.tributo != null) {
+    document.getElementById('tributo').value = d.tributo.valor ?? '';
+    tributoBase = d.tributo.base || 'servico';
+  }
+  extras = Array.isArray(d.extras) ? d.extras : [];
+  syncBaseButtons();
+  renderExtras();
+}
+
+function setBase(campo, val) {
+  if (campo === 'comissao') comissaoBase = val;
+  else tributoBase = val;
+  syncBaseButtons();
+}
+
+function syncBaseButtons() {
+  document.querySelectorAll('#toggleComissao button').forEach(b => b.classList.toggle('on', b.dataset.base === comissaoBase));
+  document.querySelectorAll('#toggleTributo button').forEach(b => b.classList.toggle('on', b.dataset.base === tributoBase));
+}
+
+function trocarEmpresa() {
+  localStorage.removeItem('integrador');
+  window.location.href = 'cadastro.html';
+}
+
+function adicionarExtra() {
+  extras.push({ nome: '', valor: 0, base: 'total' });
+  renderExtras();
+  const inputs = document.querySelectorAll('.extra-nome');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removerExtra(i) {
+  extras.splice(i, 1);
+  renderExtras();
+}
+
+function toggleExtraBase(i) {
+  extras[i].base = extras[i].base === 'total' ? 'servico' : 'total';
+  renderExtras();
+}
+
+function renderExtras() {
+  const container = document.getElementById('extrasContainer');
+  container.innerHTML = '';
+  extras.forEach((ex, i) => {
+    const div = document.createElement('div');
+    div.className = 'extra-item';
+    div.innerHTML =
+      `<input class="extra-nome" type="text" value="${ex.nome.replace(/"/g,'&quot;')}" placeholder="Nome da despesa" oninput="extras[${i}].nome=this.value">` +
+      `<div class="extra-pct-wrap">` +
+        `<input class="extra-pct" type="number" step="0.1" min="0" value="${ex.valor}" oninput="extras[${i}].valor=parseFloat(this.value)||0">` +
+        `<span class="extra-unit">%</span>` +
+      `</div>` +
+      `<button class="btn-extra-base${ex.base==='servico'?' on':''}" onclick="toggleExtraBase(${i})" title="Clique para alternar base de cálculo">${ex.base==='servico'?'Serviços':'Total'}</button>` +
+      `<button class="btn-remove-extra" onclick="removerExtra(${i})">×</button>`;
+    container.appendChild(div);
+  });
+}
+
+async function salvar() {
+  const btn = document.getElementById('btnContinuar');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+
+  const payload = {
+    comissao: { valor: parseFloat(document.getElementById('comissao').value) || 0, base: comissaoBase },
+    tributo:  { valor: parseFloat(document.getElementById('tributo').value)  || 0, base: tributoBase  },
+    extras:   extras.filter(e => e.nome.trim()),
+  };
+
+  localStorage.setItem('despesas', JSON.stringify(payload));
+
+  if (integrador?.id) {
+    await db.from('integradores').update({ despesas: payload }).eq('id', integrador.id);
+  }
+
+  window.location.href = 'projeto.html';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -663,6 +663,35 @@ async function carregarConfigs() {
   }
 }
 
+async function carregarDespesas() {
+  const local = JSON.parse(localStorage.getItem('despesas') || '{}');
+  if (Object.keys(local).length) aplicarDespesas(local);
+
+  if (!integrador?.id) return;
+  const { data } = await db.from('integradores').select('despesas').eq('id', integrador.id).single();
+  if (data?.despesas && Object.keys(data.despesas).length) {
+    localStorage.setItem('despesas', JSON.stringify(data.despesas));
+    aplicarDespesas(data.despesas);
+  }
+}
+
+function aplicarDespesas(d) {
+  if (d.comissao != null) {
+    document.getElementById('comissao').value = d.comissao.valor ?? 0;
+    comissaoBase = d.comissao.base || 'total';
+  }
+  if (d.tributo != null) {
+    document.getElementById('tributo').value = d.tributo.valor ?? 0;
+    tributoBase = d.tributo.base || 'servico';
+  }
+  if (Array.isArray(d.extras) && d.extras.length) {
+    const somaExtras = d.extras.reduce((s, e) => s + (parseFloat(e.valor) || 0), 0);
+    document.getElementById('outras').value = somaExtras;
+  }
+  syncBaseButtons();
+  render();
+}
+
 async function salvarConfigsDB() {
   localStorage.setItem('configCustos', JSON.stringify(configs));
   localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
@@ -968,6 +997,7 @@ FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
 (async () => {
   await carregarConfigs();
+  await carregarDespesas();
   renderExtras();
   load();
   aplicarTodasConfigs();
