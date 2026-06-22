@@ -251,6 +251,10 @@
           <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="homol"></div>
         </label>
+        <label class="fld">
+          <div class="lbl-row"><span class="lbl">ART do Projeto<span class="cfg-badge" id="badge-art"></span></span><button class="btn-cfg" onclick="abrirConfig('art',event)">⚙ config</button></div>
+          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="art"></div>
+        </label>
         <div id="extrasContainer"></div>
         <button class="btn-add" onclick="adicionarCusto()">+ Adicionar custo</button>
         <div class="total-row"><span class="lbl">Custo direto total</span><span class="val" id="cdtOut"></span></div>
@@ -434,9 +438,9 @@ function novoProjetoConfirm() {
 }
 
 const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
-const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
-const FIELDS=["kit","ca","inst","proj","homol","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
-const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","ticket","despFixa"]);
+const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,art:0,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
+const FIELDS=["kit","ca","inst","proj","homol","art","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
+const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","art","ticket","despFixa"]);
 function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).replace('.',',') : v; }
 let comissaoBase="total";
 let tributoBase="servico";
@@ -498,8 +502,8 @@ function cenario(tk,d){
 }
 
 function render(){
-  const d={kit:num("kit"),ca:num("ca"),inst:num("inst"),proj:num("proj"),homol:num("homol"),ticket:num("ticket"),qtd:num("qtd"),comissao:num("comissao"),tributo:num("tributo"),outras:num("outras"),despFixa:num("despFixa"),lucroAlvo:num("lucroAlvo")};
-  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol+totalExtras();
+  const d={kit:num("kit"),ca:num("ca"),inst:num("inst"),proj:num("proj"),homol:num("homol"),art:num("art"),ticket:num("ticket"),qtd:num("qtd"),comissao:num("comissao"),tributo:num("tributo"),outras:num("outras"),despFixa:num("despFixa"),lucroAlvo:num("lucroAlvo")};
+  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol+d.art+totalExtras();
 
   const cPctServ=comissaoBase==="servico"?d.comissao/100:0;
   const tPctServ=tributoBase==="servico"?d.tributo/100:0;
@@ -692,7 +696,7 @@ async function salvarOrcamento(){
   const {error}=await db.from("orcamentos").insert({
     integrador_id: integrador?.id||null,
     projeto_id:    projeto?.id||null,
-    kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol,
+    kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol, art:d.art,
     ticket:d.ticket, qtd_projetos:d.qtd,
     comissao_pct:d.comissao, comissao_base:comissaoBase,
     tributo_pct:d.tributo, tributo_base:tributoBase,
@@ -728,6 +732,7 @@ const CAMPOS_CFG = {
   inst:  'Instalação',
   proj:  'Projeto elétrico',
   homol: 'Homologação',
+  art:   'ART do Projeto',
 };
 const BADGE_LABEL = { fixo:'fixo', modulo:'R$/mod', kwp:'R$/kWp', faixa:'faixas' };
 const UNIT_LABEL  = { fixo:'R$',   modulo:'R$/módulo', kwp:'R$/kWp' };
