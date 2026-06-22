@@ -1062,13 +1062,13 @@ initCtx();
 (async () => {
   await carregarConfigs();
   await carregarDespesas();
-  await carregarSazonalidade();
   renderExtras();
   load();
   aplicarTodasConfigs();
   if (projeto?.custo_kit) {
     document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');
   }
+  await carregarSazonalidade();
   render();
 })();
 </script>
