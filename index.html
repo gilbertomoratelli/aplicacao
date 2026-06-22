@@ -438,7 +438,7 @@ function novoProjetoConfirm() {
 }
 
 const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
-const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,art:0,ticket:22000,qtd:8,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
+const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,art:0,ticket:22000,qtd:1,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
 const FIELDS=["kit","ca","inst","proj","homol","art","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
 const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","art","ticket","despFixa"]);
 function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).replace('.',',') : v; }
