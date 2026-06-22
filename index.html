@@ -654,8 +654,7 @@ function render(){
       ["= Despesas variáveis",a.dvUnit,sug.dvUnit,{b:1,invert:1,div:1}],
       ["Despesas variáveis %",a.custoVariavelPct,sug.custoVariavelPct,{pct:1,invert:1}],
       ["Margem de contribuição",a.mcUnit,sug.mcUnit,{b:1,div:1,pos:1}],
-      ["Margem de contribuição %",a.mcPct,sug.mcPct,{pct:1,pos:1}],
-      ["Resultado mensal",a.lucroMes,sug.lucroMes,{b:1,div:1,pos:1}]
+      ["Margem de contribuição %",a.mcPct,sug.mcPct,{pct:1,pos:1}]
     ];
     let h=`<div class="h">Por projeto</div><div class="h r">Atual</div><div class="h r">Sugerido</div><div class="h r">Δ</div>`;
     rows.forEach(([lbl,x,y,o])=>{
