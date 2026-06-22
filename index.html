@@ -418,6 +418,7 @@ function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).repl
 let comissaoBase="total";
 let tributoBase="servico";
 let despesasExtras=[];
+let despFixaPct=0;
 let lastCalc=null;
 
 const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
@@ -467,9 +468,10 @@ function cenario(tk,d){
   const faturamento=tk*d.qtd, dvMes=dvUnit*d.qtd;
   const custoVariavelPct=tk>0?dvUnit/tk:0;
   const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
-  const despFixaUnit=d.qtd>0?d.despFixa/d.qtd:0;
-  const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-d.despFixa, lucroPct=tk>0?lucroUnit/tk:0;
-  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,lucroUnit,lucroMes,lucroPct};
+  const despFixaUnit=despFixaPct>0?tk*(despFixaPct/100):(d.qtd>0?d.despFixa/d.qtd:0);
+  const despFixaMes=despFixaUnit*d.qtd;
+  const lucroUnit=mcUnit-despFixaUnit, lucroMes=lucroUnit*d.qtd, lucroPct=tk>0?lucroUnit/tk:0;
+  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,despFixaMes,lucroUnit,lucroMes,lucroPct};
 }
 
 function render(){
@@ -482,14 +484,14 @@ function render(){
   const baseVar=d.comissao/100+d.tributo/100+d.outras/100;
 
   const fatAtual=d.ticket*d.qtd;
-  const dfPct=fatAtual>0?d.despFixa/fatAtual:Infinity;
+  const dfPct=despFixaPct>0?despFixaPct/100:(fatAtual>0?d.despFixa/fatAtual:Infinity);
   const denom=1-baseVar-dfPct-d.lucroAlvo/100;
   const precoSugerido=(fatAtual>0&&denom>0)?(d.cdt-abat)/denom:Infinity;
 
   const a=cenario(d.ticket,d);
   const sug=isFinite(precoSugerido)?cenario(precoSugerido,d):null;
-  const peFat=a.mcPct>0?d.despFixa/a.mcPct:Infinity;
-  const peQtd=a.mcUnit>0?d.despFixa/a.mcUnit:Infinity;
+  const peFat=a.mcPct>0?a.despFixaMes/a.mcPct:Infinity;
+  const peQtd=a.mcUnit>0?a.despFixaMes/a.mcUnit:Infinity;
 
   lastCalc={d,a,peQtd,peFat,precoSugerido,dfPct};
 
@@ -533,7 +535,7 @@ function render(){
     ...(d.outras>0?[["(−) Outras desp. variáveis",-a.outrasR,-a.outrasR*d.qtd,{muted:1}]]:[]),
     ["= Despesas variáveis",-a.dvUnit,-a.dvMes,{b:1,div:1}],
     ["= Margem de contribuição",a.mcUnit,a.mcMes,{b:1,div:1,color:a.mcUnit>=0?C.positive:C.negative}],
-    ["(−) Despesas fixas",-a.despFixaUnit,-d.despFixa,{muted:1}],
+    ["(−) Despesas fixas",-a.despFixaUnit,-a.despFixaMes,{muted:1}],
     ["= Resultado",a.lucroUnit,a.lucroMes,{b:1,div:1,color:a.lucroMes>=0?C.positive:C.negative}]
   ];
   let dreHtml=`<div class="h">Linha</div><div class="h r">Por projeto</div><div class="h r">No mês</div>`;
@@ -720,6 +722,38 @@ function renderDespExtras() {
       `<span class="hint">${baseHint}</span>`;
     container.appendChild(lbl);
   });
+}
+
+async function carregarSazonalidade() {
+  const local = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+  if (local.meses) aplicarSazonalidade(local.meses);
+
+  if (!integrador?.id) return;
+  const { data } = await db.from('integradores').select('sazonalidade').eq('id', integrador.id).single();
+  if (data?.sazonalidade?.meses) {
+    localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
+    aplicarSazonalidade(data.sazonalidade.meses);
+  }
+}
+
+function aplicarSazonalidade(meses) {
+  let totalProjetos = 0, totalValor = 0;
+  Object.values(meses).forEach(m => {
+    totalProjetos += parseFloat(m.projetos) || 0;
+    totalValor    += parseFloat(m.valor)    || 0;
+  });
+  if (totalProjetos === 0 && totalValor === 0) return;
+
+  const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
+  const fatMedio    = totalValor / 12;
+
+  const despesas = JSON.parse(localStorage.getItem('despesas') || '{}');
+  const despFixaR = parseFloat(despesas.despFixa) || 0;
+  despFixaPct = fatMedio > 0 ? (despFixaR / fatMedio) * 100 : 0;
+
+  if (ticketMedio > 0) {
+    document.getElementById('ticket').value = Number(ticketMedio).toFixed(2).replace('.', ',');
+  }
 }
 
 async function salvarConfigsDB() {
@@ -1028,6 +1062,7 @@ initCtx();
 (async () => {
   await carregarConfigs();
   await carregarDespesas();
+  await carregarSazonalidade();
   renderExtras();
   load();
   aplicarTodasConfigs();
