@@ -698,6 +698,9 @@ function aplicarDespesas(d) {
     tributoBase = d.tributo.base || 'servico';
   }
   despesasExtras = Array.isArray(d.extras) ? d.extras : [];
+  if (d.despFixa) {
+    document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
+  }
   syncBaseButtons();
   renderDespExtras();
   render();

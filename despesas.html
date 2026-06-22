@@ -151,6 +151,20 @@
     <button class="btn-add-extra" onclick="adicionarExtra()">+ Adicionar despesa variável</button>
   </div>
 
+  <div class="card">
+    <h2 class="card-title">Despesas Fixas</h2>
+    <p class="card-sub">Custos mensais independentes do volume de projetos.</p>
+
+    <label class="fld">
+      <span class="lbl">Despesa fixa mensal total</span>
+      <div class="inwrap">
+        <span class="affix l">R$</span>
+        <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00">
+      </div>
+      <span class="hint">Aluguel, equipe, software, pró-labore, etc.</span>
+    </label>
+  </div>
+
   <div class="nav-row">
     <a class="btn-nav" href="configuracoes.html?onboarding=1">← Voltar</a>
     <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Continuar →</button>
@@ -205,6 +219,9 @@ function aplicarDespesas(d) {
     tributoBase = d.tributo.base || 'servico';
   }
   extras = Array.isArray(d.extras) ? d.extras : [];
+  if (d.despFixa != null) {
+    document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
+  }
   syncBaseButtons();
   renderExtras();
 }
@@ -269,6 +286,7 @@ async function salvar() {
     comissao: { valor: parseFloat(document.getElementById('comissao').value) || 0, base: comissaoBase },
     tributo:  { valor: parseFloat(document.getElementById('tributo').value)  || 0, base: tributoBase  },
     extras:   extras.filter(e => e.nome.trim()),
+    despFixa: parseFloat(document.getElementById('despFixa').value.replace(',', '.')) || 0,
   };
 
   localStorage.setItem('despesas', JSON.stringify(payload));
