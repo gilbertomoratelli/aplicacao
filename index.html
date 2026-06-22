@@ -275,7 +275,9 @@
           <button data-base="total" onclick="setBase('tributo','total')">sobre venda total</button>
           <button data-base="servico" onclick="setBase('tributo','servico')">sobre serviço</button>
         </div>
-        <label class="fld"><span class="lbl">Outras despesas variáveis</span><div class="inwrap"><input type="number" step="0.1" id="outras"><span class="affix r">%</span></div><span class="hint">Sobre o ticket — campo flexível</span></label>
+        <div id="outrasWrap" style="display:none">
+          <label class="fld"><span class="lbl">Outras despesas variáveis</span><div class="inwrap"><input type="number" step="0.1" id="outras"><span class="affix r">%</span></div><span class="hint">Sobre o ticket — campo flexível</span></label>
+        </div>
         <div id="despExtrasContainer"></div>
       </div>
 
@@ -790,6 +792,10 @@ function aplicarDespesas(d) {
 function renderDespExtras() {
   const container = document.getElementById('despExtrasContainer');
   if (!container) return;
+  const temExtras = despesasExtras.length > 0;
+  const outrasWrap = document.getElementById('outrasWrap');
+  outrasWrap.style.display = temExtras ? 'block' : 'none';
+  if (!temExtras) document.getElementById('outras').value = 0;
   container.innerHTML = '';
   despesasExtras.forEach((e, i) => {
     const baseHint = e.base === 'servico' ? 'Sobre serviços' : 'Sobre venda total';
