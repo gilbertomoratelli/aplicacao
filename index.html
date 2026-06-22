@@ -157,6 +157,16 @@
   .pe .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--teal)}
   .pe .big small{font-size:13px;color:var(--muted);font-weight:400}
   .pe .med{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--teal)}
+  .pe-table{width:100%;border-collapse:collapse;margin-top:4px}
+  .pe-table th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;padding:0 0 10px;text-align:right}
+  .pe-table th:first-child{text-align:left}
+  .pe-table td{padding:8px 0;border-top:1px solid var(--hair);font-family:var(--mono);font-size:14px;font-weight:700;text-align:right;vertical-align:middle}
+  .pe-table td:first-child{font-family:var(--sans);font-size:12px;font-weight:400;color:var(--muted);text-align:left}
+  .pe-table td small{font-size:11px;font-weight:400;color:var(--muted);display:block;margin-top:1px}
+  .pe-table .atual{color:var(--teal)}
+  .pe-table .melhor{color:var(--positive)}
+  .pe-table .pior{color:var(--negative)}
+  .pe-table .neutro{color:var(--muted)}
 
   .card.teal .p{font-size:13px;color:#C7D3D3;margin:0 0 14px}
   .price{font-family:var(--mono);font-size:30px;font-weight:800;color:#fff;line-height:1}
@@ -292,9 +302,11 @@
       <div class="grid-2">
         <div class="card pe">
           <div class="sec-title"><span class="idx">06</span><h3>Ponto de equilíbrio</h3></div>
-          <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Volume mínimo para cobrir as despesas fixas.</p>
-          <div class="blk"><div class="cap">Em projetos / mês</div><div class="big" id="peQtd"></div></div>
-          <div><div class="cap">Em faturamento</div><div class="med" id="peFat"></div></div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Volume mínimo para cobrir as despesas fixas.</p>
+          <table class="pe-table" id="peCmp">
+            <thead><tr><th></th><th>Atual</th><th>Sugerido</th></tr></thead>
+            <tbody id="peCmpBody"></tbody>
+          </table>
         </div>
 
         <div class="card teal">
@@ -492,6 +504,8 @@ function render(){
   const sug=isFinite(precoSugerido)?cenario(precoSugerido,d):null;
   const peFat=a.mcPct>0?a.despFixaMes/a.mcPct:Infinity;
   const peQtd=a.mcUnit>0?a.despFixaMes/a.mcUnit:Infinity;
+  const peFatSug=sug&&sug.mcPct>0?sug.despFixaMes/sug.mcPct:Infinity;
+  const peQtdSug=sug&&sug.mcUnit>0?sug.despFixaMes/sug.mcUnit:Infinity;
 
   lastCalc={d,a,peQtd,peFat,precoSugerido,dfPct};
 
@@ -551,8 +565,29 @@ function render(){
   });
   document.getElementById("dre").innerHTML=dreHtml;
 
-  document.getElementById("peQtd").innerHTML=(isFinite(peQtd)?Math.ceil(peQtd):"—")+` <small>de ${d.qtd}</small>`;
-  document.getElementById("peFat").textContent=brl(peFat);
+  const fmtPeQtd=(v,qtd)=>isFinite(v)?`${Math.ceil(v)}<small>de ${qtd} planejados</small>`:'—';
+  const fmtPeFat=(v)=>isFinite(v)?brl(v):'—';
+  const clsSug=(atual,sug,menor)=>{
+    if(!isFinite(sug)) return 'neutro';
+    if(!isFinite(atual)) return 'melhor';
+    return (menor?sug<atual:sug>atual)?'melhor':'pior';
+  };
+  document.getElementById("peCmpBody").innerHTML=`
+    <tr>
+      <td>Ticket</td>
+      <td class="atual">${brl(d.ticket)}</td>
+      <td class="${clsSug(d.ticket,precoSugerido,false)}">${isFinite(precoSugerido)?brl(precoSugerido):'—'}</td>
+    </tr>
+    <tr>
+      <td>PE · projetos / mês</td>
+      <td class="atual">${Math.ceil(peQtd)||'—'}<small>de ${d.qtd} planejados</small></td>
+      <td class="${clsSug(peQtd,peQtdSug,true)}">${isFinite(peQtdSug)?Math.ceil(peQtdSug)+'<small>de '+d.qtd+' planejados</small>':'—'}</td>
+    </tr>
+    <tr>
+      <td>PE · faturamento</td>
+      <td class="atual">${fmtPeFat(peFat)}</td>
+      <td class="${clsSug(peFat,peFatSug,true)}">${fmtPeFat(peFatSug)}</td>
+    </tr>`;
 
   const valido=isFinite(precoSugerido)&&denom>0;
   document.getElementById("precoP").innerHTML=`Para atingir ${d.lucroAlvo}% de lucro líquido.${abat>0?" Inclui o abatimento fiscal do KIT.":""} Despesa fixa = <b style="color:#fff">${pct(dfPct)}</b> do faturamento atual (${brl(fatAtual)}).`;
