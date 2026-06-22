@@ -140,6 +140,19 @@
       <button class="btn-primary" type="submit" id="btnSalvar">Continuar →</button>
     </form>
   </div>
+  <div class="card" style="margin-top:20px">
+    <h2 class="card-title">Margem de Lucro Desejada</h2>
+    <p class="card-sub">Meta de lucro líquido usada no preço sugerido da precificação.</p>
+    <label class="fld" style="margin-bottom:0">
+      <span class="lbl">Margem de lucro líquida alvo</span>
+      <div class="inwrap">
+        <input type="number" id="lucro_alvo" placeholder="12" min="0" max="100" step="0.1" oninput="salvarLucroAlvo()">
+        <span class="affix r">%</span>
+      </div>
+      <span class="hint" style="display:block;margin-top:5px;font-size:11px;color:var(--muted)">Preencha aqui e o campo será preenchido automaticamente na precificação.</span>
+    </label>
+  </div>
+
   <p class="foot-note">Seus dados ficam salvos neste navegador para uso futuro.</p>
 </div>
 
@@ -167,6 +180,13 @@ function mascaraTel(el) {
   el.value=v;
 }
 
+function salvarLucroAlvo() {
+  const val = parseFloat(document.getElementById('lucro_alvo').value);
+  if (isNaN(val)) return;
+  const salvo = JSON.parse(localStorage.getItem('integrador') || '{}');
+  localStorage.setItem('integrador', JSON.stringify({...salvo, lucro_alvo: val}));
+}
+
 function carregarSalvo() {
   const salvo = JSON.parse(localStorage.getItem('integrador')||'null');
   if(salvo?.nome_empresa) {
@@ -178,6 +198,11 @@ function carregarSalvo() {
     document.getElementById('regime').value = salvo.regime_tributario||'';
     document.getElementById('email').value = salvo.email||'';
     document.getElementById('whatsapp').value = salvo.whatsapp||'';
+  }
+  if (salvo?.lucro_alvo != null) {
+    document.getElementById('lucro_alvo').value = salvo.lucro_alvo;
+  } else {
+    document.getElementById('lucro_alvo').value = 12;
   }
 }
 
@@ -223,7 +248,8 @@ async function salvar(e) {
 
   if(error){ alert('Erro ao salvar: '+error.message); return; }
 
-  localStorage.setItem('integrador', JSON.stringify({...payload, id: data.id}));
+  const lucroAlvoVal = parseFloat(document.getElementById('lucro_alvo').value) || 12;
+  localStorage.setItem('integrador', JSON.stringify({...payload, id: data.id, lucro_alvo: lucroAlvoVal}));
   window.location.href='configuracoes.html?onboarding=1';
 }
 
