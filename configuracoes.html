@@ -71,6 +71,10 @@
   .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .modal-head h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.2px}
   .btn-close{background:none;border:1px solid var(--hair);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
+  .btn-help{width:22px;height:22px;border-radius:50%;border:2px solid var(--solar);background:none;color:var(--solar);font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle;flex-shrink:0;font-family:var(--sans);transition:.15s}
+  .btn-help:hover{background:var(--solar);color:#fff}
+  .help-body{font-size:14px;color:var(--ink);line-height:1.6;margin:0 0 16px}
+  .help-exemplos{font-size:12px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:10px;line-height:1.5}
   .btn-close:hover{border-color:var(--ink);color:var(--ink)}
   .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
   .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
@@ -143,7 +147,7 @@
         <div class="logo">☀</div>
         <span class="eyebrow">Auditor de Precificação · Gestão</span>
       </div>
-      <h1>Configuração de Custos do Projeto</h1>
+      <h1 style="display:flex;align-items:center;gap:10px">Configuração de Custos do Projeto <button class="btn-help" onclick="abrirHelp()" title="O que são custos diretos?">?</button></h1>
       <p class="sub">Estrutura de custos da empresa — aplicada automaticamente a todos os projetos.</p>
     </div>
     <a class="btn primary" id="btnHeaderVoltar" href="index.html">← Voltar ao dashboard</a>
@@ -204,6 +208,23 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Modal de ajuda -->
+<div class="modal-ov" id="modalHelp" onclick="if(event.target===this)fecharHelp()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>O que são Custos Diretos?</h3>
+      <button class="btn-close" onclick="fecharHelp()">×</button>
+    </div>
+    <p class="help-body">Todos os custos diretamente relacionados ao projeto e que podem ser auferidos mesmo antes de finalizar a negociação, ou seja não preciso saber qual o valor final da venda para saber quanto vai custar.</p>
+    <div class="help-exemplos">
+      <strong>Exemplos:</strong> Instalação, projeto, laudos, homologação, material CA.
+    </div>
+    <div class="modal-foot" style="margin-top:16px">
+      <button class="btn-cancel" onclick="fecharHelp()">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal de configuração -->
 <div class="modal-ov" id="modalCfg" onclick="fecharModalFora(event)">
@@ -471,6 +492,8 @@ function fecharModal() {
   document.getElementById('modalCfg').classList.remove('open');
   campoCfgAtual = null;
 }
+function abrirHelp()  { document.getElementById('modalHelp').classList.add('open'); }
+function fecharHelp() { document.getElementById('modalHelp').classList.remove('open'); }
 function fecharModalFora(e) {
   if (e.target === document.getElementById('modalCfg')) fecharModal();
 }
