@@ -266,6 +266,7 @@
           <button data-base="servico" onclick="setBase('tributo','servico')">sobre serviço</button>
         </div>
         <label class="fld"><span class="lbl">Outras despesas variáveis</span><div class="inwrap"><input type="number" step="0.1" id="outras"><span class="affix r">%</span></div><span class="hint">Sobre o ticket — campo flexível</span></label>
+        <div id="despExtrasContainer"></div>
       </div>
 
       <div class="card">
@@ -416,6 +417,7 @@ const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","ticket","despFixa"
 function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).replace('.',',') : v; }
 let comissaoBase="total";
 let tributoBase="servico";
+let despesasExtras=[];
 let lastCalc=null;
 
 const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
@@ -455,13 +457,19 @@ function cenario(tk,d){
   const comissaoR=d.comissao/100*cBase;
   const tributoR=d.tributo/100*tBase;
   const outrasR=d.outras/100*tk;
-  const dvUnit=comissaoR+tributoR+outrasR;
+  const extrasDetalhes=despesasExtras.map(e=>{
+    const base=e.base==="servico"?baseServico:tk;
+    const v=(parseFloat(e.valor)||0)/100*base;
+    return{nome:e.nome||"Extra",v,vMes:v*d.qtd};
+  });
+  const extrasR=extrasDetalhes.reduce((s,e)=>s+e.v,0);
+  const dvUnit=comissaoR+tributoR+outrasR+extrasR;
   const faturamento=tk*d.qtd, dvMes=dvUnit*d.qtd;
   const custoVariavelPct=tk>0?dvUnit/tk:0;
   const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
   const despFixaUnit=d.qtd>0?d.despFixa/d.qtd:0;
   const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-d.despFixa, lucroPct=tk>0?lucroUnit/tk:0;
-  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,lucroUnit,lucroMes,lucroPct};
+  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,lucroUnit,lucroMes,lucroPct};
 }
 
 function render(){
@@ -519,7 +527,11 @@ function render(){
     ["Receita (ticket)",d.ticket,a.faturamento,{b:1}],
     ["(−) Custo do KIT",-d.kit,-d.kit*d.qtd,{muted:1}],
     ["(−) Custos de serviço",-(d.cdt-d.kit),-(d.cdt-d.kit)*d.qtd,{muted:1}],
-    ["(−) Despesas variáveis",-a.dvUnit,-a.dvMes,{muted:1}],
+    ["(−) Comissão de vendas",-a.comissaoR,-a.comissaoR*d.qtd,{muted:1}],
+    ["(−) Carga tributária",-a.tributoR,-a.tributoR*d.qtd,{muted:1}],
+    ...a.extrasDetalhes.map(e=>[`(−) ${e.nome}`,-e.v,-e.vMes,{muted:1}]),
+    ...(d.outras>0?[["(−) Outras desp. variáveis",-a.outrasR,-a.outrasR*d.qtd,{muted:1}]]:[]),
+    ["= Despesas variáveis",-a.dvUnit,-a.dvMes,{b:1,div:1}],
     ["= Margem de contribuição",a.mcUnit,a.mcMes,{b:1,div:1,color:a.mcUnit>=0?C.positive:C.negative}],
     ["(−) Despesas fixas",-a.despFixaUnit,-d.despFixa,{muted:1}],
     ["= Resultado",a.lucroUnit,a.lucroMes,{b:1,div:1,color:a.lucroMes>=0?C.positive:C.negative}]
@@ -555,7 +567,8 @@ function render(){
       ["Preço de venda",a.ticket,sug.ticket,{b:1}],
       ["Comissão de vendas",a.comissaoR,sug.comissaoR,{muted:1,invert:1}],
       ["Carga tributária",a.tributoR,sug.tributoR,{muted:1,invert:1}],
-      ["Outras desp. variáveis",a.outrasR,sug.outrasR,{muted:1,invert:1}],
+      ...a.extrasDetalhes.map((e,i)=>[e.nome,e.v,sug.extrasDetalhes[i]?.v??0,{muted:1,invert:1}]),
+      ...(d.outras>0?[["Outras desp. variáveis",a.outrasR,sug.outrasR,{muted:1,invert:1}]]:[]),
       ["= Despesas variáveis",a.dvUnit,sug.dvUnit,{b:1,invert:1,div:1}],
       ["Despesas variáveis %",a.custoVariavelPct,sug.custoVariavelPct,{pct:1,invert:1}],
       ["Margem de contribuição",a.mcUnit,sug.mcUnit,{b:1,div:1,pos:1}],
@@ -684,12 +697,26 @@ function aplicarDespesas(d) {
     document.getElementById('tributo').value = d.tributo.valor ?? 0;
     tributoBase = d.tributo.base || 'servico';
   }
-  if (Array.isArray(d.extras) && d.extras.length) {
-    const somaExtras = d.extras.reduce((s, e) => s + (parseFloat(e.valor) || 0), 0);
-    document.getElementById('outras').value = somaExtras;
-  }
+  despesasExtras = Array.isArray(d.extras) ? d.extras : [];
   syncBaseButtons();
+  renderDespExtras();
   render();
+}
+
+function renderDespExtras() {
+  const container = document.getElementById('despExtrasContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  despesasExtras.forEach((e, i) => {
+    const baseHint = e.base === 'servico' ? 'Sobre serviços' : 'Sobre venda total';
+    const lbl = document.createElement('label');
+    lbl.className = 'fld';
+    lbl.innerHTML =
+      `<span class="lbl">${e.nome || 'Despesa extra ' + (i+1)}</span>` +
+      `<div class="inwrap"><input type="number" step="0.1" value="${e.valor}" oninput="despesasExtras[${i}].valor=parseFloat(this.value)||0;render()"><span class="affix r">%</span></div>` +
+      `<span class="hint">${baseHint}</span>`;
+    container.appendChild(lbl);
+  });
 }
 
 async function salvarConfigsDB() {
