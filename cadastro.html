@@ -137,7 +137,6 @@
         <span class="err" id="errWhats">Campo obrigatório</span>
       </label>
 
-      <button class="btn-primary" type="submit" id="btnSalvar">Continuar →</button>
     </form>
   </div>
   <div class="card" style="margin-top:20px">
@@ -152,6 +151,8 @@
       <span class="hint" style="display:block;margin-top:5px;font-size:11px;color:var(--muted)">Preencha aqui e o campo será preenchido automaticamente na precificação.</span>
     </label>
   </div>
+
+  <button class="btn-primary" id="btnSalvar" onclick="document.getElementById('form').requestSubmit()" style="margin-top:20px">Continuar →</button>
 
   <p class="foot-note">Seus dados ficam salvos neste navegador para uso futuro.</p>
 </div>
