@@ -771,8 +771,9 @@ function salvarExtras()  { salvarConfigsDB(); }
 function calcValorFaixa(cfg, kwp, mods) {
   const faixas = cfg.faixas;
   if (!faixas?.length) return 0;
+  const varVal = cfg.faixaVariavel === 'modulos' ? mods : kwp;
   const sorted = [...faixas].sort((a, b) => (a.ate ?? Infinity) - (b.ate ?? Infinity));
-  const faixa  = sorted.find(f => f.ate === null || kwp <= f.ate) || sorted[sorted.length - 1];
+  const faixa  = sorted.find(f => f.ate === null || varVal <= f.ate) || sorted[sorted.length - 1];
   const taxa   = faixa?.taxa || 0;
   const sm     = cfg.subModo || 'kwp';
   if (sm === 'fixo')   return taxa;

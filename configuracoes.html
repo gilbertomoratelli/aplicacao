@@ -228,7 +228,7 @@
       </div>
       <div class="opt-item" id="opt-faixa" onclick="selecionarModo('faixa')">
         <input type="radio" name="cfgModo" value="faixa">
-        <div class="opt-texts"><div class="ot">Por faixa de kWp</div><div class="od">Taxa diferente por faixa de potência — mais preciso</div></div>
+        <div class="opt-texts"><div class="ot">Por faixa</div><div class="od">Taxa diferente por faixa de kWp ou de módulos — mais preciso</div></div>
       </div>
     </div>
 
@@ -243,6 +243,13 @@
 
     <!-- Modo faixa -->
     <div id="faixaEditor" style="display:none">
+      <div class="rate-box" style="margin-bottom:8px">
+        <div class="rl">Definir faixas por:</div>
+        <div class="submodo-row">
+          <button class="smb fv" data-fv="kwp"     onclick="setFaixaVar('kwp')">kWp</button>
+          <button class="smb fv" data-fv="modulos"  onclick="setFaixaVar('modulos')">Módulos</button>
+        </div>
+      </div>
       <div class="rate-box" style="margin-bottom:10px">
         <div class="rl">Calcular cada faixa por:</div>
         <div class="submodo-row">
@@ -299,6 +306,7 @@ let campoCfgAtual = null;
 let modoAtual     = 'fixo';
 let faixasTemp    = [];
 let subModoAtual  = 'modulo';
+let faixaVarAtual = 'kwp';
 
 // ── Persistência ────────────────────────────────────────────────────
 async function carregarConfigs() {
@@ -341,7 +349,8 @@ function cfgDesc(cfg) {
   if (cfg.modo === 'kwp'    && cfg.taxa) return `${brl(cfg.taxa)} / kWp → ${brl(cfg.taxa * kwp)} (ref.)`;
   if (cfg.modo === 'faixa'  && cfg.faixas?.length) {
     const val = calcValorFaixa(cfg, kwp, mods);
-    return `Por faixa → ${brl(val)} (ref. ${kwp} kWp)`;
+    const vl  = cfg.faixaVariavel === 'modulos' ? `${mods} mod` : `${kwp} kWp`;
+    return `Por faixa → ${brl(val)} (ref. ${vl})`;
   }
   return null;
 }
@@ -365,7 +374,8 @@ function renderConfigs() {
 function extraDesc(item) {
   const { kwp, mods } = getRef();
   if (item.modo === 'faixa' && item.faixas?.length) {
-    return `Por faixa → ${brl(calcValorFaixa(item, kwp, mods))} (ref. ${kwp} kWp)`;
+    const vl = item.faixaVariavel === 'modulos' ? `${mods} mod` : `${kwp} kWp`;
+    return `Por faixa → ${brl(calcValorFaixa(item, kwp, mods))} (ref. ${vl})`;
   }
   if (!item.taxa) return 'Sem configuração';
   if (item.modo === 'fixo')   return `Valor fixo → ${brl(item.taxa)}`;
@@ -427,8 +437,9 @@ function abrirConfig(campo, event) {
   document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp (referência)`;
   document.getElementById('cfgTaxa').value = cfg.taxa || '';
   if (cfg.modo === 'faixa') {
-    faixasTemp   = cfg.faixas?.length ? JSON.parse(JSON.stringify(cfg.faixas)) : [{ ate: null, taxa: 0 }];
-    subModoAtual = cfg.subModo || 'modulo';
+    faixasTemp    = cfg.faixas?.length ? JSON.parse(JSON.stringify(cfg.faixas)) : [{ ate: null, taxa: 0 }];
+    subModoAtual  = cfg.subModo || 'modulo';
+    faixaVarAtual = cfg.faixaVariavel || 'kwp';
   }
   selecionarModo(cfg.modo || 'fixo');
   document.getElementById('modalCfg').classList.add('open');
@@ -446,8 +457,9 @@ function abrirConfigExtra(id, event) {
   document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp (referência)`;
   document.getElementById('cfgTaxa').value = item.taxa || '';
   if (item.modo === 'faixa') {
-    faixasTemp   = item.faixas?.length ? JSON.parse(JSON.stringify(item.faixas)) : [{ ate: null, taxa: 0 }];
-    subModoAtual = item.subModo || 'modulo';
+    faixasTemp    = item.faixas?.length ? JSON.parse(JSON.stringify(item.faixas)) : [{ ate: null, taxa: 0 }];
+    subModoAtual  = item.subModo || 'modulo';
+    faixaVarAtual = item.faixaVariavel || 'kwp';
   }
   selecionarModo(item.modo || 'fixo');
   document.getElementById('modalCfg').classList.add('open');
@@ -483,15 +495,18 @@ function atualizarPreview() {
   let val = 0, desc = '';
 
   if (modoAtual === 'faixa') {
-    const cfg    = { modo:'faixa', subModo: subModoAtual, faixas: faixasTemp };
+    const cfg    = { modo:'faixa', subModo: subModoAtual, faixaVariavel: faixaVarAtual, faixas: faixasTemp };
     val          = calcValorFaixa(cfg, kwp, mods);
+    const isMod  = faixaVarAtual === 'modulos';
+    const varVal = isMod ? mods : kwp;
+    const varUnit= isMod ? 'mod' : 'kWp';
     const sorted = [...faixasTemp].sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
-    const fi     = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+    const fi     = sorted.find(f => f.ate===null || varVal<=f.ate) || sorted[sorted.length-1];
     const fiIdx  = sorted.indexOf(fi);
     const de     = fiIdx === 0 ? 0 : sorted[fiIdx-1].ate;
-    const fd     = fi?.ate===null ? `acima de ${de} kWp` : `${de===0?'até':`${de}–`}${fi.ate} kWp`;
+    const fd     = fi?.ate===null ? `acima de ${de} ${varUnit}` : `${de===0?'até':`${de}–`}${fi.ate} ${varUnit}`;
     const smDesc = subModoAtual==='modulo' ? ` × ${mods} mod` : subModoAtual==='kwp' ? ` × ${kwp} kWp` : '';
-    desc = `${kwp} kWp → faixa ${fd} → ${brl(fi?.taxa||0)}${smDesc}`;
+    desc = `${varVal} ${varUnit} → faixa ${fd} → ${brl(fi?.taxa||0)}${smDesc}`;
   } else {
     const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
     if (modoAtual === 'fixo')   { val = taxa;        desc = 'valor fixo'; }
@@ -507,8 +522,9 @@ function atualizarPreview() {
 function calcValorFaixa(cfg, kwp, mods) {
   const faixas = cfg.faixas;
   if (!faixas?.length) return 0;
+  const varVal = cfg.faixaVariavel === 'modulos' ? mods : kwp;
   const sorted = [...faixas].sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
-  const faixa  = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+  const faixa  = sorted.find(f => f.ate===null || varVal<=f.ate) || sorted[sorted.length-1];
   const taxa   = faixa?.taxa || 0;
   const sm     = cfg.subModo || 'kwp';
   if (sm === 'fixo')   return taxa;
@@ -517,9 +533,16 @@ function calcValorFaixa(cfg, kwp, mods) {
   return 0;
 }
 
+function setFaixaVar(fv) {
+  faixaVarAtual = fv;
+  document.querySelectorAll('.smb.fv').forEach(b => b.classList.toggle('on', b.dataset.fv === fv));
+  renderFaixaEditor();
+  atualizarPreview();
+}
+
 function setSubModo(sm) {
   subModoAtual = sm;
-  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === sm));
+  document.querySelectorAll('.smb:not(.fv)').forEach(b => b.classList.toggle('on', b.dataset.sm === sm));
   renderFaixaEditor();
   atualizarPreview();
 }
@@ -527,8 +550,9 @@ function setSubModo(sm) {
 function addFaixa() {
   const nonNull = faixasTemp.filter(f => f.ate !== null);
   const ultimo  = nonNull.length ? nonNull[nonNull.length - 1].ate : 0;
+  const step    = faixaVarAtual === 'modulos' ? 10 : 5;
   const idx     = faixasTemp.findIndex(f => f.ate === null);
-  faixasTemp.splice(idx >= 0 ? idx : faixasTemp.length, 0, { ate: ultimo + 5, taxa: 0 });
+  faixasTemp.splice(idx >= 0 ? idx : faixasTemp.length, 0, { ate: ultimo + step, taxa: 0 });
   if (!faixasTemp.find(f => f.ate === null)) faixasTemp.push({ ate: null, taxa: 0 });
   renderFaixaEditor();
   atualizarPreview();
@@ -544,11 +568,15 @@ function removeFaixa(idx) {
 
 function renderFaixaEditor() {
   const { kwp, mods } = getRef();
-  const ulMap  = { fixo:'R$', modulo:'R$/mod', kwp:'R$/kWp' };
-  const ul     = ulMap[subModoAtual];
-  const sorted = [...faixasTemp].map((f,i)=>({...f,_i:i}))
+  const ulMap    = { fixo:'R$', modulo:'R$/mod', kwp:'R$/kWp' };
+  const ul       = ulMap[subModoAtual];
+  const isMod    = faixaVarAtual === 'modulos';
+  const varVal   = isMod ? mods : kwp;
+  const varUnit  = isMod ? 'mod' : 'kWp';
+  const varStep  = isMod ? '1' : '0.5';
+  const sorted   = [...faixasTemp].map((f,i)=>({...f,_i:i}))
     .sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
-  const ativo  = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
+  const ativo    = sorted.find(f => f.ate===null || varVal<=f.ate) || sorted[sorted.length-1];
 
   document.getElementById('faixasList').innerHTML = sorted.map((f, si) => {
     const de     = si === 0 ? 0 : (sorted[si-1].ate ?? '?');
@@ -556,11 +584,11 @@ function renderFaixaEditor() {
     const isAtiv = f === ativo;
     const canDel = sorted.length > 1;
     const rangeHtml = isLast
-      ? `<span class="fr-label">Acima de <b>${de}</b> kWp</span>`
+      ? `<span class="fr-label">Acima de <b>${de}</b> ${varUnit}</span>`
       : `<span class="fr-label">${de===0?'Até':`<b>${de}</b> –`}&nbsp;<input class="fr-limit" type="number"
-           value="${f.ate}" min="0.1" step="0.5"
+           value="${f.ate}" min="0.1" step="${varStep}"
            oninput="faixasTemp[${f._i}].ate=parseFloat(this.value)||0;atualizarPreview()"
-           onblur="renderFaixaEditor()">&nbsp;kWp</span>`;
+           onblur="renderFaixaEditor()">&nbsp;${varUnit}</span>`;
     return `<div class="faixa-row${isAtiv?' faixa-active':''}">
       ${rangeHtml}
       <div class="fr-taxa">
@@ -572,7 +600,8 @@ function renderFaixaEditor() {
     </div>`;
   }).join('');
 
-  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === subModoAtual));
+  document.querySelectorAll('.smb.fv').forEach(b => b.classList.toggle('on', b.dataset.fv === faixaVarAtual));
+  document.querySelectorAll('.smb:not(.fv)').forEach(b => b.classList.toggle('on', b.dataset.sm === subModoAtual));
 }
 
 // ── Aplicar configuração ─────────────────────────────────────────────
@@ -580,7 +609,7 @@ function aplicarConfig() {
   const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
   let cfgSalva;
   if (modoAtual === 'faixa') {
-    cfgSalva = { modo:'faixa', subModo: subModoAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
+    cfgSalva = { modo:'faixa', subModo: subModoAtual, faixaVariavel: faixaVarAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
   } else {
     cfgSalva = { modo: modoAtual, taxa };
   }
