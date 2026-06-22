@@ -469,8 +469,8 @@ function cenario(tk,d){
   const custoVariavelPct=tk>0?dvUnit/tk:0;
   const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
   const despFixaUnit=despFixaPct>0?tk*(despFixaPct/100):(d.qtd>0?d.despFixa/d.qtd:0);
-  const despFixaMes=despFixaUnit*d.qtd;
-  const lucroUnit=mcUnit-despFixaUnit, lucroMes=lucroUnit*d.qtd, lucroPct=tk>0?lucroUnit/tk:0;
+  const despFixaMes=d.despFixa;
+  const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-despFixaMes, lucroPct=tk>0?lucroUnit/tk:0;
   return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,despFixaMes,lucroUnit,lucroMes,lucroPct};
 }
 
