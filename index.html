@@ -6,9 +6,9 @@
 <title>Auditor de Precificação</title>
 <style>
   :root{
-    --bg:#F4F2EC; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#E3DFD4;
-    --solar:#E8820C; --teal:#0F3D3E; --kit:#A9AEB6; --variable:#D9663B;
-    --positive:#2F7A4D; --negative:#B23A2E;
+    --bg:#F2F9F5; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#DFF0E8;
+    --solar:#00B140; --teal:#183029; --kit:#A9AEB6; --variable:#D9663B;
+    --positive:#00B140; --negative:#B23A2E;
     --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   }
@@ -18,8 +18,8 @@
   .mono{font-family:var(--mono)}
 
   header.top{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-  .logo{width:28px;height:28px;border-radius:7px;background:var(--solar);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#40C1AC;text-transform:uppercase;font-weight:700}
   h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
   .sub{margin:0;color:var(--muted);font-size:14px;max-width:640px}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -76,7 +76,7 @@
   .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
   .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
   .opt-item:hover{border-color:var(--teal)}
-  .opt-item.sel{border-color:var(--teal);background:#EEF5F5}
+  .opt-item.sel{border-color:var(--teal);background:#E9F7EF}
   .opt-item input[type=radio]{accent-color:var(--teal);flex-shrink:0;width:15px;height:15px}
   .opt-texts .ot{font-size:13px;font-weight:700}
   .opt-texts .od{font-size:11px;color:var(--muted);margin-top:1px}
@@ -107,7 +107,7 @@
   .fr-taxa{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface)}
   .fr-taxa-inp{border:none;outline:none;width:64px;padding:6px 6px;font-size:13px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;text-align:right}
   .fr-unit{padding:0 7px;font-size:9px;font-weight:700;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--hair);white-space:nowrap}
-  .faixa-active{border-color:var(--teal)!important;background:#EEF5F5!important}
+  .faixa-active{border-color:var(--teal)!important;background:#E9F7EF!important}
   .faixa-active .fr-label b{color:var(--teal)}
   .btn-add-faixa{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:8px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);margin:4px 0 2px;transition:.15s}
   .btn-add-faixa:hover{border-color:var(--solar);color:var(--solar)}
@@ -118,7 +118,7 @@
   .btn-remove{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.5;transition:.15s;font-family:var(--sans)}
   .btn-remove:hover{border-color:var(--negative);color:var(--negative)}
   .btn-add{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin:6px 0 14px}
-  .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(232,130,12,.04)}
+  .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
   .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
   .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
   .inwrap .affix.l{border-right:1px solid var(--hair)}
@@ -195,8 +195,8 @@
   <header class="top">
     <div>
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="logo">☀</div>
-        <span class="eyebrow">Auditor de Precificação</span>
+        <div class="logo"><svg viewBox="0 0 509 534" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
+        <span class="eyebrow">FAVO Educação</span>
       </div>
       <h1>Dashboard de Precificação</h1>
       <p class="sub">Modelo de venda em que o KIT é faturado pela distribuidora e o integrador fatura a prestação de serviço. O tributo incide somente sobre a parte de serviço.</p>
@@ -437,7 +437,7 @@ function novoProjetoConfirm() {
   }
 }
 
-const C={ink:"#1B1A16",muted:"#736F64",hair:"#E3DFD4",solar:"#E8820C",teal:"#0F3D3E",kit:"#A9AEB6",variable:"#D9663B",positive:"#2F7A4D",negative:"#B23A2E"};
+const C={ink:"#1B1A16",muted:"#736F64",hair:"#DFF0E8",solar:"#00B140",teal:"#183029",kit:"#A9AEB6",variable:"#D9663B",positive:"#00B140",negative:"#B23A2E"};
 const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,art:0,ticket:22000,qtd:1,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
 const FIELDS=["kit","ca","inst","proj","homol","art","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
 const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","art","ticket","despFixa"]);
