@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicadores do Negócio · Auditor de Precificação</title>
+<style>
+  :root{
+    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
+    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:520px}
+
+  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
+  .btn-back:hover{color:var(--ink)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+
+  .stepper{display:flex;align-items:center;margin-bottom:24px}
+  .step{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .sn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--hair);color:var(--muted)}
+  .sl{font-size:8px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+  .step.active .sn{background:var(--solar);color:#fff}
+  .step.active .sl{color:var(--solar);font-weight:700}
+  .step.done .sn{background:var(--teal);color:#fff}
+  .step.done .sl{color:var(--teal)}
+  .sline{flex:1;height:2px;background:var(--hair);margin:0 4px;margin-bottom:14px}
+  .sline.done{background:var(--teal)}
+  .step[onclick]{cursor:pointer}
+  .step[onclick]:hover .sn{opacity:.7}
+
+  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .empresa-badge .nome{font-weight:700;font-size:14px}
+  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
+  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+  .btn-trocar:hover{background:rgba(255,255,255,.25)}
+
+  .page-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
+  .page-sub{font-size:13px;color:var(--muted);margin:0 0 18px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;overflow:hidden;margin-bottom:14px}
+  .card-head{padding:14px 18px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:10px}
+  .card-icon{width:30px;height:30px;border-radius:8px;background:#E9F7EF;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .card-head h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--ink)}
+  .card-body{padding:4px 18px 10px}
+
+  .ind-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair)}
+  .ind-row:last-child{border-bottom:none}
+  .ind-left{flex:1;min-width:0}
+  .ind-label{font-size:13px;color:var(--ink);font-weight:600}
+  .ind-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .ind-right{text-align:right;flex-shrink:0}
+  .ind-val{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
+  .ind-val.pct{color:var(--teal)}
+  .ind-val.empty{color:var(--muted);font-style:italic;font-family:var(--sans);font-size:12px;font-weight:400}
+  .ind-tag{font-size:10px;font-weight:600;font-family:var(--mono);background:var(--bg);border:1px solid var(--hair);border-radius:5px;padding:2px 7px;color:var(--muted);margin-top:4px;display:inline-block}
+
+  .lucro-destaque{text-align:center;padding:20px 18px 18px}
+  .lucro-pct{font-size:56px;font-weight:800;font-family:var(--mono);color:var(--teal);line-height:1;letter-spacing:-2px}
+  .lucro-hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+  .bar-wrap{padding:0 0 10px}
+  .bar-bg{background:var(--hair);border-radius:4px;height:7px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;transition:.6s ease}
+
+  .alert-banner{border-radius:10px;padding:11px 14px;font-size:12px;margin-bottom:16px;line-height:1.6;border:1px solid #F9D171;background:#FFF8E1;color:#7A5C00}
+
+  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:6px}
+  .btn-primary:hover{opacity:.9}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="btn-back" href="sazonalidade.html">← Voltar</a>
+
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
+    <div>
+      <div class="brand-name">Auditor de Precificação</div>
+      <div class="brand-sub">FAVO Educação</div>
+    </div>
+  </div>
+
+  <div class="stepper">
+    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
+    <div class="sline done"></div>
+    <div class="step done" onclick="location.href='sazonalidade.html'"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
+    <div class="sline done"></div>
+    <div class="step active"><div class="sn">5</div><div class="sl">Indicad.</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="sline"></div>
+    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+  </div>
+
+  <div class="empresa-badge">
+    <div>
+      <div class="nome" id="empresaNome">—</div>
+      <div class="regime" id="empresaRegime">—</div>
+    </div>
+    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
+  </div>
+
+  <h2 class="page-title">Indicadores do Negócio</h2>
+  <p class="page-sub">Resumo dos parâmetros cadastrados — revise antes de prosseguir para a precificação.</p>
+
+  <div id="alertBanner" class="alert-banner" style="display:none"></div>
+
+  <!-- Card 1: Meta de Resultado -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🎯</div>
+      <h3>Meta de Resultado</h3>
+    </div>
+    <div class="card-body">
+      <div class="lucro-destaque">
+        <div class="lucro-pct" id="lucroValor">—</div>
+        <div class="lucro-hint">Margem de lucro desejada por projeto</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Estrutura de Custos Diretos -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🔧</div>
+      <h3>Estrutura de Custos Diretos</h3>
+    </div>
+    <div class="card-body" id="custosBody"></div>
+  </div>
+
+  <!-- Card 3: Despesas Variáveis -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📊</div>
+      <h3>Despesas Variáveis</h3>
+    </div>
+    <div class="card-body" id="despVarBody"></div>
+  </div>
+
+  <!-- Card 4: Despesas Fixas -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📋</div>
+      <h3>Despesas Fixas</h3>
+    </div>
+    <div class="card-body" id="despFixaBody"></div>
+  </div>
+
+  <button class="btn-primary" onclick="location.href='projeto.html'">Continuar → Dados do Projeto</button>
+</div>
+
+<script>
+const integrador   = JSON.parse(localStorage.getItem('integrador')   || 'null');
+const configCustos = JSON.parse(localStorage.getItem('configCustos') || '{}');
+const custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
+const despesas     = JSON.parse(localStorage.getItem('despesas')     || '{}');
+const sazon        = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+
+if (!integrador?.nome_empresa) { location.href = 'cadastro.html'; }
+
+document.getElementById('empresaNome').textContent   = integrador?.nome_empresa        || '—';
+document.getElementById('empresaRegime').textContent = integrador?.regime_tributario   || '—';
+
+function brl(v) {
+  return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtPct(v) {
+  return Number(v || 0).toFixed(1).replace('.', ',') + '%';
+}
+
+function indRow(label, sub, valHtml) {
+  return `<div class="ind-row">
+    <div class="ind-left">
+      <div class="ind-label">${label}</div>
+      ${sub ? `<div class="ind-sub">${sub}</div>` : ''}
+    </div>
+    <div class="ind-right">${valHtml}</div>
+  </div>`;
+}
+
+// ── Card 1: Meta de Resultado ─────────────────────────────────────────
+const lucroAlvo = integrador?.lucro_alvo ?? 12;
+document.getElementById('lucroValor').textContent = fmtPct(lucroAlvo);
+
+// ── Card 2: Custos Diretos ────────────────────────────────────────────
+const CAMPOS = {
+  ca:    'Material adicional CA',
+  inst:  'Instalação',
+  proj:  'Projeto elétrico',
+  homol: 'Homologação',
+  art:   'ART do Projeto',
+};
+
+function cfgInfo(cfg) {
+  if (!cfg?.modo) return null;
+  if (cfg.modo === 'fixo')   return { val: brl(cfg.taxa),           tag: 'Valor fixo' };
+  if (cfg.modo === 'modulo') return { val: brl(cfg.taxa) + ' / mod', tag: 'Por módulo' };
+  if (cfg.modo === 'kwp')    return { val: brl(cfg.taxa) + ' / kWp', tag: 'Por kWp' };
+  if (cfg.modo === 'faixa')  return { val: 'Por faixa',             tag: 'Faixa configurada' };
+  return null;
+}
+
+let custosHtml = '';
+for (const [id, label] of Object.entries(CAMPOS)) {
+  const info = cfgInfo(configCustos[id]);
+  const valHtml = info
+    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
+    : `<div class="ind-val empty">Não configurado</div>`;
+  custosHtml += indRow(label, null, valHtml);
+}
+for (const extra of custosExtras) {
+  if (!extra.label) continue;
+  const info    = cfgInfo(extra);
+  const valHtml = info
+    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
+    : `<div class="ind-val empty">Não configurado</div>`;
+  custosHtml += indRow(extra.label, 'Custo adicional configurado', valHtml);
+}
+if (!custosHtml) custosHtml = indRow('Nenhum custo configurado', 'Acesse a tela Custos para configurar', '<div class="ind-val empty">—</div>');
+document.getElementById('custosBody').innerHTML = custosHtml;
+
+// ── Card 3: Despesas Variáveis ────────────────────────────────────────
+function baseLabel(b) { return b === 'servico' ? 'Sobre serviços' : 'Sobre venda total'; }
+
+const comissao = despesas.comissao;
+const tributo  = despesas.tributo;
+const dvExtras = Array.isArray(despesas.extras) ? despesas.extras : [];
+let dvHtml = '';
+
+dvHtml += indRow(
+  'Comissão de vendas',
+  comissao?.valor ? baseLabel(comissao.base) : 'Não informada',
+  comissao?.valor
+    ? `<div class="ind-val pct">${fmtPct(comissao.valor)}</div>`
+    : `<div class="ind-val empty">0,0%</div>`
+);
+
+dvHtml += indRow(
+  'Carga tributária',
+  tributo?.valor ? baseLabel(tributo.base) : 'Não informada',
+  tributo?.valor
+    ? `<div class="ind-val pct">${fmtPct(tributo.valor)}</div>`
+    : `<div class="ind-val empty">0,0%</div>`
+);
+
+for (const e of dvExtras) {
+  if (!e.nome) continue;
+  dvHtml += indRow(
+    e.nome,
+    baseLabel(e.base),
+    `<div class="ind-val pct">${fmtPct(e.valor)}</div>`
+  );
+}
+
+document.getElementById('despVarBody').innerHTML = dvHtml;
+
+// ── Card 4: Despesas Fixas ────────────────────────────────────────────
+const despFixa = parseFloat(despesas.despFixa) || 0;
+
+const mesesData = sazon.meses || {};
+const totalValorAnual = Object.values(mesesData).reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
+const fatMedioMensal  = totalValorAnual / 12;
+const despPct         = fatMedioMensal > 0 ? (despFixa / fatMedioMensal) * 100 : 0;
+
+let dfHtml = indRow(
+  'Despesas fixas mensais',
+  'Valor total cadastrado na tela Despesas',
+  `<div class="ind-val">${brl(despFixa)}</div>`
+);
+
+if (fatMedioMensal > 0) {
+  const cor = despPct > 30 ? 'var(--negative)' : despPct > 20 ? 'var(--solar)' : 'var(--teal)';
+  const fillClass = despPct > 30 ? 'background:var(--negative)' : despPct > 20 ? 'background:var(--solar)' : 'background:var(--teal)';
+  dfHtml += indRow(
+    '% sobre faturamento médio mensal',
+    `Faturamento médio: ${brl(fatMedioMensal)} / mês`,
+    `<div class="ind-val pct" style="color:${cor}">${fmtPct(despPct)}</div>`
+  );
+  dfHtml += `<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(despPct, 100).toFixed(1)}%;${fillClass}"></div></div></div>`;
+} else {
+  dfHtml += indRow(
+    '% sobre faturamento médio mensal',
+    'Preencha o Diagnóstico de Sazonalidade para calcular',
+    `<div class="ind-val empty">—</div>`
+  );
+}
+
+document.getElementById('despFixaBody').innerHTML = dfHtml;
+
+// ── Alertas ───────────────────────────────────────────────────────────
+const alertas = [];
+if (!lucroAlvo)  alertas.push('Lucro desejado não definido — acesse a tela <strong>Empresa</strong> para configurar.');
+if (!despFixa)   alertas.push('Despesas fixas zeradas — verifique a tela <strong>Despesas</strong>.');
+if (!comissao?.valor && !tributo?.valor) alertas.push('Despesas variáveis não configuradas — acesse a tela <strong>Despesas</strong>.');
+if (fatMedioMensal === 0) alertas.push('Diagnóstico de Sazonalidade não preenchido — os indicadores estarão incompletos na precificação.');
+
+const banner = document.getElementById('alertBanner');
+if (alertas.length) {
+  banner.style.display = 'block';
+  banner.innerHTML = '<strong>⚠ Atenção:</strong><br>' + alertas.map(a => '· ' + a).join('<br>');
+}
+
+function trocarEmpresa() {
+  localStorage.removeItem('integrador');
+  location.href = 'cadastro.html';
+}
+</script>
+</body>
+</html>
