@@ -1289,6 +1289,9 @@ initCtx();
   }
   document.getElementById('qtd').value = 1;
   await carregarSazonalidade();
+  if (projeto?.valor_venda) {
+    document.getElementById('ticket').value = Number(projeto.valor_venda).toFixed(2).replace('.', ',');
+  }
   if (integrador?.lucro_alvo != null) {
     document.getElementById('lucroAlvo').value = integrador.lucro_alvo;
   }

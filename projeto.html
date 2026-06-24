@@ -139,6 +139,15 @@
         <span class="err" id="errKit">Informe o custo do KIT</span>
       </label>
 
+      <label class="fld">
+        <span class="lbl">Valor de Venda Atual</span>
+        <div class="inwrap">
+          <span class="affix l">R$</span>
+          <input type="text" inputmode="decimal" id="valor_venda" placeholder="0,00">
+        </div>
+        <span class="hint">Preço praticado hoje (KIT + serviço). Preenche o campo de análise automaticamente.</span>
+      </label>
+
       <button class="btn-primary" type="submit" id="btnSalvar">Analisar precificação →</button>
     </form>
   </div>
@@ -168,6 +177,7 @@ function init() {
     document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
     document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
     document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? Number(projetoAtual.custo_kit).toFixed(2).replace('.',',') : '';
+    document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? Number(projetoAtual.valor_venda).toFixed(2).replace('.',',') : '';
     document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
   }
 }
@@ -220,7 +230,8 @@ async function salvar(e) {
 
   if(error){ alert('Erro ao salvar: '+error.message); return; }
 
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id}));
+  const valorVenda = parseFloat(document.getElementById('valor_venda').value.replace(',','.')) || null;
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
   window.location.href='index.html';
 }
 
