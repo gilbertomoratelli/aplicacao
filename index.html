@@ -178,6 +178,38 @@
   .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18)}
   .toast.show{opacity:1;transform:translateY(0)}
 
+  /* Veredito */
+  .verdict-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.4px}
+  .verdict-badge.ok{background:#E9F7EF;color:var(--positive)}
+  .verdict-badge.bad{background:#FDECEA;color:var(--negative)}
+  .verdict-prices{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:12px}
+  .verdict-col{text-align:center}
+  .verdict-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
+  .verdict-price{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1}
+  .verdict-arrow{font-size:22px;color:var(--muted);flex-shrink:0;padding:0 4px}
+  .verdict-msg{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
+
+  /* Collapsible cards */
+  details.coll{background:var(--surface);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+  details.coll summary{padding:14px 22px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;list-style:none;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  details.coll summary::-webkit-details-marker{display:none}
+  details.coll summary::before{content:"▸";transition:.2s;font-size:10px}
+  details.coll[open] summary::before{content:"▾"}
+  details.coll .coll-body{padding:0 22px 22px}
+
+  /* CTA adotar preço */
+  .btn-adoptar{width:100%;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);margin-top:18px;transition:.15s}
+  .btn-adoptar:hover{opacity:.9}
+  .btn-adoptar:disabled{opacity:.4;cursor:not-allowed}
+
+  /* Base toggles inline */
+  .base-toggles-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+  .bt-group{display:flex;flex-direction:column;gap:4px}
+  .bt-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
+  .bt-btns{display:flex;gap:4px}
+  .bt-btns button{padding:4px 10px;font-size:11px;border-radius:6px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s}
+  .bt-btns button.on{border-color:var(--teal);background:var(--teal);color:#fff}
+
   @media (max-width:880px){
     .main{grid-template-columns:1fr}
     .grid-2{grid-template-columns:1fr}
@@ -186,6 +218,9 @@
     body{background:#fff;padding:0}
     .actions{display:none}
     .card,.kpi{break-inside:avoid}
+    details.coll{display:block}
+    details.coll summary{display:none}
+    .btn-adoptar{display:none}
   }
 </style>
 </head>
@@ -294,51 +329,62 @@
 
     <!-- RESULTADOS -->
     <div class="col">
-      <div class="card">
-        <div class="sec-title"><span class="idx">◐</span><h3>Para onde vai cada real do ticket</h3></div>
-        <div class="bar" id="bar"></div>
-        <div class="legend" id="legend"></div>
-      </div>
 
-      <div class="card">
-        <div class="sec-title"><span class="idx">05</span><h3>DRE gerencial</h3></div>
-        <div class="grid-dre" id="dre"></div>
-      </div>
+      <!-- VEREDITO -->
+      <div class="card" id="verdict" style="text-align:center;padding:20px 22px"></div>
 
-      <div class="grid-2">
-        <div class="card pe">
-          <div class="sec-title"><span class="idx">06</span><h3>Ponto de equilíbrio</h3></div>
-          <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Volume mínimo para cobrir as despesas fixas.</p>
-          <table class="pe-table" id="peCmp">
-            <thead><tr><th></th><th>Atual</th><th>Sugerido</th></tr></thead>
-            <tbody id="peCmpBody"></tbody>
-          </table>
+      <!-- ANÁLISE ATUAL × SUGERIDO -->
+      <div class="card">
+        <div class="sec-title"><span class="idx">⇄</span><h3>Análise Atual × Sugerido</h3></div>
+        <div class="base-toggles-row">
+          <div class="bt-group">
+            <div class="bt-lbl">Base comissão</div>
+            <div class="bt-btns" id="toggleComissao2">
+              <button data-base="total" onclick="setBase('comissao','total')">Venda total</button>
+              <button data-base="servico" onclick="setBase('comissao','servico')">Serviço</button>
+            </div>
+          </div>
+          <div class="bt-group">
+            <div class="bt-lbl">Base tributo</div>
+            <div class="bt-btns" id="toggleTributo2">
+              <button data-base="total" onclick="setBase('tributo','total')">Venda total</button>
+              <button data-base="servico" onclick="setBase('tributo','servico')">Serviço</button>
+            </div>
+          </div>
         </div>
-
-        <div class="card teal">
-          <div class="sec-title"><span class="idx">07</span><h3>Preço sugerido · lucro líquido</h3></div>
-          <p class="p" id="precoP"></p>
-          <div class="price" id="precoOut"></div>
-          <div class="price-note" id="precoNote"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="sec-title"><span class="idx">08</span><h3>Markup sugerido</h3></div>
-        <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Relação entre o Custo Direto Total e o Preço de Venda.</p>
-        <table class="pe-table" id="markupTable">
-          <thead><tr><th></th><th>Atual</th><th>Sugerido</th></tr></thead>
-          <tbody id="markupBody"></tbody>
+        <table class="pe-table">
+          <thead><tr><th></th><th>Atual</th><th>Sugerido</th><th>Δ</th></tr></thead>
+          <tbody id="uniBody"></tbody>
         </table>
+        <button class="btn-adoptar" id="btnAdotar" onclick="adotarSugerido()" disabled>Adotar preço sugerido →</button>
       </div>
 
-      <div class="card">
-        <div class="sec-title"><span class="idx">09</span><h3>Comparativo · atual × sugerido</h3></div>
-        <div class="grid-cmp" id="cmp"></div>
-        <p class="foot" id="cmpFoot" style="margin-top:16px"></p>
+      <!-- CASCATA (recolhível) -->
+      <details class="coll">
+        <summary>Para onde vai cada real do ticket</summary>
+        <div class="coll-body">
+          <div class="bar" id="bar"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </details>
+
+      <!-- DRE (recolhível) -->
+      <details class="coll">
+        <summary>DRE gerencial</summary>
+        <div class="coll-body">
+          <div class="grid-dre" id="dre"></div>
+        </div>
+      </details>
+
+      <!-- IDs anteriores ocultos — render() ainda os popula; salvarOrcamento() lê lastCalc -->
+      <div style="display:none" aria-hidden="true">
+        <table><tbody id="peCmpBody"></tbody></table>
+        <p id="precoP"></p><div id="precoOut"></div><div id="precoNote"></div>
+        <table><tbody id="markupBody"></tbody></table>
+        <div id="cmp"></div><p id="cmpFoot"></p>
       </div>
 
-      <p class="foot">Premissas: a carga tributária e a comissão podem incidir sobre a venda total ou somente sobre o serviço (botões na seção 03). Quando incidem só sobre o serviço, o KIT escapa da base e gera um abatimento de %alíquota × KIT no numerador do preço sugerido; quando incidem sobre o total, esse abatimento deixa de existir e a alíquota é aplicada sobre o preço cheio. Ajuste os percentuais conforme seu regime tributário real.</p>
+      <p class="foot">Premissas: a carga tributária e a comissão podem incidir sobre a venda total ou somente sobre o serviço (seletores acima). Quando incidem só sobre o serviço, o KIT escapa da base e gera um abatimento de %alíquota × KIT no numerador do preço sugerido. Ajuste os percentuais conforme seu regime tributário real.</p>
     </div>
   </div>
 </div>
@@ -474,8 +520,8 @@ function setBase(campo,val){
   syncBaseButtons(); render();
 }
 function syncBaseButtons(){
-  document.querySelectorAll("#toggleComissao button").forEach(b=>b.classList.toggle("on",b.dataset.base===comissaoBase));
-  document.querySelectorAll("#toggleTributo button").forEach(b=>b.classList.toggle("on",b.dataset.base===tributoBase));
+  document.querySelectorAll("#toggleComissao button,#toggleComissao2 button").forEach(b=>b.classList.toggle("on",b.dataset.base===comissaoBase));
+  document.querySelectorAll("#toggleTributo button,#toggleTributo2 button").forEach(b=>b.classList.toggle("on",b.dataset.base===tributoBase));
 }
 
 function cenario(tk,d){
@@ -683,6 +729,82 @@ function render(){
   }
   document.getElementById("cmpFoot").textContent=`O preço sugerido embute a despesa fixa (${pct(dfPct)} do faturamento atual) e busca ${d.lucroAlvo}% de lucro líquido. As despesas variáveis são recalculadas em cada cenário. Como a despesa fixa é diluída sobre o volume atual, no preço sugerido o lucro efetivo (linha "Resultado mensal") pode diferir levemente da meta, pois o faturamento muda. Δ = diferença do sugerido em relação ao atual.`;
 
+  // ── Veredito ────────────────────────────────────────────────────────
+  const verdEl=document.getElementById('verdict');
+  if(valido){
+    const diffV=precoSugerido-d.ticket;
+    const isAbaixo=diffV>50;
+    const badge=isAbaixo
+      ?'<span class="verdict-badge bad">Preço abaixo do ideal</span>'
+      :'<span class="verdict-badge ok">Precificação saudável</span>';
+    const priceColor=isAbaixo?C.negative:C.positive;
+    const msg=isAbaixo
+      ?'Seu preço está <strong>'+brl(Math.abs(diffV))+'</strong> abaixo do mínimo para garantir '+d.lucroAlvo+'% de lucro.'
+      :'Você está <strong>'+brl(Math.abs(diffV))+'</strong> acima do mínimo para '+d.lucroAlvo+'% de lucro.';
+    verdEl.innerHTML=badge+
+      '<div class="verdict-prices">'+
+        '<div class="verdict-col"><div class="verdict-label">Preço atual</div>'+
+          '<div class="verdict-price" style="color:'+priceColor+'">'+brl(d.ticket)+'</div></div>'+
+        '<div class="verdict-arrow">→</div>'+
+        '<div class="verdict-col"><div class="verdict-label">Preço sugerido</div>'+
+          '<div class="verdict-price" style="color:'+C.positive+'">'+brl(precoSugerido)+'</div></div>'+
+      '</div>'+
+      '<p class="verdict-msg">'+msg+'</p>';
+  } else {
+    verdEl.innerHTML='<p class="verdict-msg">Ajuste os parâmetros para calcular o preço sugerido.</p>';
+  }
+
+  // ── Tabela unificada Atual × Sugerido ───────────────────────────────
+  const fmtDelta=(v,pp)=>{
+    if(!isFinite(v)) return '—';
+    const s=v>=0?'+':'−';
+    if(pp) return s+Math.abs(v*100).toFixed(1).replace('.',',')+' pp';
+    return s+' '+brl(Math.abs(v));
+  };
+  const uniRows=[
+    {lbl:'Preço de venda',  bold:true,
+     aV:brl(d.ticket), sV:valido?brl(precoSugerido):'—',
+     dV:valido?fmtDelta(precoSugerido-d.ticket,false):'—',
+     dc:valido?(precoSugerido>d.ticket?C.negative:C.positive):C.muted},
+    {lbl:'Margem de contribuição',
+     aV:pct(a.mcPct), sV:sug?pct(sug.mcPct):'—',
+     dV:sug?fmtDelta(sug.mcPct-a.mcPct,true):'—',
+     dc:sug?(sug.mcPct>a.mcPct?C.positive:C.negative):C.muted},
+    {lbl:'Lucro líquido %',
+     aV:pct(a.lucroPct), sV:sug?pct(sug.lucroPct):'—',
+     dV:sug?fmtDelta(sug.lucroPct-a.lucroPct,true):'—',
+     dc:sug?(sug.lucroPct>a.lucroPct?C.positive:C.negative):C.muted},
+    {lbl:'Lucro mensal',
+     aV:brl(a.lucroMes), sV:sug?brl(sug.lucroMes):'—',
+     dV:sug?fmtDelta(sug.lucroMes-a.lucroMes,false):'—',
+     dc:sug?(sug.lucroMes>a.lucroMes?C.positive:C.negative):C.muted},
+    {lbl:'PE · projetos/mês',
+     aV:isFinite(peQtd)?Math.ceil(peQtd)+'':'—',
+     sV:isFinite(peQtdSug)?Math.ceil(peQtdSug)+'':'—',
+     dV:(!isFinite(peQtd)||!isFinite(peQtdSug))?'—':(Math.ceil(peQtdSug)-Math.ceil(peQtd)>=0?'+':'')+String(Math.ceil(peQtdSug)-Math.ceil(peQtd)),
+     dc:isFinite(peQtd)&&isFinite(peQtdSug)?(peQtdSug<peQtd?C.positive:C.negative):C.muted},
+    {lbl:'PE · faturamento',
+     aV:isFinite(peFat)?brl(peFat):'—',
+     sV:isFinite(peFatSug)?brl(peFatSug):'—',
+     dV:(!isFinite(peFat)||!isFinite(peFatSug))?'—':fmtDelta(peFatSug-peFat,false),
+     dc:isFinite(peFat)&&isFinite(peFatSug)?(peFatSug<peFat?C.positive:C.negative):C.muted},
+    {lbl:'Markup CDT/PV',
+     aV:mkAtual!=null?fmtPct(mkAtual):'—',
+     sV:mkSug!=null?fmtPct(mkSug):'—',
+     dV:mkAtual!=null&&mkSug!=null?fmtDelta(mkSug-mkAtual,true):'—',
+     dc:mkAtual!=null&&mkSug!=null?(mkSug<mkAtual?C.positive:C.negative):C.muted},
+    {lbl:'Markup PV/CDT',
+     aV:multiAtual!=null?fmtMulti(multiAtual):'—',
+     sV:multiSug!=null?fmtMulti(multiSug):'—',
+     dV:multiAtual!=null&&multiSug!=null?(multiSug>=multiAtual?'+':'−')+Math.abs(multiSug-multiAtual).toFixed(2).replace('.',',')+'×':'—',
+     dc:multiAtual!=null&&multiSug!=null?(multiSug>multiAtual?C.positive:C.negative):C.muted},
+  ];
+  document.getElementById('uniBody').innerHTML=uniRows.map(r=>
+    '<tr><td'+(r.bold?' style="font-weight:700"':'')+'>'+r.lbl+'</td>'+
+    '<td class="atual">'+r.aV+'</td><td>'+r.sV+'</td>'+
+    '<td style="font-size:12px;font-weight:700;color:'+r.dc+'">'+r.dV+'</td></tr>').join('');
+  document.getElementById('btnAdotar').disabled=!valido;
+
   save();
 }
 
@@ -723,6 +845,12 @@ function showToast(msg, erro=false){
   t.style.background=erro?"var(--negative)":"var(--teal)";
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+function adotarSugerido(){
+  if(!lastCalc||!isFinite(lastCalc.precoSugerido)) return;
+  document.getElementById('ticket').value=lastCalc.precoSugerido.toFixed(2).replace('.',',');
+  render();
 }
 
 // ── Configuração de custos ──────────────────────────────────────────
