@@ -88,19 +88,19 @@
   </div>
 
   <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Custos</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Despesas</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='sazonalidade.html'"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">5</div><div class="sl">Indicad.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Projeto" onclick="location.href='projeto.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="empresa-badge">
@@ -114,7 +114,7 @@
   <h2 class="page-title">Indicadores do Negócio</h2>
   <p class="page-sub">Resumo dos parâmetros cadastrados — revise antes de prosseguir para a precificação.</p>
 
-  <div id="alertBanner" class="alert-banner" style="display:none"></div>
+  <div id="alertBanner" class="alert-banner" role="alert" aria-live="assertive" style="display:none"></div>
 
   <!-- Card 1: Meta de Resultado -->
   <div class="card">
@@ -160,17 +160,38 @@
   <button class="btn-primary" onclick="location.href='projeto.html'">Continuar → Dados do Projeto</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const integrador   = JSON.parse(localStorage.getItem('integrador')   || 'null');
-const configCustos = JSON.parse(localStorage.getItem('configCustos') || '{}');
-const custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
-const despesas     = JSON.parse(localStorage.getItem('despesas')     || '{}');
-const sazon        = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+const db = AppCore.getClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const integrador   = AppCore.safeParse('integrador', null);
+let configCustos   = AppCore.safeParse('configCustos', {});
+let custosExtras   = AppCore.safeParse('custosExtras', []);
+const despesas     = AppCore.safeParse('despesas', {});
+const sazon        = AppCore.safeParse('sazonalidade', {});
 
 if (!integrador?.nome_empresa) { location.href = 'cadastro.html'; }
 
 document.getElementById('empresaNome').textContent   = integrador?.nome_empresa        || '—';
 document.getElementById('empresaRegime').textContent = integrador?.regime_tributario   || '—';
+
+// C-9: se configCustos vazio no localStorage e db disponível, buscar do DB (aninhado: configs.campos / configs.extras).
+async function hidratarCustosDoDB() {
+  const vazio = !configCustos || Object.keys(configCustos).length === 0;
+  if (!vazio || !db || !integrador?.id) return;
+  const { data } = await AppCore.dbTry(
+    db.from('integradores').select('configs').eq('id', integrador.id).single()
+  );
+  if (data?.configs?.campos) {
+    configCustos = data.configs.campos;
+    if (Array.isArray(data.configs.extras)) custosExtras = data.configs.extras;
+    renderCustos();
+  }
+}
 
 function brl(v) {
   return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -190,6 +211,7 @@ function indRow(label, sub, valHtml) {
 }
 
 // ── Card 1: Meta de Resultado ─────────────────────────────────────────
+const lucroDefinido = integrador?.lucro_alvo != null;
 const lucroAlvo = integrador?.lucro_alvo ?? 12;
 document.getElementById('lucroValor').textContent = fmtPct(lucroAlvo);
 
@@ -211,24 +233,28 @@ function cfgInfo(cfg) {
   return null;
 }
 
-let custosHtml = '';
-for (const [id, label] of Object.entries(CAMPOS)) {
-  const info = cfgInfo(configCustos[id]);
-  const valHtml = info
-    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
-    : `<div class="ind-val empty">Não configurado</div>`;
-  custosHtml += indRow(label, null, valHtml);
+function renderCustos() {
+  let custosHtml = '';
+  for (const [id, label] of Object.entries(CAMPOS)) {
+    const info = cfgInfo(configCustos[id]);
+    const valHtml = info
+      ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
+      : `<div class="ind-val empty">Não configurado</div>`;
+    custosHtml += indRow(label, null, valHtml);
+  }
+  for (const extra of custosExtras) {
+    if (!extra.label) continue;
+    const info    = cfgInfo(extra);
+    const valHtml = info
+      ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
+      : `<div class="ind-val empty">Não configurado</div>`;
+    custosHtml += indRow(AppCore.escapeHtml(extra.label), 'Custo adicional configurado', valHtml);
+  }
+  if (!custosHtml) custosHtml = indRow('Nenhum custo configurado', 'Acesse a tela Custos para configurar', '<div class="ind-val empty">—</div>');
+  document.getElementById('custosBody').innerHTML = custosHtml;
 }
-for (const extra of custosExtras) {
-  if (!extra.label) continue;
-  const info    = cfgInfo(extra);
-  const valHtml = info
-    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
-    : `<div class="ind-val empty">Não configurado</div>`;
-  custosHtml += indRow(extra.label, 'Custo adicional configurado', valHtml);
-}
-if (!custosHtml) custosHtml = indRow('Nenhum custo configurado', 'Acesse a tela Custos para configurar', '<div class="ind-val empty">—</div>');
-document.getElementById('custosBody').innerHTML = custosHtml;
+renderCustos();
+hidratarCustosDoDB();
 
 // ── Card 3: Despesas Variáveis ────────────────────────────────────────
 function baseLabel(b) { return b === 'servico' ? 'Sobre serviços' : 'Sobre venda total'; }
@@ -238,18 +264,21 @@ const tributo  = despesas.tributo;
 const dvExtras = Array.isArray(despesas.extras) ? despesas.extras : [];
 let dvHtml = '';
 
+const comissaoInformada = comissao?.valor != null && comissao?.valor !== '';
+const tributoInformado  = tributo?.valor != null && tributo?.valor !== '';
+
 dvHtml += indRow(
   'Comissão de vendas',
-  comissao?.valor ? baseLabel(comissao.base) : 'Não informada',
-  comissao?.valor
+  comissaoInformada ? baseLabel(comissao.base) : 'Não informada',
+  comissaoInformada
     ? `<div class="ind-val pct">${fmtPct(comissao.valor)}</div>`
     : `<div class="ind-val empty">0,0%</div>`
 );
 
 dvHtml += indRow(
   'Carga tributária',
-  tributo?.valor ? baseLabel(tributo.base) : 'Não informada',
-  tributo?.valor
+  tributoInformado ? baseLabel(tributo.base) : 'Não informada',
+  tributoInformado
     ? `<div class="ind-val pct">${fmtPct(tributo.valor)}</div>`
     : `<div class="ind-val empty">0,0%</div>`
 );
@@ -257,7 +286,7 @@ dvHtml += indRow(
 for (const e of dvExtras) {
   if (!e.nome) continue;
   dvHtml += indRow(
-    e.nome,
+    AppCore.escapeHtml(e.nome),
     baseLabel(e.base),
     `<div class="ind-val pct">${fmtPct(e.valor)}</div>`
   );
@@ -266,10 +295,10 @@ for (const e of dvExtras) {
 document.getElementById('despVarBody').innerHTML = dvHtml;
 
 // ── Card 4: Despesas Fixas ────────────────────────────────────────────
-const despFixa = parseFloat(despesas.despFixa) || 0;
+const despFixa = AppCore.parseNum(despesas.despFixa);
 
 const mesesData = sazon.meses || {};
-const totalValorAnual = Object.values(mesesData).reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
+const totalValorAnual = Object.values(mesesData).reduce((s, m) => s + AppCore.parseNum(m.valor), 0);
 const fatMedioMensal  = totalValorAnual / 12;
 const despPct         = fatMedioMensal > 0 ? (despFixa / fatMedioMensal) * 100 : 0;
 
@@ -300,9 +329,9 @@ document.getElementById('despFixaBody').innerHTML = dfHtml;
 
 // ── Alertas ───────────────────────────────────────────────────────────
 const alertas = [];
-if (!lucroAlvo)  alertas.push('Lucro desejado não definido — acesse a tela <strong>Empresa</strong> para configurar.');
+if (!lucroDefinido)  alertas.push('Lucro desejado não definido — acesse a tela <strong>Empresa</strong> para configurar.');
 if (!despFixa)   alertas.push('Despesas fixas zeradas — verifique a tela <strong>Despesas</strong>.');
-if (!comissao?.valor && !tributo?.valor) alertas.push('Despesas variáveis não configuradas — acesse a tela <strong>Despesas</strong>.');
+if (!comissaoInformada && !tributoInformado) alertas.push('Despesas variáveis não configuradas — acesse a tela <strong>Despesas</strong>.');
 if (fatMedioMensal === 0) alertas.push('Diagnóstico de Sazonalidade não preenchido — os indicadores estarão incompletos na precificação.');
 
 const banner = document.getElementById('alertBanner');

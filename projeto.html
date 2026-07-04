@@ -76,19 +76,19 @@
   </div>
 
   <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Custos</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Despesas</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='sazonalidade.html'"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='indicadores.html'"><div class="sn">✓</div><div class="sl">Indicad.</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Indicad.</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="empresa-badge" id="empresaBadge">
@@ -106,37 +106,37 @@
     <form id="form" onsubmit="salvar(event)">
       <label class="fld">
         <span class="lbl">Nome do Projeto <span class="req">*</span></span>
-        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva">
-        <span class="err" id="errNome">Campo obrigatório</span>
+        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva" aria-required="true">
+        <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Quantidade de Módulos <span class="req">*</span></span>
         <div class="inwrap">
-          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1">
+          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1" aria-required="true">
           <span class="affix r">un</span>
         </div>
-        <span class="err" id="errModulos">Informe a quantidade</span>
+        <span class="err" id="errModulos" role="alert" aria-live="assertive">Informe a quantidade</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Potência do Sistema <span class="req">*</span></span>
         <div class="inwrap">
-          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01">
+          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01" aria-required="true">
           <span class="affix r">kWp</span>
         </div>
         <span class="hint">Potência total instalada em quilowatt-pico</span>
-        <span class="err" id="errKwp">Informe a potência</span>
+        <span class="err" id="errKwp" role="alert" aria-live="assertive">Informe a potência</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Custo KIT Distribuidora <span class="req">*</span></span>
         <div class="inwrap">
           <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="custo_kit" placeholder="0,00">
+          <input type="text" inputmode="decimal" id="custo_kit" placeholder="0,00" aria-required="true">
         </div>
         <span class="hint">Valor faturado pela distribuidora para este projeto</span>
-        <span class="err" id="errKit">Informe o custo do KIT</span>
+        <span class="err" id="errKit" role="alert" aria-live="assertive">Informe o custo do KIT</span>
       </label>
 
       <label class="fld">
@@ -154,15 +154,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
-const projetoAtual = JSON.parse(localStorage.getItem('projeto')||'null');
+const integrador = AppCore.safeParse('integrador', null);
+const projetoAtual = AppCore.safeParse('projeto', null);
 
 function init() {
   if(!integrador?.nome_empresa) {
@@ -191,9 +191,9 @@ function validar() {
   let ok=true;
   const campos=[
     {id:'nome_projeto',err:'errNome',check:v=>v.trim().length>1},
-    {id:'qtd_modulos',err:'errModulos',check:v=>parseFloat(v)>0},
+    {id:'qtd_modulos',err:'errModulos',check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;}},
     {id:'kwp_sistema',err:'errKwp',check:v=>parseFloat(v)>0},
-    {id:'custo_kit',err:'errKit',check:v=>!isNaN(parseFloat(v.replace(',','.')))},
+    {id:'custo_kit',err:'errKit',check:v=>v.trim().length>0 && AppCore.parseNum(v)>0},
   ];
   campos.forEach(c=>{
     const v=document.getElementById(c.id).value;
@@ -211,27 +211,40 @@ async function salvar(e) {
   const btn=document.getElementById('btnSalvar');
   btn.disabled=true; btn.textContent='Salvando…';
 
+  const valorVenda = AppCore.parseNum(document.getElementById('valor_venda').value) || null;
+
   const payload={
     integrador_id: integrador.id||null,
     nome_projeto: document.getElementById('nome_projeto').value.trim(),
-    quantidade_modulos: parseInt(document.getElementById('qtd_modulos').value),
+    quantidade_modulos: AppCore.parseNum(document.getElementById('qtd_modulos').value),
     kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
-    custo_kit: parseFloat(document.getElementById('custo_kit').value.replace(',','.')) || 0,
+    custo_kit: AppCore.parseNum(document.getElementById('custo_kit').value),
+    valor_venda: valorVenda,
   };
 
-  let data, error;
-  if (projetoAtual?.id) {
-    ({data,error} = await db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single());
-  } else {
-    ({data,error} = await db.from('projetos').insert(payload).select().single());
+  // Grava no localStorage independente do DB (id real do DB preservado quando vier).
+  const localId = projetoAtual?.id || AppCore.uuid();
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: localId, valor_venda: valorVenda}));
+
+  // Sync opcional com o DB.
+  let data = null, error = null;
+  if (db) {
+    if (projetoAtual?.id) {
+      ({data,error} = await AppCore.dbTry(db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single()));
+    } else {
+      ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
+    }
   }
 
   btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Analisar precificação →';
 
-  if(error){ alert('Erro ao salvar: '+error.message); return; }
+  if (error) { alert('Salvo localmente. Erro ao sincronizar com o servidor: '+error.message); }
 
-  const valorVenda = parseFloat(document.getElementById('valor_venda').value.replace(',','.')) || null;
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
+  // Preserva o id real do DB quando vier, sem sobrescrever com o local.
+  if (data) {
+    localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
+  }
+
   window.location.href='index.html';
 }
 
