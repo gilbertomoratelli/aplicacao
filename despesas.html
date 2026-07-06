@@ -112,19 +112,19 @@
   </div>
 
   <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Custos</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">3</div><div class="sl">Despesas</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='sazonalidade.html'"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">5</div><div class="sl">Indicad.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Projeto" onclick="location.href='projeto.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="empresa-badge">
@@ -136,13 +136,13 @@
   </div>
 
   <div class="card">
-    <h2 class="card-title" style="display:flex;align-items:center">Despesas Variáveis <button class="btn-help" onclick="abrirHelp('var')" title="O que são despesas variáveis?">?</button></h2>
+    <h2 class="card-title" style="display:flex;align-items:center">Despesas Variáveis <button class="btn-help" onclick="abrirHelp('var')" title="O que são despesas variáveis?" aria-label="Ajuda: o que são despesas variáveis">?</button></h2>
     <p class="card-sub">Configure as despesas que variam proporcionalmente ao volume de vendas.</p>
 
     <label class="fld">
       <span class="lbl">Comissão de vendas</span>
       <div class="inwrap">
-        <input type="number" step="0.1" min="0" id="comissao" placeholder="0,0">
+        <input type="text" inputmode="decimal" id="comissao" placeholder="0,0" oninput="marcarTocado('comissao')" onfocus="marcarTocado('comissao')">
         <span class="affix r">%</span>
       </div>
     </label>
@@ -154,7 +154,7 @@
     <label class="fld">
       <span class="lbl">Carga tributária média</span>
       <div class="inwrap">
-        <input type="number" step="0.1" min="0" id="tributo" placeholder="0,0">
+        <input type="text" inputmode="decimal" id="tributo" placeholder="0,0" oninput="marcarTocado('tributo')" onfocus="marcarTocado('tributo')">
         <span class="affix r">%</span>
       </div>
       <span class="hint">Ex.: alíquota efetiva do Simples Nacional ou regime de tributação da empresa</span>
@@ -171,14 +171,14 @@
   </div>
 
   <div class="card">
-    <h2 class="card-title" style="display:flex;align-items:center">Despesas Fixas <button class="btn-help" onclick="abrirHelp('fix')" title="O que são despesas fixas?">?</button></h2>
+    <h2 class="card-title" style="display:flex;align-items:center">Despesas Fixas <button class="btn-help" onclick="abrirHelp('fix')" title="O que são despesas fixas?" aria-label="Ajuda: o que são despesas fixas">?</button></h2>
     <p class="card-sub">Custos mensais independentes do volume de projetos.</p>
 
     <label class="fld">
       <span class="lbl">Despesa fixa mensal total</span>
       <div class="inwrap">
         <span class="affix l">R$</span>
-        <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00">
+        <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00" oninput="marcarTocado('despFixa')" onfocus="marcarTocado('despFixa')">
       </div>
       <span class="hint">Aluguel, equipe, software, pró-labore, etc.</span>
     </label>
@@ -191,18 +191,22 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+const integrador = AppCore.safeParse('integrador', null);
 
 let comissaoBase = 'total';
 let tributoBase  = 'servico';
 let extras = [];
+
+// Campos que o usuário tocou durante a sessão. Dados remotos (fetch async) não os sobrescrevem.
+const tocados = new Set();
+function marcarTocado(id) { tocados.add(id); }
 
 function init() {
   if (!integrador?.nome_empresa) {
@@ -215,11 +219,11 @@ function init() {
 }
 
 async function carregarDespesas() {
-  const local = JSON.parse(localStorage.getItem('despesas') || '{}');
+  const local = AppCore.safeParse('despesas', {});
   if (Object.keys(local).length) aplicarDespesas(local);
 
-  if (!integrador?.id) { syncBaseButtons(); return; }
-  const { data } = await db.from('integradores').select('despesas').eq('id', integrador.id).single();
+  if (!db || !integrador?.id) { syncBaseButtons(); return; }
+  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single());
   if (data?.despesas && Object.keys(data.despesas).length) {
     localStorage.setItem('despesas', JSON.stringify(data.despesas));
     aplicarDespesas(data.despesas);
@@ -229,16 +233,18 @@ async function carregarDespesas() {
 }
 
 function aplicarDespesas(d) {
-  if (d.comissao != null) {
+  if (d.comissao != null && !tocados.has('comissao')) {
     document.getElementById('comissao').value = d.comissao.valor ?? '';
     comissaoBase = d.comissao.base || 'total';
   }
-  if (d.tributo != null) {
+  if (d.tributo != null && !tocados.has('tributo')) {
     document.getElementById('tributo').value = d.tributo.valor ?? '';
     tributoBase = d.tributo.base || 'servico';
   }
-  extras = Array.isArray(d.extras) ? d.extras : [];
-  if (d.despFixa != null) {
+  if (!tocados.has('extras')) {
+    extras = Array.isArray(d.extras) ? d.extras : [];
+  }
+  if (d.despFixa != null && !tocados.has('despFixa')) {
     document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
   }
   syncBaseButtons();
@@ -246,6 +252,7 @@ function aplicarDespesas(d) {
 }
 
 function setBase(campo, val) {
+  marcarTocado(campo);
   if (campo === 'comissao') comissaoBase = val;
   else tributoBase = val;
   syncBaseButtons();
@@ -257,11 +264,13 @@ function syncBaseButtons() {
 }
 
 function trocarEmpresa() {
-  localStorage.removeItem('integrador');
+  ['integrador', 'despesas', 'configCustos', 'custosExtras', 'sazonalidade', 'projeto', 'precSolar']
+    .forEach(k => localStorage.removeItem(k));
   window.location.href = 'cadastro.html';
 }
 
 function adicionarExtra() {
+  marcarTocado('extras');
   extras.push({ nome: '', valor: 0, base: 'total' });
   renderExtras();
   const inputs = document.querySelectorAll('.extra-nome');
@@ -269,11 +278,13 @@ function adicionarExtra() {
 }
 
 function removerExtra(i) {
+  marcarTocado('extras');
   extras.splice(i, 1);
   renderExtras();
 }
 
 function toggleExtraBase(i) {
+  marcarTocado('extras');
   extras[i].base = extras[i].base === 'total' ? 'servico' : 'total';
   renderExtras();
 }
@@ -285,13 +296,13 @@ function renderExtras() {
     const div = document.createElement('div');
     div.className = 'extra-item';
     div.innerHTML =
-      `<input class="extra-nome" type="text" value="${ex.nome.replace(/"/g,'&quot;')}" placeholder="Nome da despesa" oninput="extras[${i}].nome=this.value">` +
+      `<input class="extra-nome" type="text" value="${AppCore.escapeHtml(ex.nome)}" placeholder="Nome da despesa" aria-label="Nome da despesa variável" oninput="marcarTocado('extras');extras[${i}].nome=this.value">` +
       `<div class="extra-pct-wrap">` +
-        `<input class="extra-pct" type="number" step="0.1" min="0" value="${ex.valor}" oninput="extras[${i}].valor=parseFloat(this.value)||0">` +
+        `<input class="extra-pct" type="text" inputmode="decimal" value="${ex.valor}" aria-label="Percentual da despesa variável" oninput="marcarTocado('extras');extras[${i}].valor=AppCore.parseNum(this.value)">` +
         `<span class="extra-unit">%</span>` +
       `</div>` +
-      `<button class="btn-extra-base${ex.base==='servico'?' on':''}" onclick="toggleExtraBase(${i})" title="Clique para alternar base de cálculo">${ex.base==='servico'?'Serviços':'Total'}</button>` +
-      `<button class="btn-remove-extra" onclick="removerExtra(${i})">×</button>`;
+      `<button class="btn-extra-base${ex.base==='servico'?' on':''}" onclick="toggleExtraBase(${i})" title="Clique para alternar base de cálculo" aria-label="Alternar base de cálculo">${ex.base==='servico'?'Serviços':'Total'}</button>` +
+      `<button class="btn-remove-extra" onclick="removerExtra(${i})" aria-label="Remover despesa">×</button>`;
     container.appendChild(div);
   });
 }
@@ -302,19 +313,24 @@ async function salvar(destino = 'sazonalidade.html') {
   btn.textContent = 'Salvando…';
 
   const payload = {
-    comissao: { valor: parseFloat(document.getElementById('comissao').value) || 0, base: comissaoBase },
-    tributo:  { valor: parseFloat(document.getElementById('tributo').value)  || 0, base: tributoBase  },
+    comissao: { valor: AppCore.parseNum(document.getElementById('comissao').value), base: comissaoBase },
+    tributo:  { valor: AppCore.parseNum(document.getElementById('tributo').value),  base: tributoBase  },
     extras:   extras.filter(e => e.nome.trim()),
-    despFixa: parseFloat(document.getElementById('despFixa').value.replace(',', '.')) || 0,
+    despFixa: AppCore.parseNum(document.getElementById('despFixa').value),
   };
 
+  // Grava no localStorage antes de qualquer I/O de rede: o avanço nunca depende do DB.
   localStorage.setItem('despesas', JSON.stringify(payload));
 
-  if (integrador?.id) {
-    await db.from('integradores').update({ despesas: payload }).eq('id', integrador.id);
+  try {
+    if (db && integrador?.id) {
+      await AppCore.dbTry(db.from('integradores').update({ despesas: payload }).eq('id', integrador.id));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar →';
+    window.location.href = destino;
   }
-
-  window.location.href = destino;
 }
 
 init();
@@ -324,11 +340,11 @@ function fecharHelp(tipo) { document.getElementById('modalHelp' + tipo).classLis
 </script>
 
 <!-- Modal: Despesas Variáveis -->
-<div class="modal-ov" id="modalHelpvar" onclick="if(event.target===this)fecharHelp('var')">
+<div class="modal-ov" id="modalHelpvar" role="dialog" aria-modal="true" aria-label="Ajuda: o que são despesas variáveis" onclick="if(event.target===this)fecharHelp('var')">
   <div class="modal-card">
     <div class="modal-head">
       <h3>O que são Despesas Variáveis?</h3>
-      <button class="btn-close" onclick="fecharHelp('var')">×</button>
+      <button class="btn-close" onclick="fecharHelp('var')" aria-label="Fechar">×</button>
     </div>
     <p class="help-body">Aquelas diretamente relacionadas ao faturamento — a despesa somente existe caso exista venda, caso contrário essa despesa não ocorre.</p>
     <div class="help-exemplos"><strong>Exemplos:</strong> Comissão sobre vendas, comissões de supervisores, impostos.</div>
@@ -337,11 +353,11 @@ function fecharHelp(tipo) { document.getElementById('modalHelp' + tipo).classLis
 </div>
 
 <!-- Modal: Despesas Fixas -->
-<div class="modal-ov" id="modalHelpfix" onclick="if(event.target===this)fecharHelp('fix')">
+<div class="modal-ov" id="modalHelpfix" role="dialog" aria-modal="true" aria-label="Ajuda: o que são despesas fixas" onclick="if(event.target===this)fecharHelp('fix')">
   <div class="modal-card">
     <div class="modal-head">
       <h3>O que são Despesas Fixas?</h3>
-      <button class="btn-close" onclick="fecharHelp('fix')">×</button>
+      <button class="btn-close" onclick="fecharHelp('fix')" aria-label="Fechar">×</button>
     </div>
     <p class="help-body">Aquelas que existem independentemente de existir faturamento. Mesmo que o valor seja flexível de um mês para o outro, informe a média mensal considerando uma janela de pelo menos 6 meses.</p>
     <div class="help-exemplos"><strong>Exemplos:</strong> Folha de pagamento e seus encargos, aluguel, consultorias, combustível, entre outros.</div>
