@@ -866,6 +866,14 @@ function atualizarAuthUI(){
 }
 function abrirRelatorio(){
   if(!authUser){window.location.href='login.html?returnTo=relatorio.html';return;}
+  const sazonLS=JSON.parse(localStorage.getItem('sazonalidade')||'{}');
+  const V12=sazonLS.meses
+    ?Object.values(sazonLS.meses).reduce((s,m)=>s+(parseFloat(m.projetos)||0),0)
+    :(lastCalc?.d?.qtd||1)*12;
+  sessionStorage.setItem('relatorioState',JSON.stringify({
+    lastCalc,comissaoBase,tributoBase,despesasExtras,despFixaPct,V12,
+    meses:sazonLS.meses||null
+  }));
   window.location.href='relatorio.html';
 }
 async function signOut(){
