@@ -73,6 +73,24 @@
   .cmp-table .neg{color:var(--negative)}
   .cmp-table .mu{color:var(--muted)}
 
+  /* Cards narrativos */
+  .narr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .narr-card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;break-inside:avoid;page-break-inside:avoid}
+  .narr-card.rec{border:2px solid var(--positive)}
+  .narr-card.alerta{border-color:#D9663B}
+  .narr-card.inviavel{border-color:var(--negative)}
+  .narr-badge{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;padding:3px 9px;border-radius:10px}
+  .narr-badge.green{background:#E9F7EF;color:var(--positive)}
+  .narr-badge.orange{background:#FFF3E0;color:#C05A00}
+  .narr-badge.red{background:#FDECEA;color:var(--negative)}
+  .narr-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+  .narr-number{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1.1}
+  .narr-sub{font-size:11px;color:var(--muted)}
+  .narr-text{font-size:12px;color:var(--muted);line-height:1.6;flex:1}
+  .narr-sep{height:1px;background:var(--hair);margin:2px 0}
+  .narr-meta{font-size:11px;color:var(--muted)}
+  @media(max-width:640px){.narr-grid{grid-template-columns:1fr}}
+
   /* Gráfico */
   .chart-wrap{overflow-x:auto;margin-bottom:12px}
   .chart-legend{display:flex;gap:18px;font-size:12px;flex-wrap:wrap;color:var(--muted)}
@@ -170,6 +188,7 @@ function renderRelatorio(result, d, precoSugerido, integ, proj, authUser, cbBase
     secHeader(integ, proj, authUser),
     secIdentificacao(integ, proj),
     secDiagnostico(result, d, precoSugerido, V12),
+    secNarrativa(result, d, precoSugerido, V12),
     secComparativa(result, d),
     secChart(result),
     secPremissas(d, cbBase, tbBase, V12, extras),
@@ -289,14 +308,14 @@ function secComparativa(result, d) {
   const { atual, sugerido, necessario, FixasAno } = result;
 
   const cols = [
-    {h:'Atual',      sub:`${num1(atual.totalProj)} proj/ano ao preço atual`,              sc:atual},
-    {h:'Sugerido',   sub:sugerido  ?`${num1(sugerido.totalProj)} proj/ano com preço ajustado`:'',  sc:sugerido},
-    {h:'Necessário', sub:necessario?`${num1(necessario.VnecProj||0)} proj/ano ao preço atual`:'',  sc:necessario},
+    {h:'Atual',      sub:`${num0(Math.ceil(atual.totalProj))} proj/ano ao preço atual`,              sc:atual},
+    {h:'Sugerido',   sub:sugerido  ?`${num0(Math.ceil(sugerido.totalProj))} proj/ano com preço ajustado`:'',  sc:sugerido},
+    {h:'Necessário', sub:necessario?`${num0(Math.ceil(necessario.VnecProj||0))} proj/ano ao preço atual`:'',  sc:necessario},
   ];
 
   const rows = [
     {lbl:'Preço de venda',         fn:sc=>brl(sc.ticket)},
-    {lbl:'Volume anual',           fn:sc=>num1(sc.nome==='necessario'&&sc.VnecProj?sc.VnecProj:sc.totalProj)+' proj'},
+    {lbl:'Volume anual',           fn:sc=>num0(sc.nome==='necessario'&&sc.VnecProj?Math.ceil(sc.VnecProj):Math.ceil(sc.totalProj))+' proj'},
     {lbl:'Faturamento anual',      fn:sc=>brl(sc.fatAnual),   fw:true},
     {lbl:'MC anual',               fn:sc=>brl(sc.mcAnual)},
     {lbl:'Margem de contribuição', fn:sc=>pct(sc.mcPct)},
@@ -322,23 +341,140 @@ function secComparativa(result, d) {
     }).join('')}
   </tr>`).join('');
 
-  const nota = necessario
-    ? `<p style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6">
-        <strong>Cenário Necessário:</strong> com o preço atual (${brl(d.ticket)}) e MC de ${pct(atual.mcPct)},
-        são necessários ${num1(necessario.VnecProj)} projetos/ano (${brl(necessario.VnecFat)}/ano)
-        para atingir ${d.lucroAlvo}% de lucro líquido — premissa: despesas fixas constantes.
-      </p>`
-    : `<p style="font-size:11px;color:var(--muted);margin-top:14px">
-        Cenário Necessário indisponível: margem de contribuição atual (${pct(atual.mcPct)})
-        não supera o lucro alvo (${d.lucroAlvo}%) em margem suficiente.
-      </p>`;
-
   return `<div class="sec">
     <div class="sec-title">Projeção Anual — 3 Cenários</div>
     <div class="cmp-wrap">
       <table class="cmp-table"><thead>${head}</thead><tbody>${body}</tbody></table>
     </div>
-    ${nota}
+  </div>`;
+}
+
+// ── Helpers cards narrativos ──────────────────────────────────────────
+function brlAbrev(v) {
+  if (!isFinite(v)) return '—';
+  const abs = Math.abs(v), neg = v < 0;
+  const pre = neg ? '−R$ ' : 'R$ ';
+  if (abs >= 1e6) return pre + (abs/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' mi';
+  if (abs >= 1e3) return pre + Math.round(abs/1e3).toLocaleString('pt-BR') + ' mil';
+  return pre + abs.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ── Seção 2b: Cards narrativos ────────────────────────────────────────
+function secNarrativa(result, d, precoSugerido, V12) {
+  const { atual, sugerido, necessario } = result;
+  return `<div class="narr-grid">
+    ${_cardAtual(atual, d)}
+    ${_cardSugerido(sugerido, d, precoSugerido, V12)}
+    ${_cardNecessario(atual, necessario, d, V12)}
+  </div>`;
+}
+
+function _cardAtual(atual, d) {
+  const meta      = atual.fatAnual * (d.lucroAlvo / 100);
+  const lucrativo = atual.lucroAnual >= 0;
+  const acimaMeta = atual.lucroAnual >= meta - 0.01;
+  const numColor  = lucrativo ? 'var(--positive)' : 'var(--negative)';
+
+  let texto;
+  if (atual.lucroAnual < 0) {
+    texto = `A operação encerra o ano com <strong>prejuízo de ${brlAbrev(Math.abs(atual.lucroAnual))}</strong>. A receita atual não cobre os custos totais.`;
+  } else if (!acimaMeta) {
+    texto = `A operação é lucrativa, mas encerra <strong>${brlAbrev(meta - atual.lucroAnual)} abaixo da meta</strong> de ${d.lucroAlvo}% de lucro líquido.`;
+  } else {
+    texto = `A precificação atual <strong>supera a meta</strong> de ${d.lucroAlvo}% — operação saudável.`;
+  }
+
+  const peTexto = atual.mePE
+    ? `Equilíbrio em <strong>${MESES[atual.mePE-1]} (mês ${atual.mePE})</strong>`
+    : '<strong>Não atinge equilíbrio</strong> no ano corrente';
+
+  return `<div class="narr-card">
+    <div class="narr-title">Situação atual</div>
+    <div class="narr-number" style="color:${numColor}">${brlAbrev(atual.lucroAnual)}</div>
+    <div class="narr-sub">${pct(atual.lucroPct)} de lucro líquido</div>
+    <div class="narr-sep"></div>
+    <div class="narr-text">${texto}</div>
+    <div class="narr-meta">${peTexto}</div>
+  </div>`;
+}
+
+function _cardSugerido(sugerido, d, precoSugerido, V12) {
+  if (!sugerido) {
+    return `<div class="narr-card rec">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div class="narr-title">Preço sugerido</div>
+        <div class="narr-badge green">Recomendado</div>
+      </div>
+      <div class="narr-number" style="color:var(--muted)">—</div>
+      <div class="narr-sep"></div>
+      <div class="narr-text">Não foi possível calcular o preço sugerido. Verifique a meta de lucro e as despesas variáveis.</div>
+    </div>`;
+  }
+
+  const deltaPct  = (precoSugerido - d.ticket) / d.ticket * 100;
+  const deltaStr  = (deltaPct >= 0 ? '+' : '−') + Math.abs(deltaPct).toFixed(1).replace('.',',') + '%';
+
+  const peTexto = sugerido.mePE
+    ? `Equilíbrio em <strong>${MESES[sugerido.mePE-1]} (mês ${sugerido.mePE})</strong>`
+    : 'Equilíbrio não atingido no ano';
+
+  return `<div class="narr-card rec">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div class="narr-title">Preço sugerido (${deltaStr})</div>
+      <div class="narr-badge green">Recomendado</div>
+    </div>
+    <div class="narr-number" style="color:var(--positive)">${brlAbrev(sugerido.lucroAnual)}</div>
+    <div class="narr-sub">${pct(sugerido.lucroPct)} de lucro líquido</div>
+    <div class="narr-sep"></div>
+    <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> com o mesmo volume (${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano) — meta de ${d.lucroAlvo}% atingida. Premissa: manutenção do volume de vendas.</div>
+    <div class="narr-meta">${peTexto}</div>
+  </div>`;
+}
+
+function _cardNecessario(atual, necessario, d, V12) {
+  if (atual.mcPct <= 0) {
+    return `<div class="narr-card inviavel">
+      <div class="narr-badge red">Inviável</div>
+      <div class="narr-title" style="margin-top:6px">Volume necessário</div>
+      <div class="narr-number" style="color:var(--negative)">—</div>
+      <div class="narr-sep"></div>
+      <div class="narr-text">Com margem de contribuição negativa, nenhum aumento de volume atinge a meta. <strong>A correção passa pelo preço</strong> — revise os custos ou ajuste o ticket para obter MC positiva.</div>
+    </div>`;
+  }
+
+  if (!necessario) {
+    return `<div class="narr-card inviavel">
+      <div class="narr-badge orange">Indisponível</div>
+      <div class="narr-title" style="margin-top:6px">Volume necessário</div>
+      <div class="narr-number" style="color:var(--negative)">—</div>
+      <div class="narr-sep"></div>
+      <div class="narr-text">A MC atual (${pct(atual.mcPct)}) não supera o lucro alvo (${d.lucroAlvo}%) com margem suficiente. <strong>A correção passa pelo preço.</strong></div>
+    </div>`;
+  }
+
+  const projNec     = Math.ceil(necessario.VnecProj);
+  const deltaProj   = projNec - Math.ceil(V12);
+  const deltaVolPct = (necessario.VnecProj - V12) / V12 * 100;
+  const projMesAdic = Math.max(0, Math.ceil((necessario.VnecProj - V12) / 12));
+  const isAlerta    = deltaVolPct > 30;
+  const numStr      = (deltaVolPct >= 0 ? '+' : '−') + Math.abs(deltaVolPct).toFixed(1).replace('.',',') + '%';
+
+  const alerta = isAlerta
+    ? '<br><strong>Atenção:</strong> esse aumento de volume pode exigir ampliação de equipe ou infraestrutura antes de ser executado.'
+    : '';
+
+  const peTexto = necessario.mePE
+    ? `Equilíbrio em <strong>${MESES[necessario.mePE-1]} (mês ${necessario.mePE})</strong>`
+    : 'Equilíbrio não atingido no ano';
+
+  return `<div class="narr-card${isAlerta ? ' alerta' : ''}">
+    ${isAlerta ? '<div class="narr-badge orange">Atenção — capacidade</div>' : ''}
+    <div class="narr-title"${isAlerta ? ' style="margin-top:6px"' : ''}>Volume necessário</div>
+    <div class="narr-number" style="color:var(--teal)">${numStr}</div>
+    <div class="narr-sub">${projNec.toLocaleString('pt-BR')} proj/ano · +${projMesAdic.toLocaleString('pt-BR')}/mês</div>
+    <div class="narr-sep"></div>
+    <div class="narr-text">+${deltaProj.toLocaleString('pt-BR')} projetos adicionais ao preço atual (${brl(d.ticket)}), com despesas fixas constantes, para atingir ${d.lucroAlvo}% de lucro.${alerta}</div>
+    <div class="narr-meta">${peTexto}</div>
   </div>`;
 }
 
