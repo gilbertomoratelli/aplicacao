@@ -494,6 +494,7 @@ let comissaoBase="total";
 let tributoBase="servico";
 let despesasExtras=[];
 let despFixaPct=0;
+let V12_saz=0;
 let lastCalc=null;
 let authUser=null;
 
@@ -562,7 +563,10 @@ function render(){
   const fatAtual=d.ticket*d.qtd;
   const dfPct=despFixaPct>0?despFixaPct/100:(fatAtual>0?d.despFixa/fatAtual:Infinity);
   const denom=1-baseVar-dfPct-d.lucroAlvo/100;
-  const precoSugerido=(fatAtual>0&&denom>0)?(d.cdt-abat)/denom:Infinity;
+  const V12eff=V12_saz>0?V12_saz:(d.qtd*12);
+  const fixUnit=V12eff>0?(d.despFixa*12)/V12eff:Infinity;
+  const denomSug=1-baseVar-d.lucroAlvo/100;
+  const precoSugerido=(isFinite(fixUnit)&&denomSug>0)?(fixUnit+d.cdt-abat)/denomSug:Infinity;
 
   const a=cenario(d.ticket,d);
   const sug=isFinite(precoSugerido)?cenario(precoSugerido,d):null;
@@ -996,6 +1000,7 @@ function aplicarSazonalidade(meses) {
   const despesas = JSON.parse(localStorage.getItem('despesas') || '{}');
   const despFixaR = parseFloat(despesas.despFixa) || 0;
   despFixaPct = fatMedio > 0 ? (despFixaR / fatMedio) * 100 : 0;
+  V12_saz = totalProjetos;
 
   if (ticketMedio > 0) {
     document.getElementById('ticket').value = Number(ticketMedio).toFixed(2).replace('.', ',');
