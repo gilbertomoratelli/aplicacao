@@ -52,6 +52,7 @@
   .v-price{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1}
   .v-arrow{font-size:22px;color:var(--muted);padding:0 4px}
   .v-msg{font-size:13px;color:var(--muted);line-height:1.5}
+  .v-sub{font-size:12px;color:var(--teal);background:#E9F7EF;border:1px solid #B7E5C9;border-radius:8px;padding:9px 14px;margin-top:8px;line-height:1.6}
 
   /* KPIs */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
@@ -72,6 +73,10 @@
   .cmp-table .pos{color:var(--positive)}
   .cmp-table .neg{color:var(--negative)}
   .cmp-table .mu{color:var(--muted)}
+  .cmp-badge{display:inline-block;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:2px 7px;border-radius:8px;margin-top:5px;white-space:nowrap}
+  .cmp-badge.green{background:#E9F7EF;color:var(--positive)}
+  .cmp-badge.orange{background:#FFF3E0;color:#C05A00}
+  .cmp-table th.sug-th{background:#F0FAF5;border-top:3px solid var(--positive)}
 
   /* Cards narrativos */
   .narr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -279,6 +284,7 @@ function secDiagnostico(result, d, precoSugerido, V12) {
       </div>
     </div>
     <p class="v-msg">${msg}</p>
+    ${valido && isAbaixo ? `<p class="v-sub">Ao aumentar seu ticket médio em <strong>${brl(precoSugerido - d.ticket)}</strong>, você atinge a meta de <strong>${d.lucroAlvo}%</strong> de lucro sem precisar aumentar sua equipe de vendas ou o volume de instalações.</p>` : ''}
   </div>`;
 
   const lucrativo = atual.lucroAnual >= 0;
@@ -327,8 +333,13 @@ function secComparativa(result, d) {
     {lbl:'Mês de equilíbrio',      fn:sc=>sc.mePE?MESES[sc.mePE-1]+' (mês '+sc.mePE+')':'—'},
   ];
 
-  const head = `<tr><th></th>${cols.map(c=>`<th${c.h==='Sugerido'?' style="background:#F0FAF5"':''}>
+  const cmpBadge = {
+    'Sugerido':   `<div><span class="cmp-badge green">Menor Esforço / Maior Retorno</span></div>`,
+    'Necessário': `<div><span class="cmp-badge orange">Maior Risco Operacional</span></div>`,
+  };
+  const head = `<tr><th></th>${cols.map(c=>`<th${c.h==='Sugerido'?' class="sug-th"':''}>
     ${c.h}<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:2px;white-space:normal">${c.sub}</div>
+    ${cmpBadge[c.h]||''}
   </th>`).join('')}</tr>`;
 
   const body = rows.map(r=>`<tr>
@@ -515,15 +526,22 @@ function secChart(result) {
 
   const yFix = yOf(FixasAno).toFixed(1);
   const fixLine = `<line x1="${PL}" y1="${yFix}" x2="${W-PR}" y2="${yFix}" stroke="#B23A2E" stroke-width="1.5" stroke-dasharray="6,4"/>
-    <text x="${W-PR-2}" y="${parseFloat(yFix)-5}" text-anchor="end" font-size="9" fill="#B23A2E" font-weight="700">Fixas</text>`;
+    <text x="${W-PR-2}" y="${parseFloat(yFix)-5}" text-anchor="end" font-size="9" fill="#B23A2E" font-weight="700">Custo Fixo Total</text>`;
 
   const zeroLine = minY<0 ? `<line x1="${PL}" y1="${yOf(0).toFixed(1)}" x2="${W-PR}" y2="${yOf(0).toFixed(1)}" stroke="#C0D9CC" stroke-width="1"/>` : '';
 
   let markers='';
   if(atual.mePE!==null)
     markers+=`<circle cx="${xOf(atual.mePE-1).toFixed(1)}" cy="${yFix}" r="5" fill="#183029" stroke="#fff" stroke-width="1.5"/>`;
-  if(sugerido?.mePE!=null)
-    markers+=`<circle cx="${xOf(sugerido.mePE-1).toFixed(1)}" cy="${yFix}" r="5" fill="#00B140" stroke="#fff" stroke-width="1.5"/>`;
+  if(sugerido?.mePE!=null){
+    const xSug = xOf(sugerido.mePE-1);
+    const yFixN = parseFloat(yFix);
+    const anchor = xSug > W*0.7 ? 'end' : 'middle';
+    const dx = anchor==='end' ? -8 : 0;
+    markers+=`<circle cx="${xSug.toFixed(1)}" cy="${yFix}" r="5" fill="#00B140" stroke="#fff" stroke-width="1.5"/>
+      <line x1="${xSug.toFixed(1)}" y1="${(yFixN-7).toFixed(1)}" x2="${(xSug+dx).toFixed(1)}" y2="${(yFixN-20).toFixed(1)}" stroke="#00B140" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="${(xSug+dx).toFixed(1)}" y="${(yFixN-24).toFixed(1)}" text-anchor="${anchor}" font-size="8.5" fill="#00B140" font-weight="700">Início do Lucro</text>`;
+  }
 
   const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
     ${grid}${zeroLine}${xLabels}${fixLine}
@@ -537,7 +555,7 @@ function secChart(result) {
     ${sugerido?`<div class="leg-item"><div class="leg-line" style="background:#00B140"></div>MC acumulada — Sugerido</div>`:''}
     <div class="leg-item">
       <div style="width:22px;height:3px;background:repeating-linear-gradient(90deg,#B23A2E 0,#B23A2E 6px,transparent 6px,transparent 10px)"></div>
-      Despesas fixas anuais (${brl(FixasAno)})
+      Custo Fixo Total (${brl(FixasAno)})
     </div>
     <div class="leg-item"><div class="leg-dot" style="background:#183029"></div>Mês de equilíbrio</div>
   </div>`;
@@ -560,7 +578,7 @@ function secPremissas(d, cbBase, tbBase, V12, extras) {
     {k:'Outras despesas var.',    v:d.outras>0?d.outras+'%':'Não aplicável'},
     {k:'Despesas fixas / mês',    v:brl(d.despFixa)},
     {k:'Lucro alvo',              v:d.lucroAlvo+'%'},
-    {k:'Volume anual (V12)',      v:num1(V12)+' projetos'},
+    {k:'Projetos por ano',        v:num0(Math.ceil(V12))+' projetos'},
     ...(extras?.length?[{k:'Despesas extras',v:extras.map(e=>(e.nome||'Extra')+' '+e.valor+'%').join(' · ')}]:[]),
   ];
   return `<div class="sec">
