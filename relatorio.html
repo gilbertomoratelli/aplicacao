@@ -118,7 +118,44 @@
     .kpis{grid-template-columns:1fr 1fr}
     .capa-grid{grid-template-columns:1fr 1fr}
     .prem-grid{grid-template-columns:1fr 1fr}
+    .opt-grid{grid-template-columns:1fr}
+    .elast-block{flex-direction:column}
   }
+
+  /* P4 — KPI tip */
+  .kpi-tip{font-size:10px;color:var(--muted);font-style:italic;margin-top:7px;padding-top:7px;border-top:1px solid var(--hair);line-height:1.5}
+
+  /* P1 — Lucro adicional */
+  .narr-delta{background:#E9F7EF;border-radius:8px;padding:10px 12px;margin:4px 0}
+  .narr-delta-num{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--positive);display:block;line-height:1.1;margin-bottom:3px}
+
+  /* P2 — Elasticidade */
+  .elast-block{background:#F0FAF5;border:1px solid #B7E5C9;border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;margin-top:12px}
+  .elast-icon{font-size:14px;font-weight:900;color:var(--teal);flex-shrink:0;width:28px;height:28px;background:#C6E9D6;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .elast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:6px}
+  .elast-body{font-size:12px;color:var(--teal);line-height:1.7}
+  .elast-alert{color:var(--negative);font-weight:700}
+
+  /* P5 — Recomendações */
+  .rec-intro{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  .opt-card{border:1px solid var(--hair);border-radius:10px;padding:16px}
+  .opt-a{border-top:3px solid var(--teal)}
+  .opt-b{border-top:3px solid var(--teal-accent)}
+  .opt-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+  .opt-title{font-size:13px;font-weight:700;margin-bottom:8px}
+  .opt-text{font-size:12px;color:var(--muted);line-height:1.6}
+  .opt-nota{font-size:11px;color:var(--negative);margin-top:8px;font-style:italic;line-height:1.5}
+  .impl-block{border:1px solid var(--hair);border-radius:10px;padding:14px 16px;margin-bottom:16px;background:#FAFCFB}
+  .impl-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px}
+  .impl-list{margin:0 0 0 18px;padding:0}
+  .impl-list li{font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.5}
+  .cta-row{display:flex;gap:10px;flex-wrap:wrap;padding-top:4px}
+  .cta-btn-primary{display:inline-flex;align-items:center;padding:10px 20px;background:var(--solar);color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;font-family:var(--sans)}
+  .cta-btn-primary:hover{opacity:.9}
+  .cta-btn-secondary{display:inline-flex;align-items:center;padding:10px 18px;background:var(--surface);color:var(--teal);border:1px solid var(--teal);border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;font-family:var(--sans)}
+  .cta-btn-secondary:hover{background:#E9F7EF}
+
   @media print{
     .rpt-actions{display:none!important}
     body{background:#fff}
@@ -156,6 +193,9 @@ const num1  = v => isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits
 const num0  = v => isFinite(v) ? Math.round(v).toLocaleString('pt-BR') : '—';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const CTA_URL_ANALISE  = 'index.html';
+const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
 
 (async () => {
   // 1. Auth
@@ -197,6 +237,7 @@ function renderRelatorio(result, d, precoSugerido, integ, proj, authUser, cbBase
     secComparativa(result, d),
     secChart(result),
     secPremissas(d, cbBase, tbBase, V12, extras),
+    secRecomendacoes(result, d, precoSugerido, V12),
     secFooter(authUser),
   ].join('');
 
@@ -288,13 +329,20 @@ function secDiagnostico(result, d, precoSugerido, V12) {
   </div>`;
 
   const lucrativo = atual.lucroAnual >= 0;
+  const mcUnitAtual = atual.mcPct * atual.ticket;
   const kpis = [
-    {k:'Faturamento anual',       v:brl(atual.fatAnual),   s:`${num1(V12)} proj × ${brl(d.ticket)}`, c:'var(--ink)'},
-    {k:'Margem de contribuição',  v:pct(atual.mcPct),      s:brl(atual.mcAnual)+' no ano',           c:'var(--positive)'},
+    {k:'Faturamento anual',      v:brl(atual.fatAnual),  s:`${num0(Math.ceil(V12))} proj × ${brl(d.ticket)}`, c:'var(--ink)'},
+    {k:'Margem de contribuição', v:pct(atual.mcPct),     s:brl(atual.mcAnual)+' no ano',
+     tip:`De cada venda, sobram <strong>${brl(mcUnitAtual)}</strong> para cobrir as despesas fixas — só depois disso começa o lucro.`,
+     c:'var(--positive)'},
     {k:lucrativo?'Lucro anual':'Prejuízo anual',
-     v:brl(Math.abs(atual.lucroAnual)),                    s:pct(atual.lucroPct)+' do faturamento',  c:lucrativo?'var(--positive)':'var(--negative)'},
+     v:brl(Math.abs(atual.lucroAnual)),                  s:pct(atual.lucroPct)+' do faturamento',
+     c:lucrativo?'var(--positive)':'var(--negative)'},
     {k:'Equilíbrio financeiro',
-     v:atual.mePE ? MESES[atual.mePE-1] : 'Não atingido', s:atual.mePE?'Mês '+atual.mePE+' do ano':'MC anual insuficiente',
+     v:atual.mePE ? MESES[atual.mePE-1] : 'Não atingido',
+     s: atual.mePE
+       ? `A partir de ${MESES[atual.mePE-1]}, as vendas acumuladas já cobriram todas as despesas fixas do ano — tudo que entra depois vira lucro.`
+       : 'A margem de contribuição acumulada não cobre as despesas fixas do ano.',
      c:atual.mePE?'var(--teal)':'var(--muted)'},
   ];
 
@@ -303,6 +351,7 @@ function secDiagnostico(result, d, precoSugerido, V12) {
       <div class="k">${x.k}</div>
       <div class="v">${x.v}</div>
       <div class="s">${x.s}</div>
+      ${x.tip?`<div class="kpi-tip">${x.tip}</div>`:''}
     </div>`).join('')}
   </div>`;
 
@@ -331,11 +380,16 @@ function secComparativa(result, d) {
     {lbl:'Lucro %',                fn:sc=>pct(sc.lucroPct),
      cls:sc=>sc.lucroPct>=0?'pos':'neg'},
     {lbl:'Mês de equilíbrio',      fn:sc=>sc.mePE?MESES[sc.mePE-1]+' (mês '+sc.mePE+')':'—'},
+    {lbl:'Depende de crescimento?',
+     fn: sc => sc.nome==='necessario'&&pctVolNec!==null
+       ? `Sim <em style="font-size:10px;color:var(--muted)">(+${pctVolNec}%)</em>`
+       : '<span style="color:var(--positive)">Não</span>'},
   ];
 
+  const pctVolNec = necessario ? Math.round((necessario.VnecProj / atual.totalProj - 1) * 100) : null;
   const cmpBadge = {
     'Sugerido':   `<div><span class="cmp-badge green">Menor Esforço / Maior Retorno</span></div>`,
-    'Necessário': `<div><span class="cmp-badge orange">Maior Risco Operacional</span></div>`,
+    'Necessário': `<div><span class="cmp-badge orange">Depende de Crescimento</span></div>`,
   };
   const head = `<tr><th></th>${cols.map(c=>`<th${c.h==='Sugerido'?' class="sug-th"':''}>
     ${c.h}<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:2px;white-space:normal">${c.sub}</div>
@@ -375,8 +429,48 @@ function secNarrativa(result, d, precoSugerido, V12) {
   const { atual, sugerido, necessario } = result;
   return `<div class="narr-grid">
     ${_cardAtual(atual, d)}
-    ${_cardSugerido(sugerido, d, precoSugerido, V12)}
+    ${_cardSugerido(sugerido, atual, d, precoSugerido, V12)}
     ${_cardNecessario(atual, necessario, d, V12)}
+  </div>
+  ${sugerido ? _blocoElasticidade(atual, sugerido, V12) : ''}`;
+}
+
+function _blocoElasticidade(atual, sugerido, V12) {
+  const mcUnitSugerido = sugerido.mcPct * sugerido.ticket;
+  if (mcUnitSugerido <= 0) return '';
+
+  const prejuizoAtual  = atual.lucroAnual < 0;
+  const mcUnitAtual    = atual.mcPct * atual.ticket;
+  const fixasAno       = atual.mcAnual - atual.lucroAnual;
+
+  let volumeMinimo, perdaToleravel, projetosPerdiveis, texto;
+
+  if (prejuizoAtual) {
+    volumeMinimo      = fixasAno / mcUnitSugerido;
+    perdaToleravel    = 1 - volumeMinimo / V12;
+    projetosPerdiveis = Math.floor(Math.max(0, V12 - volumeMinimo));
+    const perdaPct    = Math.max(0, (perdaToleravel * 100)).toFixed(0);
+    texto = `Com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong> em vez de <strong>${brl(mcUnitAtual)}</strong>. Mesmo perdendo até <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong>, a operação já sai do prejuízo — o reajuste por si só já melhora o resultado independentemente do volume.`;
+  } else {
+    volumeMinimo      = atual.mcAnual / mcUnitSugerido;
+    perdaToleravel    = 1 - volumeMinimo / V12;
+    projetosPerdiveis = Math.floor(Math.max(0, V12 - volumeMinimo));
+    const perdaPct    = (perdaToleravel * 100).toFixed(0);
+    const umEmCadaN   = perdaToleravel > 0 ? Math.round(1 / perdaToleravel) : 0;
+
+    if (perdaToleravel < 0.03) {
+      texto = `<span class="elast-alert">Atenção:</span> com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong>. A margem de segurança é pequena — a operação suporta perder apenas <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong> sem ficar abaixo do resultado atual. <strong>A retenção de clientes no período de ajuste é crítica.</strong>`;
+    } else {
+      texto = `Com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong> em vez de <strong>${brl(mcUnitAtual)}</strong>. Isso significa que a operação pode perder até <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos no ano)</strong> e ainda assim lucrar o mesmo que hoje. Na prática: mesmo perdendo cerca de 1 em cada <strong>${umEmCadaN}</strong> vendas por causa do reajuste, você não fica pior do que está.`;
+    }
+  }
+
+  return `<div class="elast-block">
+    <div class="elast-icon">?</div>
+    <div>
+      <div class="elast-title">E se eu perder vendas com o aumento?</div>
+      <div class="elast-body">${texto}</div>
+    </div>
   </div>`;
 }
 
@@ -409,7 +503,7 @@ function _cardAtual(atual, d) {
   </div>`;
 }
 
-function _cardSugerido(sugerido, d, precoSugerido, V12) {
+function _cardSugerido(sugerido, atual, d, precoSugerido, V12) {
   if (!sugerido) {
     return `<div class="narr-card rec">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
@@ -422,8 +516,9 @@ function _cardSugerido(sugerido, d, precoSugerido, V12) {
     </div>`;
   }
 
-  const deltaPct  = (precoSugerido - d.ticket) / d.ticket * 100;
-  const deltaStr  = (deltaPct >= 0 ? '+' : '−') + Math.abs(deltaPct).toFixed(1).replace('.',',') + '%';
+  const deltaPct      = (precoSugerido - d.ticket) / d.ticket * 100;
+  const deltaStr      = (deltaPct >= 0 ? '+' : '−') + Math.abs(deltaPct).toFixed(1).replace('.',',') + '%';
+  const lucroAdicional = sugerido.lucroAnual - atual.lucroAnual;
 
   const peTexto = sugerido.mePE
     ? `Equilíbrio em <strong>${MESES[sugerido.mePE-1]} (mês ${sugerido.mePE})</strong>`
@@ -434,10 +529,14 @@ function _cardSugerido(sugerido, d, precoSugerido, V12) {
       <div class="narr-title">Preço sugerido (${deltaStr})</div>
       <div class="narr-badge green">Recomendado</div>
     </div>
-    <div class="narr-number" style="color:var(--positive)">${brlAbrev(sugerido.lucroAnual)}</div>
+    <div class="narr-delta">
+      <span class="narr-delta-num">+${brlAbrev(lucroAdicional)}</span>
+      de lucro por ano com o mesmo volume de vendas. Reajuste de <strong>${deltaStr}</strong> no ticket — sem contratar, sem vender mais, sem aumentar despesa fixa.
+    </div>
+    <div class="narr-number" style="color:var(--positive);margin-top:2px">${brlAbrev(sugerido.lucroAnual)}</div>
     <div class="narr-sub">${pct(sugerido.lucroPct)} de lucro líquido</div>
     <div class="narr-sep"></div>
-    <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> com o mesmo volume (${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano) — meta de ${d.lucroAlvo}% atingida. Premissa: manutenção do volume de vendas.</div>
+    <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> mantendo ${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano — meta de ${d.lucroAlvo}% atingida.</div>
     <div class="narr-meta">${peTexto}</div>
   </div>`;
 }
@@ -469,22 +568,21 @@ function _cardNecessario(atual, necessario, d, V12) {
   const projMesAdic = Math.max(0, Math.ceil((necessario.VnecProj - V12) / 12));
   const isAlerta    = deltaVolPct > 30;
   const numStr      = (deltaVolPct >= 0 ? '+' : '−') + Math.abs(deltaVolPct).toFixed(1).replace('.',',') + '%';
-
-  const alerta = isAlerta
-    ? '<br><strong>Atenção:</strong> esse aumento de volume pode exigir ampliação de equipe ou infraestrutura antes de ser executado.'
-    : '';
+  const pctVolStr   = Math.round(deltaVolPct);
 
   const peTexto = necessario.mePE
     ? `Equilíbrio em <strong>${MESES[necessario.mePE-1]} (mês ${necessario.mePE})</strong>`
     : 'Equilíbrio não atingido no ano';
 
+  const textoExpl = `Este cenário lucra mais no papel, mas exige <strong>+${deltaProj.toLocaleString('pt-BR')} projetos (${pctVolStr}% a mais)</strong> com a premissa de despesas fixas constantes — o que raramente se sustenta: mais volume tende a exigir mais equipe, mais capital de giro e mais investimento em captação. O cenário Sugerido entrega a meta de ${d.lucroAlvo}% sem depender de nenhum crescimento.`;
+
   return `<div class="narr-card${isAlerta ? ' alerta' : ''}">
-    ${isAlerta ? '<div class="narr-badge orange">Atenção — capacidade</div>' : ''}
-    <div class="narr-title"${isAlerta ? ' style="margin-top:6px"' : ''}>Volume necessário</div>
+    <div class="narr-badge orange">${isAlerta ? 'Atenção — Capacidade' : 'Depende de Crescimento'}</div>
+    <div class="narr-title" style="margin-top:6px">Volume necessário</div>
     <div class="narr-number" style="color:var(--teal)">${numStr}</div>
     <div class="narr-sub">${projNec.toLocaleString('pt-BR')} proj/ano · +${projMesAdic.toLocaleString('pt-BR')}/mês</div>
     <div class="narr-sep"></div>
-    <div class="narr-text">+${deltaProj.toLocaleString('pt-BR')} projetos adicionais ao preço atual (${brl(d.ticket)}), com despesas fixas constantes, para atingir ${d.lucroAlvo}% de lucro.${alerta}</div>
+    <div class="narr-text">${textoExpl}</div>
     <div class="narr-meta">${peTexto}</div>
   </div>`;
 }
@@ -585,6 +683,67 @@ function secPremissas(d, cbBase, tbBase, V12, extras) {
     <div class="sec-title">Premissas Utilizadas</div>
     <div class="prem-grid">
       ${items.map(i=>`<div class="prem-item"><div class="k">${i.k}</div><div class="v">${i.v}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── Seção 6: Recomendações do Auditor ────────────────────────────────
+function secRecomendacoes(result, d, precoSugerido, V12) {
+  const { atual, FixasAno } = result;
+  const mcUnitAtual = atual.mcPct * atual.ticket;
+
+  const pctReajuste = isFinite(precoSugerido) && d.ticket > 0
+    ? (precoSugerido - d.ticket) / d.ticket * 100
+    : null;
+
+  const mcUnitNecessaria    = d.lucroAlvo / 100 * d.ticket + FixasAno / V12;
+  const reducaoKitNecessaria = mcUnitNecessaria - mcUnitAtual;
+  const pctReducaoKit        = d.kit > 0 ? reducaoKitNecessaria / d.kit * 100 : 0;
+  const guardaKit            = pctReducaoKit > 15;
+
+  const optA = pctReajuste !== null ? `
+    <div class="opt-card opt-a">
+      <div class="opt-label">Opção A</div>
+      <div class="opt-title">Reajuste gradual de preço</div>
+      <div class="opt-text">Reajustar gradualmente o preço dos novos orçamentos em
+        <strong>${pctReajuste.toFixed(1).replace('.',',')}%</strong>
+        (de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong>),
+        mantendo o volume atual de vendas.
+      </div>
+    </div>` : `
+    <div class="opt-card opt-a">
+      <div class="opt-label">Opção A</div>
+      <div class="opt-title">Reajuste de preço</div>
+      <div class="opt-text">Ajuste os parâmetros na análise para calcular o preço sugerido e dimensionar o reajuste necessário.</div>
+    </div>`;
+
+  const optB = `
+    <div class="opt-card opt-b">
+      <div class="opt-label">Opção B</div>
+      <div class="opt-title">Negociação com fornecedores</div>
+      <div class="opt-text">Negociar o Custo do Kit (atualmente em <strong>${brl(d.kit)}</strong>) para absorver a diferença sem repassar ao cliente.
+        Uma redução de <strong>${brl(reducaoKitNecessaria)}</strong> por kit
+        (<strong>${pctReducaoKit.toFixed(1).replace('.',',')}%</strong>)
+        atinge a mesma meta de <strong>${d.lucroAlvo}%</strong> de lucro sem alterar o preço de venda.
+      </div>
+      ${guardaKit ? `<div class="opt-nota">Uma redução dessa magnitude dificilmente será obtida apenas via negociação. Considere combinar as opções A + B: reajuste parcial de preço e redução parcial de custo.</div>` : ''}
+    </div>`;
+
+  return `<div class="sec">
+    <div class="sec-title">Recomendações do Auditor</div>
+    <p class="rec-intro">Os itens abaixo são as principais sugestões para atingir a meta de <strong>${d.lucroAlvo}%</strong> de lucro:</p>
+    <div class="opt-grid">${optA}${optB}</div>
+    <div class="impl-block">
+      <div class="impl-title">Como implementar</div>
+      <ul class="impl-list">
+        <li>Aplique o reajuste <strong>gradualmente</strong> em novas propostas — não retroativamente em contratos em andamento.</li>
+        <li>Comunique o <strong>valor entregue</strong> (garantia, suporte, qualidade) antes de mencionar o novo preço.</li>
+        <li>Monitore a <strong>taxa de conversão</strong> nas primeiras semanas para avaliar o impacto real no volume.</li>
+      </ul>
+    </div>
+    <div class="cta-row">
+      <a class="cta-btn-primary" href="${CTA_URL_ANALISE}">Refaça a análise com seus custos reais</a>
+      <a class="cta-btn-secondary" href="${CTA_URL_CONTEUDO}" target="_blank" rel="noopener">Ver conteúdo e consultoria da FAVO</a>
     </div>
   </div>`;
 }

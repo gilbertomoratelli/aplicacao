@@ -148,3 +148,89 @@ function testCenarios() {
   console.log('%c✓ testCenarios: todos os assertions passaram', 'color:#00B140;font-weight:700', r);
   return r;
 }
+
+// ── Testes das métricas de relatório (rode testMetricas() no console) ─
+
+function testMetricas() {
+  const near = (a, b, tol) => Math.abs(a - b) <= (tol || 1);
+
+  // Cenário base (sugerido válido):
+  //   ticket=10000, kit=5000, cdt=6000, comissao=5%/total, tributo=0
+  //   despFixa=2000/mês → FixasAno=24000, V12=12, lucroAlvo=25%
+  //   precoSugerido = (24000/12 + 6000) / (1 − 0.05 − 0.25) = 8000/0.70 ≈ 11428.57
+  //   mcUnitAtual = 10000 − 6000 − 500 = 3500   mcPct=35%
+  //   lucroAtual  = 3500×12 − 24000 = 18000     lucroPct=15%
+  //   mcUnitSug ≈ 4857    lucroSug ≈ 34286       lucroPct=25% ✓
+  //   lucroAdicional ≈ 16286
+  //   volumeMinimo  = 42000/4857 ≈ 8.65  (maintain atual profit with sug price)
+  //   perdaToleravel ≈ 27.9%   (> 3%, texto padrão)
+  //   reducaoKitNecessaria = (0.25×10000 + 24000/12) − 3500 = 4500 − 3500 = 1000
+  //   pctReducaoKit = 1000/5000 = 20% > 15% → guarda ativa
+
+  const precoSug = 8000 / 0.70;
+  const r = calcCenarios({
+    d: { kit:5000, cdt:6000, ticket:10000, comissao:5, tributo:0, outras:0, despFixa:2000, lucroAlvo:25 },
+    precoSugerido: precoSug,
+    V12: 12,
+    meses: null,
+    comissaoBase: 'total',
+    tributoBase: 'total',
+    despesasExtras: [],
+  });
+
+  const { atual, sugerido, FixasAno, V12: v12 } = r;
+  const mcUnitAtual    = atual.mcPct * atual.ticket;
+  const mcUnitSugerido = sugerido ? sugerido.mcPct * sugerido.ticket : 0;
+
+  // P1 — lucroAdicional
+  const lucroAdicional = sugerido ? sugerido.lucroAnual - atual.lucroAnual : 0;
+  console.assert(near(lucroAdicional, 16286, 200), 'lucroAdicional ≈ 16286');
+  console.assert(near(sugerido.lucroPct, 0.25, 0.005), 'lucroPct sugerido deve ser ≈25%');
+
+  // P2 — volumeMinimo e perdaToleravel (lucroAtual >= 0)
+  const volumeMinimo   = atual.mcAnual / mcUnitSugerido;
+  const perdaToleravel = 1 - volumeMinimo / v12;
+  console.assert(near(volumeMinimo, 8.65, 0.5), 'volumeMinimo ≈ 8.65');
+  console.assert(perdaToleravel > 0.03, 'perdaToleravel > 3% (texto padrão, não alerta)');
+  console.assert(near(perdaToleravel, 0.279, 0.02), 'perdaToleravel ≈ 27.9%');
+
+  // P2 — guarda perdaToleravel < 3% (cenário apertado)
+  const rApertado = calcCenarios({
+    d: { kit:5000, cdt:6000, ticket:10000, comissao:5, tributo:0, outras:0, despFixa:2000, lucroAlvo:25 },
+    precoSugerido: 10200,
+    V12: 100,
+    meses: null,
+    comissaoBase: 'total',
+    tributoBase: 'total',
+    despesasExtras: [],
+  });
+  if (rApertado.sugerido) {
+    const mcUS2 = rApertado.sugerido.mcPct * rApertado.sugerido.ticket;
+    const vm2   = rApertado.atual.mcAnual / mcUS2;
+    const pt2   = 1 - vm2 / 100;
+    console.assert(pt2 < 0.03, 'guarda perdaToleravel<3% ativa no cenário apertado');
+  }
+
+  // P2 — guarda lucroAtual < 0 (breakeven com sugerido)
+  const rPrejuizo = calcCenarios({
+    d: { kit:5000, cdt:6000, ticket:10000, comissao:5, tributo:0, outras:0, despFixa:5000, lucroAlvo:25 },
+    precoSugerido: precoSug,
+    V12: 12,
+    meses: null,
+    comissaoBase: 'total',
+    tributoBase: 'total',
+    despesasExtras: [],
+  });
+  console.assert(rPrejuizo.atual.lucroAnual < 0, 'guarda lucroAtual<0 ativa no cenário prejuízo');
+
+  // P5 — reducaoKitNecessaria e guarda >15%
+  const mcUnitNec          = 25/100 * 10000 + FixasAno / v12;
+  const reducaoKitNec      = mcUnitNec - mcUnitAtual;
+  const pctReducaoKit      = reducaoKitNec / 5000 * 100;
+  console.assert(near(reducaoKitNec, 1000, 50),   'reducaoKitNecessaria ≈ 1000');
+  console.assert(near(pctReducaoKit, 20, 2),       'pctReducaoKit ≈ 20%');
+  console.assert(pctReducaoKit > 15,               'guarda pctReducaoKit>15% ativa');
+
+  console.log('%c✓ testMetricas: todos os assertions passaram', 'color:#00B140;font-weight:700',
+    { lucroAdicional, volumeMinimo, perdaToleravel, reducaoKitNec, pctReducaoKit });
+}
