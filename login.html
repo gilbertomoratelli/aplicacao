@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar · Auditor de Precificação</title>
+<style>
+  :root{
+    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
+    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:400px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px;justify-content:center}
+  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px}
+  .card-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
+  .card-sub{font-size:13px;color:var(--muted);margin:0 0 24px;line-height:1.5}
+  label.fld{display:block;margin-bottom:16px}
+  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
+  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--ink);background:transparent;width:100%}
+  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:4px}
+  .btn-primary:hover{opacity:.9}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;line-height:1.5}
+  .alert.err{background:#FDECEA;color:var(--negative);border:1px solid #F5C2BE}
+  .alert.ok{background:#E9F7EF;color:var(--positive);border:1px solid #B7E5C9}
+  .divider{height:1px;background:var(--hair);margin:20px 0}
+  .toggle-mode{text-align:center;font-size:13px;color:var(--muted)}
+  .toggle-mode a{color:var(--teal);font-weight:600;cursor:pointer;text-decoration:none}
+  .toggle-mode a:hover{text-decoration:underline}
+  .back-link{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;background:none;border:none;cursor:pointer;font-family:var(--sans);padding:0}
+  .back-link:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="back-link" onclick="history.back()">← Voltar</button>
+
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
+    <div>
+      <div class="brand-name">Auditor de Precificação</div>
+      <div class="brand-sub">FAVO Educação</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" id="cardTitle">Acesse sua conta</h2>
+    <p class="card-sub" id="cardSub">Para gerar o relatório de diagnóstico, faça login com seu e-mail.</p>
+
+    <div class="alert err" id="alertErr"></div>
+    <div class="alert ok"  id="alertOk"></div>
+
+    <label class="fld">
+      <span class="lbl">E-mail</span>
+      <div class="inwrap"><input type="email" id="email" placeholder="seu@email.com" autocomplete="email"></div>
+    </label>
+    <label class="fld">
+      <span class="lbl">Senha</span>
+      <div class="inwrap"><input type="password" id="senha" placeholder="••••••••" autocomplete="current-password"></div>
+    </label>
+
+    <button class="btn-primary" id="btnSubmit" onclick="submeter()">Entrar</button>
+
+    <div class="divider"></div>
+    <div class="toggle-mode">
+      <span id="toggleText">Não tem conta?</span>&nbsp;
+      <a id="toggleLink" onclick="alternarModo()">Criar conta</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const db = createClient(
+  'https://dfsmwzmtainiclcwpigw.supabase.co',
+  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+);
+
+const params   = new URLSearchParams(location.search);
+const returnTo = params.get('returnTo') || 'index.html';
+let modoLogin  = true;
+
+// Redireciona se já autenticado
+(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user) window.location.href = returnTo;
+})();
+
+function alternarModo() {
+  modoLogin = !modoLogin;
+  document.getElementById('cardTitle').textContent = modoLogin ? 'Acesse sua conta' : 'Criar conta';
+  document.getElementById('cardSub').textContent   = modoLogin
+    ? 'Para gerar o relatório de diagnóstico, faça login com seu e-mail.'
+    : 'Crie uma conta para acessar os relatórios de diagnóstico.';
+  document.getElementById('btnSubmit').textContent    = modoLogin ? 'Entrar' : 'Criar conta';
+  document.getElementById('toggleText').textContent   = modoLogin ? 'Não tem conta?' : 'Já tem conta?';
+  document.getElementById('toggleLink').textContent   = modoLogin ? 'Criar conta' : 'Entrar';
+  document.getElementById('senha').autocomplete       = modoLogin ? 'current-password' : 'new-password';
+  limparAlertas();
+}
+
+function limparAlertas() {
+  document.getElementById('alertErr').style.display = 'none';
+  document.getElementById('alertOk').style.display  = 'none';
+}
+function mostrarErro(msg) {
+  const el = document.getElementById('alertErr');
+  el.textContent    = msg;
+  el.style.display  = 'block';
+  document.getElementById('alertOk').style.display = 'none';
+}
+function mostrarOk(msg) {
+  const el = document.getElementById('alertOk');
+  el.textContent   = msg;
+  el.style.display = 'block';
+  document.getElementById('alertErr').style.display = 'none';
+}
+
+async function submeter() {
+  limparAlertas();
+  const email = document.getElementById('email').value.trim();
+  const senha = document.getElementById('senha').value;
+  const btn   = document.getElementById('btnSubmit');
+
+  if (!email)          { mostrarErro('Informe o e-mail.'); return; }
+  if (senha.length < 6){ mostrarErro('A senha deve ter ao menos 6 caracteres.'); return; }
+
+  btn.disabled    = true;
+  btn.textContent = 'Aguarde…';
+
+  if (modoLogin) {
+    const { error } = await db.auth.signInWithPassword({ email, password: senha });
+    btn.disabled    = false;
+    btn.textContent = 'Entrar';
+    if (error) mostrarErro(traduzirErro(error.message));
+    else       window.location.href = returnTo;
+  } else {
+    const { data, error } = await db.auth.signUp({ email, password: senha });
+    btn.disabled    = false;
+    btn.textContent = 'Criar conta';
+    if (error)           mostrarErro(traduzirErro(error.message));
+    else if (data.session) window.location.href = returnTo;
+    else                 mostrarOk('Conta criada! Verifique seu e-mail para confirmar o cadastro e depois faça login.');
+  }
+}
+
+function traduzirErro(msg) {
+  if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (msg.includes('Email not confirmed'))       return 'Confirme seu e-mail antes de entrar.';
+  if (msg.includes('User already registered'))   return 'Este e-mail já está cadastrado. Faça login.';
+  if (msg.includes('Password should be'))        return 'A senha deve ter ao menos 6 caracteres.';
+  return msg;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') submeter(); });
+</script>
+</body>
+</html>
