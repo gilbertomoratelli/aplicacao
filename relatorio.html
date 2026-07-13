@@ -51,8 +51,8 @@
   .v-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
   .v-price{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1}
   .v-arrow{font-size:22px;color:var(--muted);padding:0 4px}
-  .v-msg{font-size:13px;color:var(--muted);line-height:1.5}
-  .v-sub{font-size:12px;color:var(--teal);background:#E9F7EF;border:1px solid #B7E5C9;border-radius:8px;padding:9px 14px;margin-top:8px;line-height:1.6}
+  .v-msg{font-size:13px;color:var(--muted);line-height:1.5;text-align:justify}
+  .v-sub{font-size:12px;color:var(--teal);background:#E9F7EF;border:1px solid #B7E5C9;border-radius:8px;padding:9px 14px;margin-top:8px;line-height:1.6;text-align:justify}
 
   /* KPIs */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
@@ -90,8 +90,8 @@
   .narr-badge.red{background:#FDECEA;color:var(--negative)}
   .narr-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
   .narr-number{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1.1}
-  .narr-sub{font-size:11px;color:var(--muted)}
-  .narr-text{font-size:12px;color:var(--muted);line-height:1.6;flex:1}
+  .narr-sub{font-size:11px;color:var(--muted);text-align:justify}
+  .narr-text{font-size:12px;color:var(--muted);line-height:1.6;flex:1;text-align:justify}
   .narr-sep{height:1px;background:var(--hair);margin:2px 0}
   .narr-meta{font-size:11px;color:var(--muted)}
   @media(max-width:640px){.narr-grid{grid-template-columns:1fr}}
@@ -127,30 +127,30 @@
   .kpi .s{text-align:justify}
 
   /* P1 — Lucro adicional */
-  .narr-delta{background:#E9F7EF;border-radius:8px;padding:10px 12px;margin:4px 0}
+  .narr-delta{background:#E9F7EF;border-radius:8px;padding:10px 12px;margin:4px 0;text-align:justify}
   .narr-delta-num{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--positive);display:block;line-height:1.1;margin-bottom:3px}
 
   /* P2 — Elasticidade */
   .elast-block{background:#F0FAF5;border:1px solid #B7E5C9;border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;margin-top:12px}
   .elast-icon{font-size:14px;font-weight:900;color:var(--teal);flex-shrink:0;width:28px;height:28px;background:#C6E9D6;border-radius:50%;display:flex;align-items:center;justify-content:center}
   .elast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:6px}
-  .elast-body{font-size:12px;color:var(--teal);line-height:1.7}
+  .elast-body{font-size:12px;color:var(--teal);line-height:1.7;text-align:justify}
   .elast-alert{color:var(--negative);font-weight:700}
 
   /* P5 — Recomendações */
-  .rec-intro{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+  .rec-intro{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;text-align:justify}
   .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
   .opt-card{border:1px solid var(--hair);border-radius:10px;padding:16px}
   .opt-a{border-top:3px solid var(--teal)}
   .opt-b{border-top:3px solid var(--teal-accent)}
   .opt-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
   .opt-title{font-size:13px;font-weight:700;margin-bottom:8px}
-  .opt-text{font-size:12px;color:var(--muted);line-height:1.6}
-  .opt-nota{font-size:11px;color:var(--negative);margin-top:8px;font-style:italic;line-height:1.5}
+  .opt-text{font-size:12px;color:var(--muted);line-height:1.6;text-align:justify}
+  .opt-nota{font-size:11px;color:var(--negative);margin-top:8px;font-style:italic;line-height:1.5;text-align:justify}
   .impl-block{border:1px solid var(--hair);border-radius:10px;padding:14px 16px;margin-bottom:16px;background:#FAFCFB}
   .impl-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px}
   .impl-list{margin:0 0 0 18px;padding:0}
-  .impl-list li{font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.5}
+  .impl-list li{font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.5;text-align:justify}
   .cta-row{display:flex;gap:10px;flex-wrap:wrap;padding-top:4px}
   .cta-btn-primary{display:inline-flex;align-items:center;padding:10px 20px;background:var(--solar);color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;font-family:var(--sans)}
   .cta-btn-primary:hover{opacity:.9}
@@ -334,7 +334,7 @@ function secDiagnostico(result, d, precoSugerido, V12) {
   const kpis = [
     {k:'Faturamento anual',      v:brl(atual.fatAnual),  s:`${num0(Math.ceil(V12))} projetos apurados anualmente`, c:'var(--ink)'},
     {k:'Margem de contribuição', v:pct(atual.mcPct),     s:brl(atual.mcAnual)+' no ano',
-     tip:`De cada venda, sobram <strong>${brl(mcUnitAtual)}</strong> para cobrir as despesas fixas — só depois disso começa o lucro.`,
+     tip:`De cada venda, sobram <strong>${brl(mcUnitAtual)}</strong> para cobrir as despesas fixas. Só depois disso começa o lucro.`,
      c:'var(--positive)'},
     {k:lucrativo?'Lucro anual':'Prejuízo anual',
      v:brl(Math.abs(atual.lucroAnual)),                  s:pct(atual.lucroPct)+' do faturamento',
@@ -343,7 +343,7 @@ function secDiagnostico(result, d, precoSugerido, V12) {
     {k:'Equilíbrio financeiro',
      v:atual.mePE ? MESES[atual.mePE-1] : 'Não atingido',
      s: atual.mePE
-       ? `A partir de ${MESES[atual.mePE-1]}, as vendas acumuladas já cobriram todas as despesas fixas do ano — tudo que entra depois vira lucro.`
+       ? `A partir de ${MESES[atual.mePE-1]}, as vendas acumuladas já cobriram todas as despesas fixas do ano. Tudo que entra depois vira lucro.`
        : 'A margem de contribuição acumulada não cobre as despesas fixas do ano.',
      c:atual.mePE?'var(--teal)':'var(--muted)'},
   ];
@@ -452,7 +452,7 @@ function _blocoElasticidade(atual, sugerido, V12) {
     perdaToleravel    = 1 - volumeMinimo / V12;
     projetosPerdiveis = Math.floor(Math.max(0, V12 - volumeMinimo));
     const perdaPct    = Math.max(0, (perdaToleravel * 100)).toFixed(0);
-    texto = `Com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong> em vez de <strong>${brl(mcUnitAtual)}</strong>. Mesmo perdendo até <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong>, a operação já sai do prejuízo — o reajuste por si só já melhora o resultado independentemente do volume.`;
+    texto = `Com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong> em vez de <strong>${brl(mcUnitAtual)}</strong>. Mesmo perdendo até <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong>, a operação já sai do prejuízo. O reajuste por si só já melhora o resultado independentemente do volume.`;
   } else {
     volumeMinimo      = atual.mcAnual / mcUnitSugerido;
     perdaToleravel    = 1 - volumeMinimo / V12;
@@ -461,7 +461,7 @@ function _blocoElasticidade(atual, sugerido, V12) {
     const umEmCadaN   = perdaToleravel > 0 ? Math.round(1 / perdaToleravel) : 0;
 
     if (perdaToleravel < 0.03) {
-      texto = `<span class="elast-alert">Atenção:</span> com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong>. A margem de segurança é pequena — a operação suporta perder apenas <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong> sem ficar abaixo do resultado atual. <strong>A retenção de clientes no período de ajuste é crítica.</strong>`;
+      texto = `<span class="elast-alert">Atenção:</span> com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong>. A margem de segurança é pequena: a operação suporta perder apenas <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos)</strong> sem ficar abaixo do resultado atual. <strong>A retenção de clientes no período de ajuste é crítica.</strong>`;
     } else {
       texto = `Com o preço reajustado, cada venda contribui com <strong>${brl(mcUnitSugerido)}</strong> em vez de <strong>${brl(mcUnitAtual)}</strong>. Isso significa que a operação pode perder até <strong>${perdaPct}% do volume (${projetosPerdiveis.toLocaleString('pt-BR')} projetos no ano)</strong> e ainda assim lucrar o mesmo que hoje. Na prática: mesmo perdendo cerca de 1 em cada <strong>${umEmCadaN}</strong> vendas por causa do reajuste, você não fica pior do que está.`;
     }
@@ -488,7 +488,7 @@ function _cardAtual(atual, d) {
   } else if (!acimaMeta) {
     texto = `A operação é lucrativa, mas encerra <strong>${brlAbrev(meta - atual.lucroAnual)} abaixo da meta</strong> de ${d.lucroAlvo}% de lucro líquido.`;
   } else {
-    texto = `A precificação atual <strong>supera a meta</strong> de ${d.lucroAlvo}% — operação saudável.`;
+    texto = `A precificação atual <strong>supera a meta</strong> de ${d.lucroAlvo}%. Operação saudável.`;
   }
 
   const peTexto = atual.mePE
@@ -533,12 +533,12 @@ function _cardSugerido(sugerido, atual, d, precoSugerido, V12) {
     </div>
     <div class="narr-delta">
       <span class="narr-delta-num">+${brlAbrev(lucroAdicional)}</span>
-      de lucro por ano com o mesmo volume de vendas. Reajuste de <strong>${deltaStr}</strong> no ticket — sem contratar, sem vender mais, sem aumentar despesa fixa.
+      de lucro por ano com o mesmo volume de vendas. Reajuste de <strong>${deltaStr}</strong> no ticket, sem contratar, sem vender mais, sem aumentar despesa fixa.
     </div>
     <div class="narr-number" style="color:var(--positive);margin-top:2px">${brlAbrev(sugerido.lucroAnual)}</div>
     <div class="narr-sub">${pct(sugerido.lucroPct)} de lucro líquido</div>
     <div class="narr-sep"></div>
-    <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> mantendo ${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano — meta de ${d.lucroAlvo}% atingida.</div>
+    <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> mantendo ${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano. Meta de ${d.lucroAlvo}% atingida.</div>
     <div class="narr-meta">${peTexto}</div>
   </div>`;
 }
@@ -550,7 +550,7 @@ function _cardNecessario(atual, necessario, d, V12) {
       <div class="narr-title" style="margin-top:6px">Volume necessário</div>
       <div class="narr-number" style="color:var(--negative)">—</div>
       <div class="narr-sep"></div>
-      <div class="narr-text">Com margem de contribuição negativa, nenhum aumento de volume atinge a meta. <strong>A correção passa pelo preço</strong> — revise os custos ou ajuste o ticket para obter MC positiva.</div>
+      <div class="narr-text">Com margem de contribuição negativa, nenhum aumento de volume atinge a meta. <strong>A correção passa pelo preço:</strong> revise os custos ou ajuste o ticket para obter MC positiva.</div>
     </div>`;
   }
 
@@ -576,7 +576,7 @@ function _cardNecessario(atual, necessario, d, V12) {
     ? `Equilíbrio em <strong>${MESES[necessario.mePE-1]} (mês ${necessario.mePE})</strong>`
     : 'Equilíbrio não atingido no ano';
 
-  const textoExpl = `Este cenário lucra mais no papel, mas exige <strong>+${deltaProj.toLocaleString('pt-BR')} projetos (${pctVolStr}% a mais)</strong> com a premissa de despesas fixas constantes — o que raramente se sustenta: mais volume tende a exigir mais equipe, mais capital de giro e mais investimento em captação. O cenário Sugerido entrega a meta de ${d.lucroAlvo}% sem depender de nenhum crescimento.`;
+  const textoExpl = `Este cenário lucra mais no papel, mas exige <strong>+${deltaProj.toLocaleString('pt-BR')} projetos (${pctVolStr}% a mais)</strong> com a premissa de despesas fixas constantes, o que raramente se sustenta: mais volume tende a exigir mais equipe, mais capital de giro e mais investimento em captação. O cenário Sugerido entrega a meta de ${d.lucroAlvo}% sem depender de nenhum crescimento.`;
 
   return `<div class="narr-card${isAlerta ? ' alerta' : ''}">
     <div class="narr-badge orange">${isAlerta ? 'Atenção — Capacidade' : 'Depende de Crescimento'}</div>
@@ -738,7 +738,7 @@ function secRecomendacoes(result, d, precoSugerido, V12) {
     <div class="impl-block">
       <div class="impl-title">Como implementar</div>
       <ul class="impl-list">
-        <li>Aplique o reajuste <strong>gradualmente</strong> em novas propostas — não retroativamente em contratos em andamento.</li>
+        <li>Aplique o reajuste <strong>gradualmente</strong> em novas propostas, não retroativamente em contratos em andamento.</li>
         <li>Comunique o <strong>valor entregue</strong> (garantia, suporte, qualidade) antes de mencionar o novo preço.</li>
         <li>Monitore a <strong>taxa de conversão</strong> nas primeiras semanas para avaliar o impacto real no volume.</li>
       </ul>
