@@ -142,10 +142,10 @@
       <div id="custosFixosContainer"></div>
 
       <label class="fld">
-        <span class="lbl">Valor de Venda Atual</span>
-        <div class="inwrap">
-          <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="valor_venda" placeholder="0,00">
+        <span class="lbl" style="font-size:14px;font-weight:700;color:var(--ink)">Valor de Venda Atual</span>
+        <div class="inwrap" style="border-width:2px;border-color:var(--teal)">
+          <span class="affix l" style="font-size:16px;font-weight:700">R$</span>
+          <input type="text" inputmode="decimal" id="valor_venda" placeholder="0,00" style="font-size:22px;font-weight:700;padding:14px 12px">
         </div>
         <span class="hint">Preço praticado hoje (KIT + serviço). Preenche o campo de análise automaticamente.</span>
       </label>
@@ -180,7 +180,7 @@ function renderCustosFixos() {
   const camposFixos = Object.keys(LABEL_CUSTO).filter(k => cfgMap[k]?.modo === 'fixo');
   if (!camposFixos.length) { container.innerHTML = ''; return; }
   const salvos = projetoAtual?.custos_diretos || {};
-  let html = '<div style="border-top:1px solid var(--hair);margin:8px 0 16px;padding-top:16px"><span class="lbl" style="display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Custos adicionais do projeto</span>';
+  let html = '<div style="border-top:1px solid var(--hair);margin:8px 0 16px;padding-top:16px"><span class="lbl" style="display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Custos do projeto</span>';
   camposFixos.forEach(k => {
     const taxa = cfgMap[k]?.taxa ?? 0;
     const val  = salvos[k] !== undefined ? salvos[k] : taxa;
