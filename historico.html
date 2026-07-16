@@ -112,13 +112,24 @@ const brl = v => isFinite(v) && v !== null
 const pct = v => v !== null && isFinite(v) ? Number(v).toFixed(1).replace(".",",")+"%" : "—";
 const dataFmt = s => new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 
+const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
 let todos = [];
 
 async function carregar() {
-  const { data, error } = await db
+  const { data: { session } } = await db.auth.getSession();
+  if (!session?.user) {
+    window.location.href = 'login.html?returnTo=historico.html';
+    return;
+  }
+
+  let query = db
     .from("orcamentos")
     .select("*, projetos(nome_projeto, quantidade_modulos, kwp_sistema), integradores(nome_empresa)")
     .order("criado_em", { ascending: false });
+
+  if (integrador?.id) query = query.eq('integrador_id', integrador.id);
+
+  const { data, error } = await query;
 
   if (error) {
     document.getElementById("tabela").innerHTML =

@@ -817,6 +817,7 @@ function render(){
 
 async function salvarOrcamento(){
   if(!lastCalc) return;
+  if(!authUser){ window.location.href='login.html?returnTo=index.html'; return; }
   const btn=document.getElementById("btnSalvar");
   btn.disabled=true;
   btn.textContent="Salvando…";
@@ -1313,9 +1314,9 @@ FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
 (async () => {
   await carregarConfigs();
-  await carregarDespesas();
   renderExtras();
   load();
+  await carregarDespesas();
   aplicarTodasConfigs();
   if (projeto?.custo_kit) {
     document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');

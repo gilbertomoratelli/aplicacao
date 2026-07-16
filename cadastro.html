@@ -245,14 +245,27 @@ async function salvar(e) {
     whatsapp: document.getElementById('whatsapp').value.trim(),
   };
 
-  const {data,error}=await db.from('integradores').insert(payload).select().single();
+  const salvo = JSON.parse(localStorage.getItem('integrador')||'null');
+  let data = null, error = null;
+  try {
+    if (salvo?.id) {
+      ({data,error} = await db.from('integradores').update(payload).eq('id', salvo.id).select().single());
+      if (!data || error?.code === 'PGRST116') {
+        error = null;
+        ({data,error} = await db.from('integradores').insert(payload).select().single());
+      }
+    } else {
+      ({data,error} = await db.from('integradores').insert(payload).select().single());
+    }
+  } catch(err) {
+    console.error('Supabase salvar integrador:', err);
+  }
 
   btn.disabled=false; btn.textContent='Continuar →';
 
-  if(error){ alert('Erro ao salvar: '+error.message); return; }
-
   const lucroAlvoVal = parseFloat(document.getElementById('lucro_alvo').value) || 12;
-  localStorage.setItem('integrador', JSON.stringify({...payload, id: data.id, lucro_alvo: lucroAlvoVal}));
+  const integradorId = data?.id ?? salvo?.id ?? null;
+  localStorage.setItem('integrador', JSON.stringify({...payload, id: integradorId, lucro_alvo: lucroAlvoVal}));
   window.location.href='configuracoes.html?onboarding=1';
 }
 
