@@ -139,6 +139,8 @@
         <span class="err" id="errKit">Informe o custo do KIT</span>
       </label>
 
+      <div id="custosFixosContainer"></div>
+
       <label class="fld">
         <span class="lbl">Valor de Venda Atual</span>
         <div class="inwrap">
@@ -164,6 +166,33 @@ const db = createClient(
 const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
 const projetoAtual = JSON.parse(localStorage.getItem('projeto')||'null');
 
+const LABEL_CUSTO = {
+  ca:    'Material adicional CA',
+  inst:  'Instalação',
+  proj:  'Projeto elétrico',
+  homol: 'Homologação',
+  art:   'ART do Projeto',
+};
+
+function renderCustosFixos() {
+  const cfgMap = JSON.parse(localStorage.getItem('configCustos') || '{}');
+  const container = document.getElementById('custosFixosContainer');
+  const camposFixos = Object.keys(LABEL_CUSTO).filter(k => cfgMap[k]?.modo === 'fixo');
+  if (!camposFixos.length) { container.innerHTML = ''; return; }
+  const salvos = projetoAtual?.custos_diretos || {};
+  let html = '<div style="border-top:1px solid var(--hair);margin:8px 0 16px;padding-top:16px"><span class="lbl" style="display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Custos adicionais do projeto</span>';
+  camposFixos.forEach(k => {
+    const taxa = cfgMap[k]?.taxa ?? 0;
+    const val  = salvos[k] !== undefined ? salvos[k] : taxa;
+    html += `<label class="fld"><span class="lbl">${LABEL_CUSTO[k]}</span>
+      <div class="inwrap"><span class="affix l">R$</span>
+        <input type="text" inputmode="decimal" id="cd_${k}" value="${Number(val).toFixed(2).replace('.',',')}" placeholder="0,00">
+      </div></label>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
 function init() {
   if(!integrador?.nome_empresa) {
     window.location.href='cadastro.html';
@@ -180,6 +209,7 @@ function init() {
     document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? Number(projetoAtual.valor_venda).toFixed(2).replace('.',',') : '';
     document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
   }
+  renderCustosFixos();
 }
 
 function trocarEmpresa() {
@@ -240,7 +270,12 @@ async function salvar(e) {
 
   // Salva localmente independente do resultado da rede e avança
   const projetoId = data?.id ?? projetoAtual?.id ?? null;
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: projetoId, valor_venda: valorVenda}));
+  const custos_diretos = {};
+  Object.keys(LABEL_CUSTO).forEach(k => {
+    const el = document.getElementById('cd_' + k);
+    if (el) custos_diretos[k] = parseFloat(el.value.replace(',', '.')) || 0;
+  });
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: projetoId, valor_venda: valorVenda, custos_diretos}));
   window.location.href='index.html';
 }
 

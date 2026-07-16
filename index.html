@@ -120,6 +120,8 @@
   .btn-add{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin:6px 0 14px}
   .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
   .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
+  .inwrap.readonly-cost{background:var(--bg);pointer-events:none}
+  .inwrap.readonly-cost input{color:var(--muted)}
   .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
   .inwrap .affix.l{border-right:1px solid var(--hair)}
   .inwrap .affix.r{border-left:1px solid var(--hair)}
@@ -266,7 +268,7 @@
     <!-- ENTRADAS -->
     <div class="col left">
       <div class="card">
-        <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3></div>
+        <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3><a href="projeto.html" style="font-size:11px;color:var(--muted);text-decoration:none;margin-left:auto;font-weight:600" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">← ajustar projeto</a></div>
         <label class="fld">
           <span class="lbl">Custo do KIT</span>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="kit"></div>
@@ -1047,11 +1049,27 @@ function calcValor(campo) {
 }
 
 function aplicarTodasConfigs() {
+  const custosDiretos = projeto?.custos_diretos || {};
   Object.keys(CAMPOS_CFG).forEach(campo => {
-    const val = calcValor(campo);
-    if (val !== null) document.getElementById(campo).value = val.toFixed(2).replace('.',',');
+    if (custosDiretos[campo] !== undefined) {
+      document.getElementById(campo).value = Number(custosDiretos[campo]).toFixed(2).replace('.', ',');
+    } else {
+      const val = calcValor(campo);
+      if (val !== null) document.getElementById(campo).value = val.toFixed(2).replace('.',',');
+    }
   });
   render();
+}
+
+function tornarCustosReadonly() {
+  ['kit','ca','inst','proj','homol','art'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.closest('.inwrap').classList.add('readonly-cost');
+  });
+  document.querySelectorAll('.btn-cfg').forEach(b => b.style.display = 'none');
+  document.querySelectorAll('.cfg-badge').forEach(b => b.style.display = 'none');
+  const btnAdd = document.querySelector('.btn-add');
+  if (btnAdd) btnAdd.style.display = 'none';
 }
 
 function atualizarBadges() {
@@ -1264,23 +1282,11 @@ function renderExtras() {
   const container = document.getElementById('extrasContainer');
   if (!custosExtras.length) { container.innerHTML = ''; return; }
   container.innerHTML = custosExtras.map(item => {
-    const val     = calcValorExtra(item);
-    const ativoExtra = item.modo === 'faixa' ? item.faixas?.length > 0 : item.taxa > 0;
-    const badge   = ativoExtra ? `<span class="cfg-badge" style="display:inline">${BADGE_LABEL[item.modo]||item.modo}</span>` : '';
+    const val = calcValorExtra(item);
     return `<div class="extra-item">
-      <div class="lbl-row">
-        <input class="extra-lbl-input" value="${item.label}"
-               onblur="atualizarLabelExtra('${item.id}', this.value)"
-               onkeydown="if(event.key==='Enter')this.blur()">
-        <div style="display:flex;gap:5px;align-items:center">
-          ${badge}
-          <button class="btn-cfg" onclick="abrirConfigExtra('${item.id}',event)">⚙ config</button>
-          <button class="btn-remove" onclick="removerExtra('${item.id}')" title="Remover">×</button>
-        </div>
-      </div>
-      <div class="inwrap"><span class="affix l">R$</span>
-        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly
-               style="color:${val>0?'var(--ink)':'var(--muted)'}">
+      <div class="lbl-row"><span class="lbl">${item.label || 'Custo extra'}</span></div>
+      <div class="inwrap readonly-cost"><span class="affix l">R$</span>
+        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly>
       </div>
     </div>`;
   }).join('');
@@ -1330,6 +1336,7 @@ initCtx();
     document.getElementById('lucroAlvo').value = integrador.lucro_alvo;
   }
   render();
+  tornarCustosReadonly();
   const { data: { session } } = await db.auth.getSession();
   authUser = session?.user || null;
   atualizarAuthUI();
