@@ -218,20 +218,29 @@ async function salvar(e) {
     kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
     custo_kit: parseFloat(document.getElementById('custo_kit').value.replace(',','.')) || 0,
   };
+  const valorVenda = parseFloat(document.getElementById('valor_venda').value.replace(',','.')) || null;
 
-  let data, error;
-  if (projetoAtual?.id) {
-    ({data,error} = await db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single());
-  } else {
-    ({data,error} = await db.from('projetos').insert(payload).select().single());
+  let data = null, error = null;
+  try {
+    if (projetoAtual?.id) {
+      ({data,error} = await db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single());
+      // Registro não existe na base atual (ID de outro ambiente) — tenta inserir
+      if (!data || error?.code === 'PGRST116') {
+        error = null;
+        ({data,error} = await db.from('projetos').insert(payload).select().single());
+      }
+    } else {
+      ({data,error} = await db.from('projetos').insert(payload).select().single());
+    }
+  } catch(err) {
+    console.error('Supabase salvar projeto:', err);
   }
 
   btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Analisar precificação →';
 
-  if(error){ alert('Erro ao salvar: '+error.message); return; }
-
-  const valorVenda = parseFloat(document.getElementById('valor_venda').value.replace(',','.')) || null;
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
+  // Salva localmente independente do resultado da rede e avança
+  const projetoId = data?.id ?? projetoAtual?.id ?? null;
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: projetoId, valor_venda: valorVenda}));
   window.location.href='index.html';
 }
 
