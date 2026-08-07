@@ -91,7 +91,7 @@
     <div class="card-head">
       <h3>Orçamentos</h3>
       <div class="search-wrap">
-        <input type="text" id="busca" placeholder="Buscar cliente…" oninput="filtrar()">
+        <input type="text" id="busca" placeholder="Buscar empresa ou projeto…" aria-label="Buscar por empresa ou projeto" oninput="filtrar()">
       </div>
     </div>
     <div id="tabela"><div class="loading">Carregando…</div></div>
@@ -99,9 +99,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
@@ -110,12 +110,18 @@ const brl = v => isFinite(v) && v !== null
   ? Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0})
   : "—";
 const pct = v => v !== null && isFinite(v) ? Number(v).toFixed(1).replace(".",",")+"%" : "—";
-const dataFmt = s => new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const dataFmt = s => s ? new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
 
 const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
 let todos = [];
 
 async function carregar() {
+  if (!db) {
+    document.getElementById("tabela").innerHTML =
+      `<div class="empty"><div class="icon">📡</div><p><strong>Sem conexão — histórico indisponível.</strong></p><p>Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue.</p></div>`;
+    return;
+  }
+
   const { data: { session } } = await db.auth.getSession();
   if (!session?.user) {
     window.location.href = 'login.html?returnTo=historico.html';
@@ -129,7 +135,7 @@ async function carregar() {
 
   if (integrador?.id) query = query.eq('integrador_id', integrador.id);
 
-  const { data, error } = await query;
+  const { data, error } = await AppCore.dbTry(query);
 
   if (error) {
     document.getElementById("tabela").innerHTML =
@@ -146,19 +152,21 @@ function atualizarKpis(dados) {
   document.getElementById("kTotal").textContent = dados.length;
   if (!dados.length) return;
 
-  const ticketMedio = dados.reduce((s,r) => s + (r.ticket||0), 0) / dados.length;
-  const margemMedia = dados.reduce((s,r) => s + (r.margem_contribuicao_pct||0), 0) / dados.length;
-  const lucroMedio  = dados.reduce((s,r) => s + (r.lucro_mensal||0), 0) / dados.length;
+  const media = campo => {
+    const vals = dados.map(r => r[campo]).filter(v => v != null && isFinite(v));
+    return vals.length ? vals.reduce((s,v) => s + Number(v), 0) / vals.length : null;
+  };
 
-  document.getElementById("kTicket").textContent = brl(ticketMedio);
-  document.getElementById("kMargem").textContent = pct(margemMedia);
-  document.getElementById("kLucro").textContent  = brl(lucroMedio);
+  document.getElementById("kTicket").textContent = brl(media("ticket"));
+  document.getElementById("kMargem").textContent = pct(media("margem_contribuicao_pct"));
+  document.getElementById("kLucro").textContent  = brl(media("lucro_mensal"));
 }
 
-function renderTabela(dados) {
+function renderTabela(dados, busca) {
   if (!dados.length) {
-    document.getElementById("tabela").innerHTML =
-      `<div class="empty"><div class="icon">📋</div><p><strong>Nenhum orçamento salvo ainda.</strong></p><p>Preencha o dashboard e clique em "Salvar orçamento".</p></div>`;
+    document.getElementById("tabela").innerHTML = busca
+      ? `<div class="empty"><div class="icon">🔍</div><p><strong>Nenhum resultado para a busca.</strong></p><p>Tente outro termo de empresa ou projeto.</p></div>`
+      : `<div class="empty"><div class="icon">📋</div><p><strong>Nenhum orçamento salvo ainda.</strong></p><p>Preencha o dashboard e clique em "Salvar orçamento".</p></div>`;
     return;
   }
 
@@ -177,17 +185,18 @@ function renderTabela(dados) {
 
   dados.forEach(r => {
     const lucrativo = (r.lucro_mensal || 0) >= 0;
+    const margemPos = (r.margem_contribuicao_pct || 0) >= 0;
     const empresa   = r.integradores?.nome_empresa || '—';
     const projeto   = r.projetos?.nome_projeto     || '—';
-    const kwp       = r.projetos?.kwp_sistema      != null ? r.projetos.kwp_sistema+' kWp' : '—';
+    const kwp       = r.projetos?.kwp_sistema      != null ? Number(r.projetos.kwp_sistema).toLocaleString('pt-BR')+' kWp' : '—';
     html += `<tr>
       <td class="date-cell">${dataFmt(r.criado_em)}</td>
-      <td class="emp-cell" title="${empresa}">${empresa}</td>
-      <td class="proj-cell" title="${projeto}">${projeto}</td>
+      <td class="emp-cell" title="${AppCore.escapeHtml(empresa)}">${AppCore.escapeHtml(empresa)}</td>
+      <td class="proj-cell" title="${AppCore.escapeHtml(projeto)}">${AppCore.escapeHtml(projeto)}</td>
       <td class="r hide-sm">${kwp}</td>
       <td class="r hide-sm">${brl(r.ticket)}</td>
       <td class="r hide-sm">${brl(r.custo_direto_total)}</td>
-      <td class="r"><span class="badge ${lucrativo?'pos':'neg'}">${pct(r.margem_contribuicao_pct)}</span></td>
+      <td class="r"><span class="badge ${margemPos?'pos':'neg'}">${pct(r.margem_contribuicao_pct)}</span></td>
       <td class="r" style="color:${lucrativo?'var(--positive)':'var(--negative)'};font-weight:700">${brl(r.lucro_mensal)}</td>
       <td class="r hide-sm">${brl(r.preco_sugerido)}</td>
     </tr>`;
@@ -203,7 +212,7 @@ function filtrar() {
     (r.integradores?.nome_empresa||"").toLowerCase().includes(termo) ||
     (r.projetos?.nome_projeto||"").toLowerCase().includes(termo)
   );
-  renderTabela(filtrado);
+  renderTabela(filtrado, termo.length > 0);
 }
 
 carregar();

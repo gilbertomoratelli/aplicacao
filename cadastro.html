@@ -77,17 +77,17 @@
   <div class="stepper">
     <div class="step active"><div class="sn">1</div><div class="sl">Empresa</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">2</div><div class="sl">Custos</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">2</div><div class="sl">Custos</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='despesas.html'"><div class="sn">3</div><div class="sl">Despesas</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">3</div><div class="sl">Despesas</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='sazonalidade.html'"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">5</div><div class="sl">Indicad.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Projeto" onclick="location.href='projeto.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="card">
@@ -106,37 +106,38 @@
     <form id="form" onsubmit="salvar(event)">
       <label class="fld">
         <span class="lbl">Nome da Empresa <span class="req">*</span></span>
-        <input class="plain" type="text" id="nome_empresa" placeholder="Ex: Solar Norte Energia" autocomplete="organization">
-        <span class="err" id="errNome">Campo obrigatório</span>
+        <input class="plain" type="text" id="nome_empresa" placeholder="Ex: Solar Norte Energia" autocomplete="organization" aria-required="true">
+        <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
       </label>
 
       <label class="fld">
         <span class="lbl">CNPJ</span>
         <input class="plain" type="text" id="cnpj" placeholder="00.000.000/0000-00" maxlength="18" oninput="mascaraCNPJ(this)">
+        <span class="err" id="errCnpj" role="alert" aria-live="assertive">CNPJ inválido</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Regime Tributário <span class="req">*</span></span>
-        <select class="plain" id="regime">
+        <select class="plain" id="regime" aria-required="true">
           <option value="">Selecione…</option>
           <option value="MEI">MEI</option>
           <option value="Simples Nacional">Simples Nacional</option>
           <option value="Lucro Presumido">Lucro Presumido</option>
           <option value="Lucro Real">Lucro Real</option>
         </select>
-        <span class="err" id="errRegime">Selecione um regime</span>
+        <span class="err" id="errRegime" role="alert" aria-live="assertive">Selecione um regime</span>
       </label>
 
       <label class="fld">
         <span class="lbl">E-mail <span class="req">*</span></span>
-        <input class="plain" type="email" id="email" placeholder="contato@suaempresa.com.br" autocomplete="email">
-        <span class="err" id="errEmail">E-mail inválido</span>
+        <input class="plain" type="email" id="email" placeholder="contato@suaempresa.com.br" autocomplete="email" aria-required="true">
+        <span class="err" id="errEmail" role="alert" aria-live="assertive">E-mail inválido</span>
       </label>
 
       <label class="fld">
         <span class="lbl">WhatsApp <span class="req">*</span></span>
-        <input class="plain" type="tel" id="whatsapp" placeholder="(00) 00000-0000" maxlength="15" oninput="mascaraTel(this)">
-        <span class="err" id="errWhats">Campo obrigatório</span>
+        <input class="plain" type="tel" id="whatsapp" placeholder="(00) 00000-0000" maxlength="15" oninput="mascaraTel(this)" aria-required="true">
+        <span class="err" id="errWhats" role="alert" aria-live="assertive">Campo obrigatório</span>
       </label>
 
     </form>
@@ -160,9 +161,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
@@ -175,6 +176,22 @@ function mascaraCNPJ(el) {
   else if(v.length>2) v=v.replace(/(\d{2})(\d+)/,'$1.$2');
   el.value=v;
 }
+function cnpjValido(str) {
+  const c = String(str).replace(/\D/g,'');
+  if (c.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(c)) return false;
+  const dv = (base, pesos) => {
+    const soma = base.reduce((s,n,i)=>s+n*pesos[i],0);
+    const r = soma % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  const nums = c.split('').map(Number);
+  const p1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+  const p2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+  const d1 = dv(nums.slice(0,12), p1);
+  const d2 = dv(nums.slice(0,12).concat(d1), p2);
+  return d1 === nums[12] && d2 === nums[13];
+}
 function mascaraTel(el) {
   let v = el.value.replace(/\D/g,'').slice(0,11);
   if(v.length>10) v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
@@ -184,14 +201,14 @@ function mascaraTel(el) {
 }
 
 function salvarLucroAlvo() {
-  const val = parseFloat(document.getElementById('lucro_alvo').value);
-  if (isNaN(val)) return;
-  const salvo = JSON.parse(localStorage.getItem('integrador') || '{}');
+  if (document.getElementById('lucro_alvo').value.trim() === '') return;
+  const val = AppCore.parseNum(document.getElementById('lucro_alvo').value);
+  const salvo = AppCore.safeParse('integrador', {});
   localStorage.setItem('integrador', JSON.stringify({...salvo, lucro_alvo: val}));
 }
 
 function carregarSalvo() {
-  const salvo = JSON.parse(localStorage.getItem('integrador')||'null');
+  const salvo = AppCore.safeParse('integrador', null);
   if(salvo?.nome_empresa) {
     document.getElementById('retNome').textContent = salvo.nome_empresa;
     document.getElementById('returning').style.display='flex';
@@ -227,6 +244,10 @@ function validar() {
     document.getElementById(c.err).style.display=valido?'none':'block';
     if(!valido) ok=false;
   });
+  const cnpjVal=document.getElementById('cnpj').value.trim();
+  const cnpjOk=cnpjVal==='' || cnpjValido(cnpjVal);
+  document.getElementById('errCnpj').style.display=cnpjOk?'none':'block';
+  if(!cnpjOk) ok=false;
   return ok;
 }
 
@@ -245,27 +266,30 @@ async function salvar(e) {
     whatsapp: document.getElementById('whatsapp').value.trim(),
   };
 
-  const salvo = JSON.parse(localStorage.getItem('integrador')||'null');
-  let data = null, error = null;
-  try {
+  const salvo = AppCore.safeParse('integrador', null);
+  const lucroAlvoVal = AppCore.parseNum(document.getElementById('lucro_alvo').value) || 12;
+
+  // Grava no localStorage antes do DB, com um id garantido: nunca bloqueia o avanço do usuário (funciona offline).
+  const id = salvo?.id || AppCore.uuid();
+  localStorage.setItem('integrador', JSON.stringify({...payload, id, lucro_alvo: lucroAlvoVal}));
+
+  // Sync opcional com o DB: atualiza se já existe um registro salvo, senão cria um novo.
+  if (db) {
+    let data, error;
     if (salvo?.id) {
-      ({data,error} = await db.from('integradores').update(payload).eq('id', salvo.id).select().single());
+      ({data,error} = await AppCore.dbTry(db.from('integradores').update(payload).eq('id', salvo.id).select().single()));
       if (!data || error?.code === 'PGRST116') {
-        error = null;
-        ({data,error} = await db.from('integradores').insert(payload).select().single());
+        ({data,error} = await AppCore.dbTry(db.from('integradores').insert(payload).select().single()));
       }
     } else {
-      ({data,error} = await db.from('integradores').insert(payload).select().single());
+      ({data,error} = await AppCore.dbTry(db.from('integradores').insert(payload).select().single()));
     }
-  } catch(err) {
-    console.error('Supabase salvar integrador:', err);
+    if (!error && data?.id) {
+      localStorage.setItem('integrador', JSON.stringify({...payload, id: data.id, lucro_alvo: lucroAlvoVal}));
+    }
   }
 
   btn.disabled=false; btn.textContent='Continuar →';
-
-  const lucroAlvoVal = parseFloat(document.getElementById('lucro_alvo').value) || 12;
-  const integradorId = data?.id ?? salvo?.id ?? null;
-  localStorage.setItem('integrador', JSON.stringify({...payload, id: integradorId, lucro_alvo: lucroAlvoVal}));
   window.location.href='configuracoes.html?onboarding=1';
 }
 

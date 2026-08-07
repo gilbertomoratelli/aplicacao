@@ -275,23 +275,23 @@
           <span class="hint">Faturado direto pela distribuidora</span>
         </label>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">Material adicional CA<span class="cfg-badge" id="badge-ca"></span></span><button class="btn-cfg" onclick="abrirConfig('ca',event)">⚙ config</button></div>
+          <div class="lbl-row"><span class="lbl">Material adicional CA<span class="cfg-badge" id="badge-ca"></span></span><button class="btn-cfg" onclick="abrirConfig('ca',event)" aria-label="Configurar Material adicional CA">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="ca"></div>
         </label>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">Instalação<span class="cfg-badge" id="badge-inst"></span></span><button class="btn-cfg" onclick="abrirConfig('inst',event)">⚙ config</button></div>
+          <div class="lbl-row"><span class="lbl">Instalação<span class="cfg-badge" id="badge-inst"></span></span><button class="btn-cfg" onclick="abrirConfig('inst',event)" aria-label="Configurar Instalação">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="inst"></div>
         </label>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">Projeto elétrico<span class="cfg-badge" id="badge-proj"></span></span><button class="btn-cfg" onclick="abrirConfig('proj',event)">⚙ config</button></div>
+          <div class="lbl-row"><span class="lbl">Projeto elétrico<span class="cfg-badge" id="badge-proj"></span></span><button class="btn-cfg" onclick="abrirConfig('proj',event)" aria-label="Configurar Projeto elétrico">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="proj"></div>
         </label>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)">⚙ config</button></div>
+          <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)" aria-label="Configurar Homologação">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="homol"></div>
         </label>
         <label class="fld">
-          <div class="lbl-row"><span class="lbl">ART do Projeto<span class="cfg-badge" id="badge-art"></span></span><button class="btn-cfg" onclick="abrirConfig('art',event)">⚙ config</button></div>
+          <div class="lbl-row"><span class="lbl">ART do Projeto<span class="cfg-badge" id="badge-art"></span></span><button class="btn-cfg" onclick="abrirConfig('art',event)" aria-label="Configurar ART do Projeto">⚙ config</button></div>
           <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="art"></div>
         </label>
         <div id="extrasContainer"></div>
@@ -396,11 +396,11 @@
 <div class="toast" id="toast"></div>
 
 <!-- Modal de configuração de custo -->
-<div class="modal-ov" id="modalCfg" onclick="fecharModalFora(event)">
+<div class="modal-ov" id="modalCfg" role="dialog" aria-modal="true" aria-label="Configurar custo" onclick="fecharModalFora(event)">
   <div class="modal-card">
     <div class="modal-head">
       <h3 id="cfgTitulo">Configurar</h3>
-      <button class="btn-close" onclick="fecharModal()">×</button>
+      <button class="btn-close" onclick="fecharModal()" aria-label="Fechar">×</button>
     </div>
 
     <div class="opt-list">
@@ -459,19 +459,25 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
-const projeto    = JSON.parse(localStorage.getItem('projeto')||'null');
+const integrador = AppCore.safeParse('integrador', null);
+const projeto    = AppCore.safeParse('projeto', null);
 
 function initCtx() {
-  if(!integrador?.nome_empresa || !projeto?.nome_projeto) {
+  // M-11: onboarding parcial não deve expulsar para o cadastro se apenas o
+  // projeto estiver faltando — retoma a etapa pendente (projeto.html).
+  if(!integrador?.nome_empresa) {
     window.location.href='cadastro.html';
+    return;
+  }
+  if(!projeto?.nome_projeto) {
+    window.location.href='projeto.html';
     return;
   }
   document.getElementById('ctxEmpresa').textContent  = integrador.nome_empresa;
@@ -499,26 +505,46 @@ let despFixaPct=0;
 let V12_saz=0;
 let lastCalc=null;
 let authUser=null;
+// M-2: quando true, a sazonalidade NÃO deve sobrescrever o #ticket
+// (projeto.valor_venda tem prioridade). Definida no boot.
+let ticketTemValorVenda=false;
 
 const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
 const pct=v=>isFinite(v)?(v*100).toFixed(1).replace(".",",")+"%":"—";
-const num=id=>parseFloat((document.getElementById(id).value||'0').replace(',','.'))||0;
+const num=id=>AppCore.parseNum(document.getElementById(id).value);
+
+let initDone = false;
 
 function load(){
-  let s={};
-  try{ s=JSON.parse(localStorage.getItem("precSolar")||"{}"); }catch(e){}
+  // B-8: precSolar é estado LOCAL exclusivo deste dashboard — nenhuma outra
+  // página (cadastro/projeto/etc.) o popula. Por isso, no primeiro acesso os
+  // DEFAULTS cobrem todos os campos; a partir daí precSolar guarda o que o
+  // usuário editou aqui (via save()). Não há contrato de precSolar entre páginas.
+  const s=AppCore.safeParse("precSolar",{});
   FIELDS.forEach(f=>document.getElementById(f).value = fmtField(f, s[f]!==undefined?s[f]:DEFAULTS[f]));
-  comissaoBase = s.comissaoBase || DEFAULTS.comissaoBase;
-  tributoBase = s.tributoBase || DEFAULTS.tributoBase;
+  // A base de comissão/tributo NÃO vem de precSolar (fonte de verdade é `despesas`,
+  // aplicada por aplicarDespesas() após o load). Aqui só garantimos o DEFAULT
+  // como fallback quando não há despesas do onboarding.
+  comissaoBase = DEFAULTS.comissaoBase;
+  tributoBase = DEFAULTS.tributoBase;
   syncBaseButtons();
 }
 function save(){
-  const s={comissaoBase,tributoBase}; FIELDS.forEach(f=>s[f]=num(f));
+  // comissaoBase/tributoBase NÃO são persistidos aqui: fonte de verdade é `despesas`.
+  const s={}; FIELDS.forEach(f=>s[f]=num(f));
   try{ localStorage.setItem("precSolar",JSON.stringify(s)); }catch(e){}
 }
 function resetDefaults(){
   FIELDS.forEach(f=>document.getElementById(f).value=fmtField(f,DEFAULTS[f]));
   comissaoBase=DEFAULTS.comissaoBase; tributoBase=DEFAULTS.tributoBase;
+  // M-12: "Restaurar padrões" agora zera TUDO que o reset deve cobrir, não só
+  // os campos numéricos. Limpa custos extras dinâmicos, as configurações de
+  // cálculo por campo (fixo/módulo/kWp/faixa) e o rateio de despesa fixa (%).
+  // Só toca nas chaves relacionadas ao motor de precificação — não apaga
+  // integrador/projeto/despesas/sazonalidade nem persiste no banco.
+  custosExtras=[]; configs={}; despFixaPct=0;
+  try{ localStorage.removeItem('custosExtras'); localStorage.removeItem('configCustos'); }catch(e){}
+  atualizarBadges(); renderExtras();
   syncBaseButtons(); render();
 }
 function setBase(campo,val){
@@ -548,7 +574,7 @@ function cenario(tk,d){
   const custoVariavelPct=tk>0?dvUnit/tk:0;
   const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
   const despFixaUnit=despFixaPct>0?tk*(despFixaPct/100):(d.qtd>0?d.despFixa/d.qtd:0);
-  const despFixaMes=d.despFixa;
+  const despFixaMes=despFixaPct>0?despFixaUnit*d.qtd:d.despFixa;
   const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-despFixaMes, lucroPct=tk>0?lucroUnit/tk:0;
   return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,despFixaMes,lucroUnit,lucroMes,lucroPct};
 }
@@ -615,7 +641,7 @@ function render(){
     ["(−) Custos de serviço",-(d.cdt-d.kit),-(d.cdt-d.kit)*d.qtd,{muted:1}],
     ["(−) Comissão de vendas",-a.comissaoR,-a.comissaoR*d.qtd,{muted:1}],
     ["(−) Carga tributária",-a.tributoR,-a.tributoR*d.qtd,{muted:1}],
-    ...a.extrasDetalhes.map(e=>[`(−) ${e.nome}`,-e.v,-e.vMes,{muted:1}]),
+    ...a.extrasDetalhes.map(e=>[`(−) ${AppCore.escapeHtml(e.nome)}`,-e.v,-e.vMes,{muted:1}]),
     ...(d.outras>0?[["(−) Outras desp. variáveis",-a.outrasR,-a.outrasR*d.qtd,{muted:1}]]:[]),
     ["= Despesas variáveis",-a.dvUnit,-a.dvMes,{b:1,div:1}],
     ["= Margem de contribuição",a.mcUnit,a.mcMes,{b:1,div:1,color:a.mcUnit>=0?C.positive:C.negative}],
@@ -650,7 +676,7 @@ function render(){
     </tr>
     <tr>
       <td>PE · projetos / mês</td>
-      <td class="atual">${Math.ceil(peQtd)||'—'}<small>de ${d.qtd} planejados</small></td>
+      <td class="atual">${isFinite(peQtd)?Math.ceil(peQtd):'—'}<small>de ${d.qtd} planejados</small></td>
       <td class="${clsSug(peQtd,peQtdSug,true)}">${isFinite(peQtdSug)?Math.ceil(peQtdSug)+'<small>de '+d.qtd+' planejados</small>':'—'}</td>
     </tr>
     <tr>
@@ -693,14 +719,23 @@ function render(){
     </tr>`;
 
   const valido=isFinite(precoSugerido)&&denom>0;
+  // Diferencia a causa da indefinição do preço sugerido:
+  //  - dfPct indefinido (despFixaPct<=0 E faturamento atual=0) => faltam dados de entrada
+  //  - denom<=0 (meta + custos variáveis + desp. fixa % >= 100%) => meta inviável
+  const semDados = !isFinite(dfPct);
+  const precoInvalidoMsg = semDados ? "informe os dados" : "ajuste a meta";
   document.getElementById("precoP").innerHTML=`Para atingir ${d.lucroAlvo}% de lucro líquido.${abat>0?" Inclui o abatimento fiscal do KIT.":""} Despesa fixa = <b style="color:#fff">${pct(dfPct)}</b> do faturamento atual (${brl(fatAtual)}).`;
-  document.getElementById("precoOut").textContent=valido?brl(precoSugerido):"ajuste a meta";
+  document.getElementById("precoOut").textContent=valido?brl(precoSugerido):precoInvalidoMsg;
   const note=document.getElementById("precoNote");
   if(valido){
     note.innerHTML = precoSugerido>d.ticket
       ? `Ticket atual está <b style="color:${C.solar}">${brl(precoSugerido-d.ticket)}</b> abaixo do ideal.`
       : `Ticket atual já supera o alvo em <b style="color:#8FD3A8">${brl(d.ticket-precoSugerido)}</b>.`;
-  } else { note.textContent=""; }
+  } else {
+    note.innerHTML = semDados
+      ? `Informe quantidade/ticket ou a despesa fixa para calcular o preço sugerido.`
+      : `Meta de lucro + custos variáveis + despesa fixa somam <b style="color:${C.negative}">≥ 100%</b> do ticket — inviável. Reduza a meta ou os custos.`;
+  }
 
   const cmpEl=document.getElementById("cmp");
   if(!sug){
@@ -710,7 +745,7 @@ function render(){
       ["Preço de venda",a.ticket,sug.ticket,{b:1}],
       ["Comissão de vendas",a.comissaoR,sug.comissaoR,{muted:1,invert:1}],
       ["Carga tributária",a.tributoR,sug.tributoR,{muted:1,invert:1}],
-      ...a.extrasDetalhes.map((e,i)=>[e.nome,e.v,sug.extrasDetalhes[i]?.v??0,{muted:1,invert:1}]),
+      ...a.extrasDetalhes.map((e,i)=>[AppCore.escapeHtml(e.nome),e.v,sug.extrasDetalhes[i]?.v??0,{muted:1,invert:1}]),
       ...(d.outras>0?[["Outras desp. variáveis",a.outrasR,sug.outrasR,{muted:1,invert:1}]]:[]),
       ["= Despesas variáveis",a.dvUnit,sug.dvUnit,{b:1,invert:1,div:1}],
       ["Despesas variáveis %",a.custoVariavelPct,sug.custoVariavelPct,{pct:1,invert:1}],
@@ -814,7 +849,7 @@ function render(){
     '<td style="font-size:12px;font-weight:700;color:'+r.dc+'">'+r.dV+'</td></tr>').join('');
   document.getElementById('btnAdotar').disabled=!valido;
 
-  save();
+  if (initDone) save();
 }
 
 async function salvarOrcamento(){
@@ -825,7 +860,13 @@ async function salvarOrcamento(){
   btn.textContent="Salvando…";
 
   const {d,a,peQtd,precoSugerido}=lastCalc;
-  const {error}=await db.from("orcamentos").insert({
+  if(!db){
+    btn.disabled=false;
+    btn.textContent="Salvar análise";
+    showToast("Sem conexão: não foi possível salvar no servidor.", true);
+    return;
+  }
+  const {error}=await AppCore.dbTry(db.from("orcamentos").insert({
     integrador_id: integrador?.id||null,
     projeto_id:    projeto?.id||null,
     kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol, art:d.art,
@@ -840,7 +881,7 @@ async function salvarOrcamento(){
     lucro_mensal:a.lucroMes,
     ponto_equilibrio_qtd:isFinite(peQtd)?parseFloat(peQtd.toFixed(2)):null,
     preco_sugerido:isFinite(precoSugerido)?parseFloat(precoSugerido.toFixed(2)):null
-  });
+  }));
 
   btn.disabled=false;
   btn.textContent="Salvar análise";
@@ -908,13 +949,19 @@ let subModoAtual = 'modulo';
 
 async function carregarConfigs() {
   // Carrega do cache local imediatamente (sem latência)
-  configs      = JSON.parse(localStorage.getItem('configCustos') || '{}');
-  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
+  configs      = AppCore.safeParse('configCustos', {});
+  custosExtras = AppCore.safeParse('custosExtras', []);
   atualizarBadges();
 
-  // Sincroniza com Supabase (fonte de verdade)
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('configs').eq('id', integrador.id).single();
+  // M-6: sincroniza com Supabase, MAS sem descartar edições offline.
+  // Decisão (mínima e segura, sem merge): só aplicamos os dados do banco quando
+  // o estado LOCAL está vazio para essas chaves. Se já há configs/custosExtras
+  // locais, eles refletem a edição mais recente do usuário nesta sessão e
+  // prevalecem — evitando que o banco vença cegamente (last-write sem merge).
+  const temConfigLocal = Object.keys(configs).length > 0 || custosExtras.length > 0;
+  if (temConfigLocal) return;
+  if (!db || !integrador?.id) return;
+  const { data } = await AppCore.dbTry(db.from('integradores').select('configs').eq('id', integrador.id).single());
   if (data?.configs && Object.keys(data.configs).length) {
     configs      = data.configs.campos || {};
     custosExtras = data.configs.extras || [];
@@ -928,11 +975,16 @@ async function carregarConfigs() {
 }
 
 async function carregarDespesas() {
-  const local = JSON.parse(localStorage.getItem('despesas') || '{}');
-  if (Object.keys(local).length) aplicarDespesas(local);
+  const local = AppCore.safeParse('despesas', {});
+  const temDespesaLocal = Object.keys(local).length > 0;
+  if (temDespesaLocal) aplicarDespesas(local);
 
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('despesas').eq('id', integrador.id).single();
+  // M-6: se já há despesas locais (edição mais recente do usuário), preferimos
+  // o local e NÃO sobrescrevemos com o banco. Só puxamos do banco quando o
+  // estado local está ausente/vazio. Sem merge — decisão mínima e segura.
+  if (temDespesaLocal) return;
+  if (!db || !integrador?.id) return;
+  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single());
   if (data?.despesas && Object.keys(data.despesas).length) {
     localStorage.setItem('despesas', JSON.stringify(data.despesas));
     aplicarDespesas(data.despesas);
@@ -970,7 +1022,7 @@ function renderDespExtras() {
     const lbl = document.createElement('label');
     lbl.className = 'fld';
     lbl.innerHTML =
-      `<span class="lbl">${e.nome || 'Despesa extra ' + (i+1)}</span>` +
+      `<span class="lbl">${AppCore.escapeHtml(e.nome || 'Despesa extra ' + (i+1))}</span>` +
       `<div class="inwrap"><input type="number" step="0.1" value="${e.valor}" oninput="despesasExtras[${i}].valor=parseFloat(this.value)||0;render()"><span class="affix r">%</span></div>` +
       `<span class="hint">${baseHint}</span>`;
     container.appendChild(lbl);
@@ -978,11 +1030,11 @@ function renderDespExtras() {
 }
 
 async function carregarSazonalidade() {
-  const local = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+  const local = AppCore.safeParse('sazonalidade', {});
   if (local.meses) aplicarSazonalidade(local.meses);
 
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('sazonalidade').eq('id', integrador.id).single();
+  if (!db || !integrador?.id) return;
+  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single());
   if (data?.sazonalidade?.meses) {
     localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
     aplicarSazonalidade(data.sazonalidade.meses);
@@ -1000,12 +1052,13 @@ function aplicarSazonalidade(meses) {
   const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
   const fatMedio    = totalValor / 12;
 
-  const despesas = JSON.parse(localStorage.getItem('despesas') || '{}');
+  const despesas = AppCore.safeParse('despesas', {});
   const despFixaR = parseFloat(despesas.despFixa) || 0;
   despFixaPct = fatMedio > 0 ? (despFixaR / fatMedio) * 100 : 0;
   V12_saz = totalProjetos;
 
-  if (ticketMedio > 0) {
+  // M-2: só assume o #ticket se projeto.valor_venda não tiver prioridade.
+  if (ticketMedio > 0 && !ticketTemValorVenda) {
     document.getElementById('ticket').value = Number(ticketMedio).toFixed(2).replace('.', ',');
   }
 }
@@ -1013,10 +1066,10 @@ function aplicarSazonalidade(meses) {
 async function salvarConfigsDB() {
   localStorage.setItem('configCustos', JSON.stringify(configs));
   localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-  if (!integrador?.id) return;
-  await db.from('integradores')
+  if (!db || !integrador?.id) return;
+  await AppCore.dbTry(db.from('integradores')
     .update({ configs: { campos: configs, extras: custosExtras } })
-    .eq('id', integrador.id);
+    .eq('id', integrador.id));
 }
 
 function salvarConfigs() { salvarConfigsDB(); }
@@ -1212,7 +1265,7 @@ function renderFaixaEditor() {
                oninput="faixasTemp[${f._i}].taxa=parseFloat(this.value)||0;atualizarPreview()">
         <span class="fr-unit">${ul}</span>
       </div>
-      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover">×</button>`:'<span></span>'}
+      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover" aria-label="Remover faixa">×</button>`:'<span></span>'}
     </div>`;
   }).join('');
 
@@ -1284,9 +1337,10 @@ function renderExtras() {
   container.innerHTML = custosExtras.map(item => {
     const val = calcValorExtra(item);
     return `<div class="extra-item">
-      <div class="lbl-row"><span class="lbl">${item.label || 'Custo extra'}</span></div>
+      <div class="lbl-row"><span class="lbl">${AppCore.escapeHtml(item.label) || 'Custo extra'}</span></div>
       <div class="inwrap readonly-cost"><span class="affix l">R$</span>
-        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly>
+        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly
+               aria-label="Valor calculado do custo extra">
       </div>
     </div>`;
   }).join('');
@@ -1319,15 +1373,34 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(
 FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
 initCtx();
 (async () => {
-  await carregarConfigs();
-  renderExtras();
+  // 1) Restaura os valores persistidos (precSolar) / DEFAULTS primeiro,
+  //    para que a precedência de escrita nos inputs seja única e determinística.
   load();
+  // 2) Carrega configs e despesas do onboarding. aplicarDespesas() roda DEPOIS
+  //    do load(), então comissao/tributo/despFixa do onboarding prevalecem sobre
+  //    um precSolar zerado no primeiro acesso.
+  await carregarConfigs();
   await carregarDespesas();
+  renderExtras();
   aplicarTodasConfigs();
   if (projeto?.custo_kit) {
     document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');
   }
-  document.getElementById('qtd').value = 1;
+  // M-10: só forçar qtd=1 como DEFAULT quando NÃO há qtd salvo em precSolar.
+  // Se o usuário já salvou um valor, respeitá-lo (load() já o colocou no campo).
+  {
+    const _prec = AppCore.safeParse('precSolar', {});
+    if (_prec.qtd === undefined) document.getElementById('qtd').value = 1;
+  }
+  // M-2: precedência ÚNICA e determinística para #ticket. Três fontes disputam
+  // esse campo; a ordem abaixo é a fonte de verdade (mais específico/recente vence):
+  //   1º projeto.valor_venda  (se existir)  — valor do projeto atual
+  //   2º sazonalidade (ticket médio)         — histórico do integrador
+  //   3º precSolar / DEFAULT                  — já aplicado por load() antes daqui
+  // carregarSazonalidade() sempre roda (define despFixaPct, usado no cálculo),
+  // MAS só pode escrever no #ticket quando não houver valor_venda. Sinalizamos
+  // isso via flag global lida por aplicarSazonalidade().
+  ticketTemValorVenda = !!projeto?.valor_venda;
   await carregarSazonalidade();
   if (projeto?.valor_venda) {
     document.getElementById('ticket').value = Number(projeto.valor_venda).toFixed(2).replace('.', ',');
@@ -1335,6 +1408,8 @@ initCtx();
   if (integrador?.lucro_alvo != null) {
     document.getElementById('lucroAlvo').value = integrador.lucro_alvo;
   }
+  // 3) Init concluída: habilita persistência e renderiza uma única vez.
+  initDone = true;
   render();
   tornarCustosReadonly();
   const { data: { session } } = await db.auth.getSession();

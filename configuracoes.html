@@ -147,26 +147,26 @@
         <div class="logo"><svg viewBox="0 0 509 534" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
         <span class="eyebrow">FAVO Educação</span>
       </div>
-      <h1 style="display:flex;align-items:center;gap:10px">Configuração de Custos do Projeto <button class="btn-help" onclick="abrirHelp()" title="O que são custos diretos?">?</button></h1>
+      <h1 style="display:flex;align-items:center;gap:10px">Configuração de Custos do Projeto <button class="btn-help" onclick="abrirHelp()" title="O que são custos diretos?" aria-label="Ajuda: o que são custos diretos">?</button></h1>
       <p class="sub">Estrutura de custos da empresa — aplicada automaticamente a todos os projetos.</p>
     </div>
     <a class="btn primary" id="btnHeaderVoltar" href="index.html">← Voltar ao dashboard</a>
   </header>
 
   <div class="stepper" id="stepperOb" style="display:none">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">2</div><div class="sl">Custos</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='despesas.html'"><div class="sn">3</div><div class="sl">Despesas</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">3</div><div class="sl">Despesas</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='sazonalidade.html'"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">5</div><div class="sl">Indicad.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Projeto" onclick="location.href='projeto.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="empresa-bar" id="empresaBar" style="display:none">
@@ -177,9 +177,9 @@
 
   <div class="ref-bar">
     <span>Prévia calculada com</span>
-    <input type="number" id="refMods" value="12" min="1" oninput="renderConfigs();renderExtras()"> <strong>módulos</strong>
+    <input type="number" id="refMods" value="12" min="1" aria-label="Quantidade de módulos de referência" oninput="renderConfigs();renderExtras()"> <strong>módulos</strong>
     <span>e</span>
-    <input type="number" id="refKwp" value="5" min="0.1" step="0.1" oninput="renderConfigs();renderExtras()"> <strong>kWp</strong>
+    <input type="number" id="refKwp" value="5" min="0.1" step="0.1" aria-label="Potência em kWp de referência" oninput="renderConfigs();renderExtras()"> <strong>kWp</strong>
     <span class="ref-tag">referência para prévia</span>
   </div>
 
@@ -203,8 +203,8 @@
   </div>
 
   <div class="nav-row" id="navOb" style="display:none">
-    <a class="btn" href="cadastro.html">← Voltar</a>
-    <a class="btn primary" href="despesas.html">Continuar →</a>
+    <a class="btn" href="cadastro.html?onboarding=1">← Voltar</a>
+    <a class="btn primary" href="despesas.html?onboarding=1">Continuar →</a>
   </div>
 
 </div>
@@ -212,11 +212,11 @@
 <div class="toast" id="toast"></div>
 
 <!-- Modal de ajuda -->
-<div class="modal-ov" id="modalHelp" onclick="if(event.target===this)fecharHelp()">
+<div class="modal-ov" id="modalHelp" role="dialog" aria-modal="true" aria-label="Ajuda: o que são custos diretos" onclick="if(event.target===this)fecharHelp()">
   <div class="modal-card">
     <div class="modal-head">
       <h3>O que são Custos Diretos?</h3>
-      <button class="btn-close" onclick="fecharHelp()">×</button>
+      <button class="btn-close" onclick="fecharHelp()" aria-label="Fechar">×</button>
     </div>
     <p class="help-body">Todos os custos diretamente relacionados ao projeto e que podem ser auferidos mesmo antes de finalizar a negociação, ou seja não preciso saber qual o valor final da venda para saber quanto vai custar.</p>
     <div class="help-exemplos">
@@ -229,11 +229,11 @@
 </div>
 
 <!-- Modal de configuração -->
-<div class="modal-ov" id="modalCfg" onclick="fecharModalFora(event)">
+<div class="modal-ov" id="modalCfg" role="dialog" aria-modal="true" aria-label="Configurar custo" onclick="fecharModalFora(event)">
   <div class="modal-card">
     <div class="modal-head">
       <h3 id="cfgTitulo">Configurar</h3>
-      <button class="btn-close" onclick="fecharModal()">×</button>
+      <button class="btn-close" onclick="fecharModal()" aria-label="Fechar">×</button>
     </div>
 
     <div class="opt-list">
@@ -299,19 +299,21 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
 
-const integrador = JSON.parse(localStorage.getItem('integrador') || 'null');
+const integrador = AppCore.safeParse('integrador', null);
 
 if (!integrador?.id) window.location.href = 'cadastro.html';
 
+// M-1: prévia de custos usa 2 casas decimais para não parecer erro de cálculo
+// (ex.: R$ 2,50 arredondava para "R$ 3"). Todos os usos são prévias monetárias.
 const brl = v => isFinite(v) && v !== null
-  ? Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:0, maximumFractionDigits:0 })
+  ? Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2, maximumFractionDigits:2 })
   : '—';
 
 const CAMPOS_CFG = {
@@ -334,12 +336,14 @@ let faixaVarAtual = 'kwp';
 
 // ── Persistência ────────────────────────────────────────────────────
 async function carregarConfigs() {
-  configs      = JSON.parse(localStorage.getItem('configCustos') || '{}');
-  custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
+  configs      = AppCore.safeParse('configCustos', {});
+  custosExtras = AppCore.safeParse('custosExtras', []);
 
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('configs').eq('id', integrador.id).single();
-  if (data?.configs && Object.keys(data.configs).length) {
+  if (!db || !integrador?.id) return;
+  const { data, error } = await AppCore.dbTry(
+    db.from('integradores').select('configs').eq('id', integrador.id).single()
+  );
+  if (!error && data?.configs && Object.keys(data.configs).length) {
     configs      = data.configs.campos || {};
     custosExtras = data.configs.extras || [];
     localStorage.setItem('configCustos', JSON.stringify(configs));
@@ -350,17 +354,30 @@ async function carregarConfigs() {
 async function salvarConfigsDB() {
   localStorage.setItem('configCustos', JSON.stringify(configs));
   localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-  if (!integrador?.id) return;
-  await db.from('integradores')
-    .update({ configs: { campos: configs, extras: custosExtras } })
-    .eq('id', integrador.id);
+  if (!db || !integrador?.id) return { error: null, skipped: true };
+  return await AppCore.dbTry(
+    db.from('integradores')
+      .update({ configs: { campos: configs, extras: custosExtras } })
+      .eq('id', integrador.id)
+  );
 }
 
 // ── Valores de referência para prévia ───────────────────────────────
+// M-8: 0/vazio/negativo em kWp ou módulos caía no fallback (||5 / ||12), mas o
+// campo continuava mostrando "0" — o valor exibido divergia do valor calculado.
+// Correção conservadora: quando o valor digitado é inválido (<=0 ou vazio),
+// usamos o fallback E o refletimos de volta no próprio campo, garantindo
+// coerência entre o que o usuário vê e o que a prévia calcula.
+function refValido(el, fallback) {
+  const n = AppCore.parseNum(el.value);
+  if (isFinite(n) && n > 0) return n;
+  el.value = fallback;   // reflete o fallback no campo
+  return fallback;
+}
 function getRef() {
   return {
-    kwp:  parseFloat(document.getElementById('refKwp').value)  || 5,
-    mods: parseFloat(document.getElementById('refMods').value) || 12,
+    kwp:  refValido(document.getElementById('refKwp'),  5),
+    mods: refValido(document.getElementById('refMods'), 12),
   };
 }
 
@@ -389,7 +406,7 @@ function renderConfigs() {
         <div class="cfg-label">${label}</div>
         <div class="cfg-desc ${desc ? 'active' : 'dim'}">${desc || 'Sem configuração — preenchimento manual no projeto'}</div>
       </div>
-      <button class="btn-cfg" onclick="abrirConfig('${id}', event)">⚙ configurar</button>
+      <button class="btn-cfg" onclick="abrirConfig('${id}', event)" aria-label="Configurar ${label}">⚙ configurar</button>
     </div>`;
   }).join('');
 }
@@ -415,20 +432,24 @@ function renderExtras() {
     const desc = extraDesc(item);
     const ativo = item.modo === 'faixa' ? item.faixas?.length > 0 : item.taxa > 0;
     return `<div class="extra-row">
-      <input class="extra-lbl-input" value="${item.label}"
+      <input class="extra-lbl-input" value="${AppCore.escapeHtml(item.label)}"
+             aria-label="Nome do custo extra"
              onblur="atualizarLabelExtra('${item.id}', this.value)"
              onkeydown="if(event.key==='Enter')this.blur()">
       <span class="extra-cfg-desc ${ativo ? 'active' : ''}">${desc}</span>
-      <button class="btn-cfg" onclick="abrirConfigExtra('${item.id}', event)">⚙</button>
-      <button class="btn-remove-extra" onclick="removerExtra('${item.id}')">×</button>
+      <button class="btn-cfg" onclick="abrirConfigExtra('${item.id}', event)" aria-label="Configurar custo extra">⚙</button>
+      <button class="btn-remove-extra" onclick="removerExtra('${item.id}')" aria-label="Remover custo extra">×</button>
     </div>`;
   }).join('');
 }
 
 function adicionarExtra() {
-  const id = Date.now().toString();
+  // B-7: id único (evita colisão de Date.now() em cliques rápidos)
+  const id = AppCore.uuid();
+  // M-7: só cria a linha na UI + estado local; persiste no DB quando o
+  // usuário nomear o extra (atualizarLabelExtra), evitando round-trip vazio.
   custosExtras.push({ id, label: '', modo: 'fixo', taxa: 0 });
-  salvarConfigsDB();
+  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
   renderExtras();
   // Foca o campo de nome para o usuário digitar antes de configurar
   const inputs = document.querySelectorAll('.extra-lbl-input');
@@ -447,7 +468,13 @@ function removerExtra(id) {
 
 function atualizarLabelExtra(id, label) {
   const item = custosExtras.find(e => e.id === id);
-  if (item) { item.label = label.trim() || 'Custo'; salvarConfigsDB(); renderExtras(); }
+  if (!item) return;
+  const nome = label.trim();
+  // M-7: persiste no DB apenas quando há conteúdo (nome preenchido). Se o
+  // usuário adicionou e saiu sem digitar, mantém só localmente (sem write vazio).
+  if (nome) { item.label = nome; salvarConfigsDB(); }
+  else { item.label = ''; localStorage.setItem('custosExtras', JSON.stringify(custosExtras)); }
+  renderExtras();
 }
 
 // ── Modal: abrir / fechar ───────────────────────────────────────────
@@ -534,7 +561,7 @@ function atualizarPreview() {
     const smDesc = subModoAtual==='modulo' ? ` × ${mods} mod` : subModoAtual==='kwp' ? ` × ${kwp} kWp` : '';
     desc = `${varVal} ${varUnit} → faixa ${fd} → ${brl(fi?.taxa||0)}${smDesc}`;
   } else {
-    const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+    const taxa = AppCore.parseNum(document.getElementById('cfgTaxa').value);
     if (modoAtual === 'fixo')   { val = taxa;        desc = 'valor fixo'; }
     if (modoAtual === 'modulo') { val = taxa * mods; desc = `${brl(taxa)} × ${mods} módulos (ref.)`; }
     if (modoAtual === 'kwp')    { val = taxa * kwp;  desc = `${brl(taxa)} × ${kwp} kWp (ref.)`; }
@@ -575,7 +602,7 @@ function setSubModo(sm) {
 
 function addFaixa() {
   const nonNull = faixasTemp.filter(f => f.ate !== null);
-  const ultimo  = nonNull.length ? nonNull[nonNull.length - 1].ate : 0;
+  const ultimo  = nonNull.length ? Math.max(...nonNull.map(f => f.ate)) : 0;
   const step    = faixaVarAtual === 'modulos' ? 10 : 5;
   const idx     = faixasTemp.findIndex(f => f.ate === null);
   faixasTemp.splice(idx >= 0 ? idx : faixasTemp.length, 0, { ate: ultimo + step, taxa: 0 });
@@ -613,16 +640,16 @@ function renderFaixaEditor() {
       ? `<span class="fr-label">Acima de <b>${de}</b> ${varUnit}</span>`
       : `<span class="fr-label">${de===0?'Até':`<b>${de}</b> –`}&nbsp;<input class="fr-limit" type="number"
            value="${f.ate}" min="0.1" step="${varStep}"
-           oninput="faixasTemp[${f._i}].ate=parseFloat(this.value)||0;atualizarPreview()"
+           oninput="faixasTemp[${f._i}].ate=AppCore.parseNum(this.value)||0;atualizarPreview()"
            onblur="renderFaixaEditor()">&nbsp;${varUnit}</span>`;
     return `<div class="faixa-row${isAtiv?' faixa-active':''}">
       ${rangeHtml}
       <div class="fr-taxa">
         <input class="fr-taxa-inp" type="number" value="${f.taxa||''}" min="0" step="0.01" placeholder="0"
-               oninput="faixasTemp[${f._i}].taxa=parseFloat(this.value)||0;atualizarPreview()">
+               oninput="faixasTemp[${f._i}].taxa=AppCore.parseNum(this.value)||0;atualizarPreview()">
         <span class="fr-unit">${ul}</span>
       </div>
-      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover">×</button>`:'<span></span>'}
+      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover" aria-label="Remover faixa">×</button>`:'<span></span>'}
     </div>`;
   }).join('');
 
@@ -631,26 +658,41 @@ function renderFaixaEditor() {
 }
 
 // ── Aplicar configuração ─────────────────────────────────────────────
-function aplicarConfig() {
-  const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
+async function aplicarConfig() {
+  const taxa = AppCore.parseNum(document.getElementById('cfgTaxa').value);
   let cfgSalva;
   if (modoAtual === 'faixa') {
+    // Valida monotonicidade: cada limite "ate" deve ser estritamente maior que o anterior
+    const limites = faixasTemp.filter(f => f.ate !== null).map(f => f.ate).sort((a, b) => a - b);
+    for (let i = 1; i < limites.length; i++) {
+      if (limites[i] <= limites[i - 1]) {
+        showToast('Faixas sobrepostas ou duplicadas — ajuste os limites.');
+        return;
+      }
+    }
     cfgSalva = { modo:'faixa', subModo: subModoAtual, faixaVariavel: faixaVarAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
+    // M-9: gaps entre faixas são permitidos por design (cenário legítimo).
+    // Continuamos sem bloquear o salvamento — a faixa "acima de" (ate:null)
+    // sempre captura os valores intermediários, então nenhum valor fica sem
+    // taxa. Não emitimos toast de aviso para não gerar falso-positivo irritante
+    // em fluxos que usam saltos propositais. Ver decisão no resumo.
   } else {
     cfgSalva = { modo: modoAtual, taxa };
   }
 
+  let res;
   if (campoCfgAtual.startsWith('extra:')) {
     const id   = campoCfgAtual.slice(6);
     const item = custosExtras.find(e => e.id === id);
-    if (item) { Object.assign(item, cfgSalva); salvarConfigsDB(); renderExtras(); }
+    if (item) { Object.assign(item, cfgSalva); res = await salvarConfigsDB(); renderExtras(); }
   } else {
     configs[campoCfgAtual] = cfgSalva;
-    salvarConfigsDB();
+    res = await salvarConfigsDB();
     renderConfigs();
   }
   fecharModal();
-  showToast('Configuração salva!');
+  if (db && res && !res.error && !res.skipped) showToast('Configuração salva!');
+  else showToast('Salvo localmente');
 }
 
 // ── Toast ────────────────────────────────────────────────────────────
@@ -678,7 +720,7 @@ if (integrador?.nome_empresa) {
 }
 
 // Pré-preenche referência com o último projeto, se disponível
-const ultimoProjeto = JSON.parse(localStorage.getItem('projeto') || 'null');
+const ultimoProjeto = AppCore.safeParse('projeto', null);
 if (ultimoProjeto?.kwp_sistema)        document.getElementById('refKwp').value  = ultimoProjeto.kwp_sistema;
 if (ultimoProjeto?.quantidade_modulos) document.getElementById('refMods').value = ultimoProjeto.quantidade_modulos;
 

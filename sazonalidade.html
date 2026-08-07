@@ -93,19 +93,19 @@
   </div>
 
   <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Custos</div></div>
     <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
+    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Despesas</div></div>
     <div class="sline done"></div>
     <div class="step active"><div class="sn">4</div><div class="sl">Sazonalid.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">5</div><div class="sl">Indicad.</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Projeto" onclick="location.href='projeto.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">6</div><div class="sl">Projeto</div></div>
     <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
+    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
   </div>
 
   <div class="empresa-badge">
@@ -158,21 +158,23 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
+const db = AppCore.getClient(
   'https://dfsmwzmtainiclcwpigw.supabase.co',
   'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
 );
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+const integrador = AppCore.safeParse('integrador', null);
 let dadosMeses  = {};
 let chavesMeses = [];
+const camposTocados = new Set(); // A-11: campos editados pelo usuário, não sobrescrever com dados remotos
 
 function getMeses12() {
+  const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   return Array.from({length:12}, (_,i) => ({
     key:   `m${String(i+1).padStart(2,'0')}`,
-    label: `${i+1} / 12`
+    label: nomesMeses[i]
   }));
 }
 
@@ -210,18 +212,18 @@ function renderTabela(meses) {
 
       `<div class="sg-cell">` +
         `<div class="sg-inp-wrap">` +
-          `<input class="sg-inp" type="number" min="0" step="1" placeholder="0"` +
+          `<input class="sg-inp" type="number" min="0" step="1" placeholder="0" aria-label="Número de projetos em ${label}"` +
           ` id="proj_${key}" value="${dadosMeses[key]?.projetos||''}"` +
-          ` oninput="atualizar('${key}')">` +
+          ` oninput="camposTocados.add('${key}-projetos');atualizar('${key}')">` +
         `</div>` +
       `</div>` +
 
       `<div class="sg-cell">` +
         `<div class="sg-inp-wrap">` +
           `<span class="pfx">R$</span>` +
-          `<input class="sg-inp" type="text" inputmode="decimal" placeholder="0,00"` +
+          `<input class="sg-inp" type="text" inputmode="decimal" placeholder="0,00" aria-label="Faturamento em ${label}"` +
           ` id="val_${key}" value="${dadosMeses[key]?.valor ? Number(dadosMeses[key].valor).toFixed(2).replace('.',',') : ''}"` +
-          ` oninput="atualizar('${key}')">` +
+          ` oninput="camposTocados.add('${key}-valor');atualizar('${key}')">` +
         `</div>` +
       `</div>` +
 
@@ -240,7 +242,7 @@ function atualizar(key) {
   const tickEl = document.getElementById(`tick_${key}`);
 
   const proj = parseInt(projEl.value) || 0;
-  const val  = parseFloat((valEl.value || '0').replace(',', '.')) || 0;
+  const val  = AppCore.parseNum(valEl.value);
 
   dadosMeses[key] = { projetos: proj, valor: val };
 
@@ -266,8 +268,8 @@ function calcResumo() {
   const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
   const fatMedio    = totalValor / 12;
 
-  const despesas  = JSON.parse(localStorage.getItem('despesas') || '{}');
-  const despFixa  = parseFloat(despesas.despFixa) || 0;
+  const despesas  = AppCore.safeParse('despesas', {});
+  const despFixa  = AppCore.parseNum(despesas.despFixa);
   const despPct   = fatMedio > 0 ? (despFixa / fatMedio) * 100 : 0;
 
   document.getElementById('resumoTicket').textContent  = brl(ticketMedio);
@@ -285,11 +287,11 @@ function trocarEmpresa() {
 }
 
 async function carregarDados() {
-  const local = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+  const local = AppCore.safeParse('sazonalidade', {});
   if (local.meses) aplicarDados(local.meses);
 
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('sazonalidade').eq('id', integrador.id).single();
+  if (!integrador?.id || !db) return;
+  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single());
   if (data?.sazonalidade?.meses) {
     localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
     aplicarDados(data.sazonalidade.meses);
@@ -299,11 +301,17 @@ async function carregarDados() {
 function aplicarDados(meses) {
   Object.entries(meses).forEach(([key, v]) => {
     if (!chavesMeses.includes(key)) return;
-    dadosMeses[key] = { projetos: v.projetos || 0, valor: v.valor || 0 };
+    // A-11: não sobrescrever campos que o usuário já editou (ex.: durante o await do fetch remoto)
+    const tocouProj = camposTocados.has(`${key}-projetos`);
+    const tocouVal  = camposTocados.has(`${key}-valor`);
     const projEl = document.getElementById(`proj_${key}`);
     const valEl  = document.getElementById(`val_${key}`);
-    if (projEl) projEl.value = v.projetos || '';
-    if (valEl)  valEl.value  = v.valor ? Number(v.valor).toFixed(2).replace('.', ',') : '';
+    if (projEl && !tocouProj) projEl.value = v.projetos || '';
+    if (valEl  && !tocouVal)  valEl.value  = v.valor ? Number(v.valor).toFixed(2).replace('.', ',') : '';
+    dadosMeses[key] = {
+      projetos: tocouProj ? (dadosMeses[key]?.projetos || 0) : (v.projetos || 0),
+      valor:    tocouVal  ? (dadosMeses[key]?.valor    || 0) : (v.valor    || 0)
+    };
     atualizar(key);
   });
 }
@@ -316,11 +324,15 @@ async function salvar() {
   const payload = { meses: dadosMeses };
   localStorage.setItem('sazonalidade', JSON.stringify(payload));
 
-  if (integrador?.id) {
-    await db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id);
+  try {
+    if (integrador?.id && db) {
+      await AppCore.dbTry(db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar →';
+    window.location.href = 'indicadores.html';
   }
-
-  window.location.href = 'indicadores.html';
 }
 
 init();
