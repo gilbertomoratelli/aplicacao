@@ -120,6 +120,37 @@
     });
   };
 
+  // custoMaximo(d) — maior custo direto por projeto que ainda entrega a margem
+  // alvo SEM mexer no preço. É a alternativa honesta a "aumente o preço":
+  // muita integradora tem mais espaço para negociar kit e instalação do que
+  // para repassar reajuste ao cliente.
+  //
+  // Assume que a redução vem de custos que não alteram o abatimento fiscal
+  // (ou seja, não vem do kit). Se vier do kit, a economia necessária é menor.
+  Calculo.custoMaximo = function (d) {
+    var cPctServ = d.comissaoBase === 'servico' ? (d.comissao || 0) / 100 : 0;
+    var tPctServ = d.tributoBase  === 'servico' ? (d.tributo  || 0) / 100 : 0;
+    var abat = (cPctServ + tPctServ) * (d.kit || 0);
+
+    var baseVar = ((d.comissao || 0) + (d.tributo || 0) + (d.outras || 0)) / 100;
+    var denom = 1 - baseVar - (d.lucroAlvo || 0) / 100;
+    var fixUnit = d.qtd > 0 ? (d.despFixa || 0) / d.qtd : Infinity;
+
+    if (!isFinite(fixUnit)) return null;
+    return d.ticket * denom - fixUnit + abat;
+  };
+
+  // projecaoAnual(a) — o mesmo cenário esticado para 12 meses.
+  Calculo.projecaoAnual = function (a, qtd) {
+    return {
+      projetos: (qtd || 0) * 12,
+      faturamento: a.faturamento * 12,
+      margemContribuicao: a.mcMes * 12,
+      despesasFixas: a.despFixaMes * 12,
+      sobra: a.lucroMes * 12
+    };
+  };
+
   // diagnostico(d) — tudo que a tela precisa, em uma chamada.
   Calculo.diagnostico = function (d) {
     var dados = Object.assign({}, d);
@@ -152,7 +183,9 @@
       abaixoDoPiso: valido && dados.ticket < piso,
       folga: valido ? dados.ticket - piso : null,
       pontoEquilibrio: Calculo.pontoEquilibrio(atual),
-      descontos: Calculo.impactoDesconto(dados)
+      descontos: Calculo.impactoDesconto(dados),
+      custoMaximo: Calculo.custoMaximo(dados),
+      anual: Calculo.projecaoAnual(atual, dados.qtd)
     };
   };
 
