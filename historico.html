@@ -115,7 +115,8 @@ async function carregar() {
     return;
   }
 
-  const { data: { session } } = await db.auth.getSession();
+  const { data: _sess } = await AppCore.dbTry(db.auth.getSession());
+  const session = _sess?.session;
   if (!session?.user) {
     window.location.href = 'login.html?returnTo=historico.html';
     return;

@@ -33,8 +33,8 @@
   <nav class="stepper" id="stepper"></nav>
 
   <div class="card">
-    <h2 class="card-title">Dados da Integradora</h2>
-    <p class="card-sub">Preencha os dados da empresa responsável pelo projeto.</p>
+    <h2 class="card-title">Vamos começar pela sua empresa</h2>
+    <p class="card-sub">São só quatro campos. No fim você recebe um diagnóstico do seu preço atual.</p>
 
     <div class="returning" id="returning" style="display:none">
       <div>
@@ -59,18 +59,6 @@
       </label>
 
       <label class="fld">
-        <span class="lbl">Regime Tributário <span class="req">*</span></span>
-        <select class="plain" id="regime" aria-required="true">
-          <option value="">Selecione…</option>
-          <option value="MEI">MEI</option>
-          <option value="Simples Nacional">Simples Nacional</option>
-          <option value="Lucro Presumido">Lucro Presumido</option>
-          <option value="Lucro Real">Lucro Real</option>
-        </select>
-        <span class="err" id="errRegime" role="alert" aria-live="assertive">Selecione um regime</span>
-      </label>
-
-      <label class="fld">
         <span class="lbl">E-mail <span class="req">*</span></span>
         <input class="plain" type="email" id="email" placeholder="contato@suaempresa.com.br" autocomplete="email" aria-required="true">
         <span class="err" id="errEmail" role="alert" aria-live="assertive">E-mail inválido</span>
@@ -83,18 +71,6 @@
       </label>
 
     </form>
-  </div>
-  <div class="card" style="margin-top:20px">
-    <h2 class="card-title">Margem de Lucro Desejada</h2>
-    <p class="card-sub">Meta de lucro líquido usada no preço sugerido da precificação.</p>
-    <label class="fld" style="margin-bottom:0">
-      <span class="lbl">Margem de lucro líquida alvo</span>
-      <div class="inwrap">
-        <input type="number" id="lucro_alvo" placeholder="12" min="0" max="100" step="0.1" oninput="salvarLucroAlvo()">
-        <span class="affix r">%</span>
-      </div>
-      <span class="hint" style="display:block;margin-top:5px;font-size:11px;color:var(--muted)">Preencha aqui e o campo será preenchido automaticamente na precificação.</span>
-    </label>
   </div>
 
   <button class="btn-primary" id="btnSalvar" onclick="document.getElementById('form').requestSubmit()" style="margin-top:20px">Continuar →</button>
@@ -142,13 +118,6 @@ function mascaraTel(el) {
   el.value=v;
 }
 
-function salvarLucroAlvo() {
-  if (document.getElementById('lucro_alvo').value.trim() === '') return;
-  const val = AppCore.parseNum(document.getElementById('lucro_alvo').value);
-  const salvo = AppCore.safeParse('integrador', {});
-  localStorage.setItem('integrador', JSON.stringify({...salvo, lucro_alvo: val}));
-}
-
 function carregarSalvo() {
   const salvo = AppCore.safeParse('integrador', null);
   if(salvo?.nome_empresa) {
@@ -157,19 +126,13 @@ function carregarSalvo() {
     document.getElementById('dividerRet').style.display='block';
     document.getElementById('nome_empresa').value = salvo.nome_empresa||'';
     document.getElementById('cnpj').value = salvo.cnpj||'';
-    document.getElementById('regime').value = salvo.regime_tributario||'';
     document.getElementById('email').value = salvo.email||'';
     document.getElementById('whatsapp').value = salvo.whatsapp||'';
-  }
-  if (salvo?.lucro_alvo != null) {
-    document.getElementById('lucro_alvo').value = salvo.lucro_alvo;
-  } else {
-    document.getElementById('lucro_alvo').value = 12;
   }
 }
 
 function continuar() {
-  window.location.href = 'configuracoes.html?onboarding=1';
+  window.location.href = 'projeto.html';
 }
 
 // Cada campo declara a própria regra e a mensagem do erro. A mensagem é função
@@ -182,9 +145,6 @@ const CAMPOS_OBRIGATORIOS=[
   {id:'cnpj',err:'errCnpj',
    check:v=>cnpjValido(v),
    msg:v=>v.trim()===''?'Informe o CNPJ da empresa':'CNPJ inválido — confira os 14 dígitos'},
-  {id:'regime',err:'errRegime',
-   check:v=>v!=='',
-   msg:()=>'Selecione o regime tributário'},
   {id:'email',err:'errEmail',
    check:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
    msg:v=>v.trim()===''?'Informe o e-mail de contato':'E-mail inválido — ex.: contato@suaempresa.com.br'},
@@ -204,16 +164,21 @@ async function salvar(e) {
   const btn=document.getElementById('btnSalvar');
   btn.disabled=true; btn.textContent='Salvando…';
 
+  const salvo = AppCore.safeParse('integrador', null);
+
+  // Regime tributário e margem-alvo agora são perguntados no passo Custos, onde
+  // ficam ao lado da carga tributária e fazem sentido para o usuário. Aqui eles
+  // só são preservados: quem volta para corrigir o contato não perde o que já
+  // respondeu adiante.
   const payload={
     nome_empresa: document.getElementById('nome_empresa').value.trim(),
     cnpj: document.getElementById('cnpj').value.trim(),
-    regime_tributario: document.getElementById('regime').value,
+    regime_tributario: salvo?.regime_tributario ?? null,
     email: document.getElementById('email').value.trim(),
     whatsapp: document.getElementById('whatsapp').value.trim(),
   };
 
-  const salvo = AppCore.safeParse('integrador', null);
-  const lucroAlvoVal = AppCore.parseNum(document.getElementById('lucro_alvo').value) || 12;
+  const lucroAlvoVal = salvo?.lucro_alvo ?? 12;
 
   // Grava no localStorage antes do DB, com um id garantido: nunca bloqueia o avanço do usuário (funciona offline).
   const id = salvo?.id || AppCore.uuid();
@@ -236,10 +201,10 @@ async function salvar(e) {
   }
 
   btn.disabled=false; btn.textContent='Continuar →';
-  window.location.href='configuracoes.html?onboarding=1';
+  window.location.href='projeto.html';
 }
 
-AppCore.renderStepper('stepper','empresa');
+AppCore.renderStepper('stepper','contato');
 carregarSalvo();
 </script>
 </body>

@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="indicadores.html">← Voltar</a>
+  <a class="btn-back" href="cadastro.html">← Voltar</a>
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
     <div>
@@ -32,7 +32,7 @@
 
   <div class="card">
     <h2 class="card-title">Dados do Projeto</h2>
-    <p class="card-sub">Informe os dados técnicos do sistema fotovoltaico, de acordo com o ticket médio apurado.</p>
+    <p class="card-sub">Use um projeto típico da sua empresa. É com ele que vamos calcular o seu preço.</p>
 
     <form id="form" onsubmit="salvar(event)">
       <label class="fld">
@@ -81,7 +81,7 @@
         <span class="hint">Preço praticado hoje (KIT + serviço). Preenche o campo de análise automaticamente.</span>
       </label>
 
-      <button class="btn-primary" type="submit" id="btnSalvar">Analisar precificação →</button>
+      <button class="btn-primary" type="submit" id="btnSalvar">Continuar →</button>
     </form>
   </div>
 </div>
@@ -130,7 +130,9 @@ function init() {
     return;
   }
   document.getElementById('empresaNome').textContent = integrador.nome_empresa;
-  document.getElementById('empresaRegime').textContent = integrador.regime_tributario||'Regime não informado';
+  const regimeEl = document.getElementById('empresaRegime');
+  regimeEl.textContent = integrador.regime_tributario || '';
+  regimeEl.style.display = integrador.regime_tributario ? '' : 'none';
 
   if (projetoAtual) {
     document.getElementById('nome_projeto').value    = projetoAtual.nome_projeto        || '';
@@ -216,9 +218,9 @@ async function salvar(e) {
     }
   }
 
-  btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Analisar precificação →';
+  btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Continuar →';
 
-  window.location.href='index.html';
+  window.location.href='configuracoes.html?onboarding=1';
 }
 
 AppCore.renderStepper('stepper','projeto');

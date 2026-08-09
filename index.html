@@ -216,7 +216,8 @@
     <div class="actions">
       <button class="btn" onclick="location.href='projeto.html'">← Voltar</button>
       <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
-      <button class="btn" onclick="location.href='configuracoes.html'">⚙ Custos do Projeto</button>
+      <button class="btn" onclick="location.href='configuracoes.html'">⚙ Custos e despesas</button>
+      <button class="btn" onclick="location.href='sazonalidade.html'">📅 Refinar sazonalidade</button>
       <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
       <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar análise</button>
       <button class="btn save" id="btnRelatorio" onclick="abrirRelatorio()">Gerar Relatório PDF</button>
@@ -901,7 +902,7 @@ function abrirRelatorio(){
   window.location.href='relatorio.html';
 }
 async function signOut(){
-  await db.auth.signOut();
+  if (db) await AppCore.dbTry(db.auth.signOut());
   authUser=null;
   atualizarAuthUI();
 }
@@ -938,7 +939,7 @@ async function carregarConfigs() {
   const temConfigLocal = Object.keys(configs).length > 0 || custosExtras.length > 0;
   if (temConfigLocal) return;
   if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('configs').eq('id', integrador.id).single());
+  const { data } = await AppCore.dbTry(db.from('integradores').select('configs').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
   if (data?.configs && Object.keys(data.configs).length) {
     configs      = data.configs.campos || {};
     custosExtras = data.configs.extras || [];
@@ -961,7 +962,7 @@ async function carregarDespesas() {
   // estado local está ausente/vazio. Sem merge — decisão mínima e segura.
   if (temDespesaLocal) return;
   if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single());
+  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
   if (data?.despesas && Object.keys(data.despesas).length) {
     localStorage.setItem('despesas', JSON.stringify(data.despesas));
     aplicarDespesas(data.despesas);
@@ -1011,7 +1012,7 @@ async function carregarSazonalidade() {
   if (local.meses) aplicarSazonalidade(local.meses);
 
   if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single());
+  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
   if (data?.sazonalidade?.meses) {
     localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
     aplicarSazonalidade(data.sazonalidade.meses);
@@ -1353,11 +1354,18 @@ initCtx();
   // 1) Restaura os valores persistidos (precSolar) / DEFAULTS primeiro,
   //    para que a precedência de escrita nos inputs seja única e determinística.
   load();
-  // 2) Carrega configs e despesas do onboarding. aplicarDespesas() roda DEPOIS
-  //    do load(), então comissao/tributo/despFixa do onboarding prevalecem sobre
-  //    um precSolar zerado no primeiro acesso.
-  await carregarConfigs();
-  await carregarDespesas();
+  // M-2 (parte 1): sinalizar ANTES de qualquer carga assíncrona. aplicarSazonalidade()
+  // consulta esta flag para não sobrescrever o #ticket quando o projeto já tem
+  // valor de venda — e agora a sazonalidade carrega junto com o resto.
+  ticketTemValorVenda = !!projeto?.valor_venda;
+
+  // 2) Carrega configs, despesas e sazonalidade do onboarding. Todas rodam DEPOIS
+  //    do load(), então os dados do onboarding prevalecem sobre um precSolar
+  //    zerado no primeiro acesso.
+  //    Em paralelo de propósito: são leituras independentes e, em série, cada uma
+  //    somava o próprio tempo de espera — com rede ruim a tela levava o triplo
+  //    do tempo para mostrar os números reais do usuário.
+  await Promise.all([carregarConfigs(), carregarDespesas(), carregarSazonalidade()]);
   renderExtras();
   aplicarTodasConfigs();
   if (projeto?.custo_kit) {
@@ -1369,16 +1377,13 @@ initCtx();
     const _prec = AppCore.safeParse('precSolar', {});
     if (_prec.qtd === undefined) document.getElementById('qtd').value = 1;
   }
-  // M-2: precedência ÚNICA e determinística para #ticket. Três fontes disputam
-  // esse campo; a ordem abaixo é a fonte de verdade (mais específico/recente vence):
+  // M-2 (parte 2): precedência ÚNICA e determinística para #ticket. Três fontes
+  // disputam esse campo; a ordem abaixo é a fonte de verdade (mais específico vence):
   //   1º projeto.valor_venda  (se existir)  — valor do projeto atual
   //   2º sazonalidade (ticket médio)         — histórico do integrador
   //   3º precSolar / DEFAULT                  — já aplicado por load() antes daqui
   // carregarSazonalidade() sempre roda (define despFixaPct, usado no cálculo),
-  // MAS só pode escrever no #ticket quando não houver valor_venda. Sinalizamos
-  // isso via flag global lida por aplicarSazonalidade().
-  ticketTemValorVenda = !!projeto?.valor_venda;
-  await carregarSazonalidade();
+  // MAS só escreve no #ticket quando ticketTemValorVenda é falso.
   if (projeto?.valor_venda) {
     document.getElementById('ticket').value = Number(projeto.valor_venda).toFixed(2).replace('.', ',');
   }
@@ -1389,10 +1394,14 @@ initCtx();
   initDone = true;
   render();
   tornarCustosReadonly();
-  const { data: { session } } = await db.auth.getSession();
-  authUser = session?.user || null;
-  atualizarAuthUI();
-  db.auth.onAuthStateChange((_, s) => { authUser = s?.user || null; atualizarAuthUI(); });
+  if (db) {
+    const { data } = await AppCore.dbTry(db.auth.getSession(), AppCore.PRAZO_BOOT);
+    authUser = data?.session?.user || null;
+    atualizarAuthUI();
+    db.auth.onAuthStateChange((_, s) => { authUser = s?.user || null; atualizarAuthUI(); });
+  } else {
+    atualizarAuthUI();
+  }
 })();
 </script>
 </body>

@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="despesas.html">← Voltar</a>
+  <a class="btn-back" href="index.html">← Voltar ao diagnóstico</a>
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
     <div>
@@ -52,7 +52,6 @@
     </div>
   </div>
 
-  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge">
     <div>
@@ -98,8 +97,8 @@
   </div>
 
   <div class="nav-row">
-    <a class="btn-nav" href="despesas.html">← Voltar</a>
-    <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Continuar →</button>
+    <a class="btn-nav" href="index.html">← Voltar</a>
+    <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Salvar e voltar →</button>
   </div>
 </div>
 
@@ -276,13 +275,12 @@ async function salvar() {
     }
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Continuar →';
-    window.location.href = 'indicadores.html';
+    btn.textContent = 'Salvar e voltar →';
+    window.location.href = 'index.html';
   }
 }
 
 init();
-AppCore.renderStepper('stepper','sazonalidade');
 </script>
 </body>
 </html>

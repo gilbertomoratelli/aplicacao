@@ -85,8 +85,9 @@ a.step-link:hover .sn{opacity:.75}
 .sline{flex:1;height:2px;background:var(--hair);margin:0 8px 16px}
 .sline.done{background:var(--teal)}
 
-/* Abaixo deste ponto os rótulos lado a lado não cabem sem encavalar. */
-@media (max-width:680px){
+/* Abaixo deste ponto os rótulos lado a lado não cabem sem encavalar.
+   Com 4 passos o limite é bem mais folgado do que era com 7. */
+@media (max-width:560px){
   .stepper-compact{display:block}
   .stepper-full{display:none}
 }
@@ -153,6 +154,17 @@ input.plain:focus,select.plain:focus{outline:2px solid var(--solar);outline-offs
 
 .btn-help{width:22px;height:22px;border-radius:50%;border:2px solid var(--solar);background:none;color:var(--solar);font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle;flex-shrink:0;font-family:var(--sans);transition:.15s;margin-left:8px}
 .btn-help:hover{background:var(--solar);color:#fff}
+
+/* Listas editáveis (custos extras, despesas extras) — o botão de remover
+   é pequeno por natureza, então ganha área de toque por padding. */
+.btn-add-extra{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin-top:12px;min-height:var(--toque)}
+.btn-add-extra:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
+.btn-remove-extra{background:none;border:1px solid var(--hair);border-radius:5px;padding:4px 10px;font-size:14px;cursor:pointer;color:var(--muted);line-height:1.4;transition:.15s;font-family:var(--sans);flex-shrink:0;min-height:36px}
+.btn-remove-extra:hover{border-color:var(--negative);color:var(--negative)}
+
+/* Conteúdo dos modais de ajuda */
+.help-body{font-size:14px;color:var(--ink);line-height:1.6;margin:0 0 12px}
+.help-exemplos{font-size:12px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px 12px;line-height:1.5}
 
 /* ─────────────────────────────────────────────────────────────
    8. Faixa de identificação da empresa

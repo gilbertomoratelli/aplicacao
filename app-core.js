@@ -5,6 +5,11 @@
 
   var AppCore = {};
 
+  // Prazo máximo (ms) para consultas feitas durante a abertura de uma tela.
+  // Passado esse tempo, seguimos com o dado local: é melhor mostrar o que já
+  // temos do que travar a tela esperando o servidor.
+  AppCore.PRAZO_BOOT = 6000;
+
   // 1. safeParse(key, fallback) — lê localStorage[key] e faz JSON.parse com try/catch.
   //    Se a chave não existir OU o parse falhar, retorna fallback. Nunca lança.
   AppCore.safeParse = function (key, fallback) {
@@ -64,14 +69,30 @@
       .replace(/'/g, '&#39;');
   };
 
-  // 4. dbTry(promise) — envolve uma Promise (tipicamente query supabase que já retorna {data,error})
-  //    e SEMPRE resolve para { data, error }, nunca rejeita.
+  // 4. dbTry(promise, prazoMs) — envolve uma Promise (tipicamente query supabase
+  //    que já retorna {data,error}) e SEMPRE resolve para { data, error }, nunca rejeita.
   //      - promise rejeita → { data: null, error: <erro> }
   //      - resolve com objeto que já tem {data,error} → repassa
   //      - resolve com outro valor → { data: <valor>, error: null }
-  AppCore.dbTry = async function (promise) {
+  //    prazoMs (opcional): desiste da espera e devolve erro de tempo esgotado.
+  //    Serve para chamadas que rodam durante a abertura da tela: rede lenta não
+  //    pode segurar o carregamento e deixar o usuário vendo valor padrão como se
+  //    fosse o dado dele. A promise original segue seu curso; só paramos de esperar.
+  AppCore.dbTry = async function (promise, prazoMs) {
     try {
-      var result = await promise;
+      var result;
+      if (prazoMs) {
+        var expirou = { __prazoEsgotado: true };
+        result = await Promise.race([
+          promise,
+          new Promise(function (resolve) { setTimeout(function () { resolve(expirou); }, prazoMs); })
+        ]);
+        if (result === expirou) {
+          return { data: null, error: new Error('Tempo esgotado ao consultar o servidor') };
+        }
+      } else {
+        result = await promise;
+      }
       if (result && typeof result === 'object' && 'data' in result && 'error' in result) {
         return result;
       }
@@ -110,14 +131,14 @@
   //      id     — identificador da etapa, usado pela página para se localizar.
   //      rotulo — texto curto exibido no desktop (cabe embaixo do círculo).
   //      href   — destino ao clicar numa etapa já concluída.
+  //    Projeto vem ANTES de Custos de propósito: a tela de custos calcula prévias
+  //    ("quanto isso dá no seu projeto?") e, com o projeto já preenchido, ela usa
+  //    os números reais do usuário em vez de uma referência genérica.
   AppCore.PASSOS = [
-    { id: 'empresa',      rotulo: 'Empresa',   href: 'cadastro.html' },
-    { id: 'custos',       rotulo: 'Custos',    href: 'configuracoes.html?onboarding=1' },
-    { id: 'despesas',     rotulo: 'Despesas',  href: 'despesas.html' },
-    { id: 'sazonalidade', rotulo: 'Sazonal.',  href: 'sazonalidade.html' },
-    { id: 'indicadores',  rotulo: 'Indicad.',  href: 'indicadores.html' },
-    { id: 'projeto',      rotulo: 'Projeto',   href: 'projeto.html' },
-    { id: 'preco',        rotulo: 'Preço',     href: 'index.html' }
+    { id: 'contato',    rotulo: 'Contato',     href: 'cadastro.html' },
+    { id: 'projeto',    rotulo: 'Projeto',     href: 'projeto.html' },
+    { id: 'custos',     rotulo: 'Custos',      href: 'configuracoes.html?onboarding=1' },
+    { id: 'diagnostico',rotulo: 'Diagnóstico', href: 'index.html' }
   ];
 
   // 8. renderStepper(container, passoAtualId) — desenha o indicador de progresso.

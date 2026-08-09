@@ -187,8 +187,16 @@ const CTA_URL_ANALISE  = 'index.html';
 const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
 
 (async () => {
-  // 1. Auth
-  const { data: { session } } = await db.auth.getSession();
+  // 1. Auth — sem o SDK (CDN fora do ar) não há como validar sessão.
+  if (!db) {
+    document.body.innerHTML =
+      '<div class="wrap" style="padding:40px 20px"><h1>Relatório indisponível</h1>' +
+      '<p class="sub">Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue a página.</p>' +
+      '<p><a class="btn" href="index.html">← Voltar ao diagnóstico</a></p></div>';
+    return;
+  }
+  const { data: _sess } = await AppCore.dbTry(db.auth.getSession());
+  const session = _sess?.session;
   if (!session?.user) { window.location.href = 'login.html?returnTo=relatorio.html'; return; }
   const authUser = session.user;
 
