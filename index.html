@@ -1,1420 +1,511 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auditor de Precificação</title>
+<title>Seu diagnóstico de preço · Auditor de Precificação</title>
 <link rel="stylesheet" href="shared.css">
 <style>
-  /* Ajustes desta página sobre o padrão do shared.css */
-  .wrap{max-width:1180px;margin:0 auto}
-  .card{padding:22px;border-radius:14px}
+  .wrap{max-width:720px}
 
-  .mono{font-family:var(--mono)}
+  .ctx{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px}
+  .ctx b{color:var(--ink);font-weight:700}
+  .ctx .sep{opacity:.4}
+  .ctx a{color:var(--teal);font-weight:600}
 
-  header.top{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#40C1AC;text-transform:uppercase;font-weight:700}
-  h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
-  .sub{margin:0;color:var(--muted);font-size:14px;max-width:640px}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-  .btn:hover{border-color:var(--teal)}
-  .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
-  .btn.save{background:var(--solar);color:#fff;border-color:var(--solar)}
-  .btn.save:hover{opacity:.9}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin:0 0 4px;text-wrap:balance}
+  .sub{margin:0 0 22px;color:var(--muted);font-size:14px}
 
-  .ctx-bar{background:var(--teal);border-radius:12px;padding:12px 18px;margin-bottom:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .ctx-item{display:flex;flex-direction:column;gap:1px}
-  .ctx-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
-  .ctx-value{font-size:13px;font-weight:700;color:#fff}
-  .ctx-sep{color:rgba(255,255,255,.25);font-size:18px;margin:0 4px}
-  .ctx-novo{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
-  .ctx-novo:hover{background:rgba(255,255,255,.22)}
+  /* ── B2 Veredito ─────────────────────────────────────────── */
+  .veredito{border-radius:16px;padding:26px 24px;margin-bottom:16px;border:1px solid var(--hair);background:var(--surface);border-top:5px solid var(--cor)}
+  .selo{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:5px 12px;border-radius:20px;background:var(--corSuave);color:var(--cor);margin-bottom:14px}
+  .heroi{font-family:var(--mono);font-size:clamp(30px,7vw,42px);font-weight:800;line-height:1;letter-spacing:-1.5px;color:var(--cor);margin-bottom:8px;overflow-wrap:anywhere}
+  .heroi-leg{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:12px}
+  .veredito p{margin:0;font-size:14px;color:var(--muted);line-height:1.65}
+  .piso-linha{margin-top:16px;padding-top:16px;border-top:1px solid var(--hair);font-size:14px;line-height:1.7;color:var(--ink)}
+  .piso-linha b{font-family:var(--mono)}
+  .piso-nota{display:block;margin-top:6px;font-size:13px;color:var(--teal);font-weight:600}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
-  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:16px 18px;border-top:3px solid var(--ink)}
-  .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-  .kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1}
-  .kpi .s{font-size:12px;color:var(--muted);margin-top:6px}
+  /* ── Blocos ──────────────────────────────────────────────── */
+  .bloco{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:22px 24px;margin-bottom:16px}
+  .bloco h2{font-size:15px;font-weight:800;margin:0 0 3px;letter-spacing:-.2px}
+  .bloco .ajuda{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.6}
 
-  .main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}
-  .col{display:flex;flex-direction:column;gap:22px}
-  .col.left{gap:18px}
-  .card.teal{background:var(--teal);border-color:var(--teal)}
+  /* ── B3 Cascata ──────────────────────────────────────────── */
+  .fatia{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair)}
+  .fatia:last-child{border-bottom:none}
+  .fatia .nome{font-size:13px;color:var(--ink);min-width:0}
+  .fatia .nome small{display:block;color:var(--muted);font-size:11px}
+  .fatia .val{font-family:var(--mono);font-size:14px;font-weight:700;text-align:right;white-space:nowrap}
+  .fatia .barra{grid-column:1/-1;height:6px;border-radius:3px;background:var(--hair);overflow:hidden}
+  .fatia .barra i{display:block;height:100%;border-radius:3px;background:var(--c)}
+  .fatia.sobra{margin-top:6px;padding-top:14px;border-top:2px solid var(--hair)}
+  .fatia.sobra .nome{font-weight:800;font-size:14px}
+  .fatia.sobra .val{font-size:18px}
 
-  .sec-title{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
-  .sec-title .idx{font-family:var(--mono);font-size:11px;color:var(--solar);font-weight:700}
-  .sec-title h3{margin:0;font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
-  .card.teal .sec-title h3{color:#fff}
+  /* ── B4/B5 ───────────────────────────────────────────────── */
+  .destaque{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-1px}
+  .desc-tabela{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  .desc-tabela th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding:0 0 8px 12px;text-align:right}
+  .desc-tabela th:first-child{text-align:left;padding-left:0}
+  .desc-tabela td{padding:8px 0 8px 12px;border-top:1px solid var(--hair);font-family:var(--mono);font-size:13px;text-align:right;white-space:nowrap}
+  .desc-tabela td:first-child{text-align:left;padding-left:0;font-family:var(--sans);color:var(--muted)}
+  /* No celular a tabela rola sozinha em vez de espremer as colunas. */
+  .desc-rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .desc-tabela tr.hoje td{font-weight:800;color:var(--ink)}
+  .desc-tabela tr.hoje td:first-child{color:var(--ink)}
+  .perda{color:var(--negative);font-weight:700}
 
-  .lbl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
-  .lbl-row .lbl{margin-bottom:0}
-  .btn-cfg{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--sans);line-height:1.6;transition:.15s}
-  .btn-cfg:hover{border-color:var(--solar);color:var(--solar)}
-  .cfg-badge{display:none;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--teal);color:#fff;margin-left:5px;font-family:var(--mono);vertical-align:middle}
+  /* ── B6 acordeão ─────────────────────────────────────────── */
+  details.como{background:var(--surface);border:1px solid var(--hair);border-radius:16px;margin-bottom:16px;overflow:hidden}
+  details.como>summary{padding:18px 24px;cursor:pointer;font-size:14px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:var(--toque)}
+  details.como>summary::-webkit-details-marker{display:none}
+  details.como>summary::after{content:"▾";color:var(--muted);transition:.2s;flex-shrink:0}
+  details.como[open]>summary::after{transform:rotate(180deg)}
+  .como-corpo{padding:0 24px 22px}
+  .lista-dados{display:grid;grid-template-columns:1fr auto;gap:7px 14px;font-size:13px;margin:0 0 18px}
+  .lista-dados dt{color:var(--muted);min-width:0}
+  .lista-dados dd{margin:0;font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+  .assumido{font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 14px}
+  .assumido li{margin-bottom:5px}
+  .ressalva{font-size:12px;color:var(--muted);background:var(--bg);border-radius:9px;padding:13px 15px;line-height:1.6}
 
-  /* Modal de configuração */
-  .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
-  .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
-  .opt-item:hover{border-color:var(--teal)}
-  .opt-item.sel{border-color:var(--teal);background:#E9F7EF}
-  .opt-item input[type=radio]{accent-color:var(--teal);flex-shrink:0;width:15px;height:15px}
-  .opt-texts .ot{font-size:13px;font-weight:700}
-  .opt-texts .od{font-size:11px;color:var(--muted);margin-top:1px}
-  .rate-box{background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px}
-  .rate-box .rl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-  .rate-inp{display:flex;align-items:center;border:1.5px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:10px}
-  .rate-inp:focus-within{outline:2px solid var(--solar);outline-offset:1px}
-  .rate-inp input{flex:1;border:none;outline:none;padding:9px 10px;font-size:20px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;min-width:0}
-  .rate-inp .unit{padding:0 12px;color:var(--muted);font-size:11px;font-weight:700;border-left:1px solid var(--hair);white-space:nowrap;font-family:var(--mono)}
-  .prev-val{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--teal)}
-  .prev-desc{font-size:11px;color:var(--muted);margin-top:2px}
-  .modal-foot{display:flex;gap:8px}
-  .modal-foot button{flex:1;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);border:1px solid var(--hair);transition:.15s}
-  .btn-cancel{background:var(--surface);color:var(--muted)}
-  .btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
-  .btn-apply{background:var(--teal);color:#fff;border-color:var(--teal)}
-  .btn-apply:hover{opacity:.9}
+  /* ── B7 CTA ──────────────────────────────────────────────── */
+  .cta{background:var(--teal);border-radius:16px;padding:26px 24px;text-align:center;margin-bottom:16px}
+  .cta h2{color:#fff;font-size:18px;font-weight:800;margin:0 0 6px;letter-spacing:-.3px;text-wrap:balance}
+  .cta p{color:rgba(255,255,255,.75);font-size:14px;margin:0 0 18px;line-height:1.6}
+  .cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:15px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);text-decoration:none;min-height:var(--toque)}
+  .cta-btn:hover{opacity:.92}
+  .cta-sec{display:block;margin-top:14px;color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:underline;background:none;border:none;cursor:pointer;font-family:var(--sans);width:100%;padding:8px}
 
-  /* Faixa editor */
-  .submodo-row{display:flex;gap:5px;margin-top:8px}
-  .smb{flex:1;padding:6px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s;text-align:center}
-  .smb.on{border-color:var(--teal);background:var(--teal);color:#fff}
-  .faixa-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:7px;background:var(--bg);border:1px solid var(--hair);border-radius:9px;padding:9px 12px}
-  .fr-label{font-size:11px;color:var(--muted);line-height:1.4}
-  .fr-label b{color:var(--ink)}
-  .fr-limit{width:52px;border:1px solid var(--hair);border-radius:5px;padding:3px 5px;font-size:13px;font-family:var(--mono);text-align:right;outline:none;background:var(--surface);color:var(--ink)}
-  .fr-limit:focus{outline:2px solid var(--solar);outline-offset:1px}
-  .fr-taxa{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface)}
-  .fr-taxa-inp{border:none;outline:none;width:64px;padding:6px 6px;font-size:13px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;text-align:right}
-  .fr-unit{padding:0 7px;font-size:9px;font-weight:700;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--hair);white-space:nowrap}
-  .faixa-active{border-color:var(--teal)!important;background:#E9F7EF!important}
-  .faixa-active .fr-label b{color:var(--teal)}
-  .btn-add-faixa{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:8px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);margin:4px 0 2px;transition:.15s}
-  .btn-add-faixa:hover{border-color:var(--solar);color:var(--solar)}
+  .rodape{text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px}
+  .rodape a{color:var(--teal);font-weight:600}
 
-  .extra-item{margin-bottom:12px}
-  .extra-lbl-input{border:none;outline:none;font-size:12px;color:var(--muted);font-weight:600;background:transparent;font-family:var(--sans);cursor:text;flex:1;min-width:0}
-  .extra-lbl-input:focus{outline:1px dashed var(--hair);border-radius:3px;padding:0 3px}
-  .btn-remove{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.5;transition:.15s;font-family:var(--sans)}
-  .btn-remove:hover{border-color:var(--negative);color:var(--negative)}
-  .btn-add{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin:6px 0 14px}
-  .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
-  .inwrap.readonly-cost{background:var(--bg);pointer-events:none}
-  .inwrap.readonly-cost input{color:var(--muted)}
-  input:focus,.inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
+  .aviso{border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6;border:1px solid #F9D171;background:#FFF8E1;color:#7A5C00;margin-bottom:16px}
 
-  .total-row{border-top:1px solid var(--hair);padding-top:12px;margin-top:2px;display:flex;justify-content:space-between;align-items:baseline}
-  .total-row .lbl{font-size:12px;color:var(--muted)}
-  .total-row .val{font-family:var(--mono);font-weight:700;font-size:17px}
-
-  .toggle{display:flex;gap:6px;margin:-6px 0 14px}
-  .toggle button{flex:1;padding:6px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans)}
-  .toggle button.on{border-color:var(--teal);background:var(--teal);color:#fff}
-
-  .bar{display:flex;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--hair)}
-  .bar .seg{display:flex;align-items:center;justify-content:center;min-width:2px}
-  .bar .seg span{color:#fff;font-family:var(--mono);font-size:12px;font-weight:700}
-  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
-  .legend .item{display:flex;align-items:center;gap:8px}
-  .legend .dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
-  .legend .lt{font-size:12px}
-  .legend .lv{font-family:var(--mono);font-size:13px;font-weight:700}
-
-  .grid-dre{display:grid;grid-template-columns:1fr auto auto;gap:0 24px;font-size:14px}
-  .grid-cmp{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:0 16px;align-items:baseline}
-  .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;font-weight:600}
-  .h.r{text-align:right}
-  .cell{padding:7px 0;font-family:var(--mono);font-size:14px;text-align:right}
-  .lbl-cell{padding:7px 0;font-size:14px}
-  .b{font-weight:700}.muted{color:var(--muted)}.div{border-top:1px solid var(--hair)}
-
-  .pe .blk{margin-bottom:14px}
-  .pe .cap{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-  .pe .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--teal)}
-  .pe .big small{font-size:13px;color:var(--muted);font-weight:400}
-  .pe .med{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--teal)}
-  .pe-table{width:100%;border-collapse:collapse;margin-top:4px}
-  .pe-table th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;padding:0 0 10px;text-align:right}
-  .pe-table th:first-child{text-align:left}
-  .pe-table td{padding:8px 0;border-top:1px solid var(--hair);font-family:var(--mono);font-size:14px;font-weight:700;text-align:right;vertical-align:middle}
-  .pe-table td:first-child{font-family:var(--sans);font-size:12px;font-weight:400;color:var(--muted);text-align:left}
-  .pe-table td small{font-size:11px;font-weight:400;color:var(--muted);display:block;margin-top:1px}
-  .pe-table .atual{color:var(--teal)}
-  .pe-table .melhor{color:var(--positive)}
-  .pe-table .pior{color:var(--negative)}
-  .pe-table .neutro{color:var(--muted)}
-
-  .card.teal .p{font-size:13px;color:#C7D3D3;margin:0 0 14px}
-  .price{font-family:var(--mono);font-size:30px;font-weight:800;color:#fff;line-height:1}
-  .price-note{font-size:13px;color:#C7D3D3;margin-top:10px}
-
-  .foot{font-size:11px;color:var(--muted);margin:0;line-height:1.6}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-
-  .toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18)}
-  .toast.show{opacity:1;transform:translateY(0)}
-
-  /* Veredito */
-  .verdict-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.4px}
-  .verdict-badge.ok{background:#E9F7EF;color:var(--positive)}
-  .verdict-badge.bad{background:#FDECEA;color:var(--negative)}
-  .verdict-prices{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:12px}
-  .verdict-col{text-align:center}
-  .verdict-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
-  .verdict-price{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1}
-  .verdict-arrow{font-size:22px;color:var(--muted);flex-shrink:0;padding:0 4px}
-  .verdict-msg{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
-
-  /* Collapsible cards */
-  details.coll{background:var(--surface);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
-  details.coll summary{padding:14px 22px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;list-style:none;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
-  details.coll summary::-webkit-details-marker{display:none}
-  details.coll summary::before{content:"▸";transition:.2s;font-size:10px}
-  details.coll[open] summary::before{content:"▾"}
-  details.coll .coll-body{padding:0 22px 22px}
-
-  /* CTA adotar preço */
-  .btn-adoptar{width:100%;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);margin-top:18px;transition:.15s}
-  .btn-adoptar:hover{opacity:.9}
-  .btn-adoptar:disabled{opacity:.4;cursor:not-allowed}
-
-  /* Base toggles inline */
-  .base-toggles-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-  .bt-group{display:flex;flex-direction:column;gap:4px}
-  .bt-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
-  .bt-btns{display:flex;gap:4px}
-  .bt-btns button{padding:4px 10px;font-size:11px;border-radius:6px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s}
-  .bt-btns button.on{border-color:var(--teal);background:var(--teal);color:#fff}
-
-  @media (max-width:880px){
-    .main{grid-template-columns:1fr}
-    .grid-2{grid-template-columns:1fr}
+  @media (max-width:560px){
+    .bloco,.veredito,.cta{padding:20px 18px;border-radius:14px}
+    .como-corpo{padding:0 18px 20px}
+    details.como>summary{padding:16px 18px}
+    h1{font-size:22px}
   }
-  @media print{
-    .actions{display:none}
-    .card,.kpi{break-inside:avoid}
-    details.coll{display:block}
-    details.coll summary{display:none}
-    .btn-adoptar{display:none}
-  }
+  /* Filhos de grid/flex precisam poder encolher: sem isto o conteúdo impõe
+     largura mínima e a página inteira ganha rolagem horizontal no celular. */
+  .wrap,.bloco,.veredito,.fatia,.fatia .nome,.lista-dados dt{min-width:0}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="top">
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
     <div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="logo"><svg viewBox="0 0 509 534" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-        <span class="eyebrow">FAVO Educação</span>
-      </div>
-      <h1>Dashboard de Precificação</h1>
-      <p class="sub">Modelo de venda em que o KIT é faturado pela distribuidora e o integrador fatura a prestação de serviço. O tributo incide somente sobre a parte de serviço.</p>
-    </div>
-    <div class="actions">
-      <button class="btn" onclick="location.href='custos.html'">← Voltar</button>
-      <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
-      <button class="btn" onclick="location.href='custos.html'">✏️ Ajustar custos</button>
-      <button class="btn" onclick="location.href='sazonalidade.html'">📅 Refinar sazonalidade</button>
-      <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
-      <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar análise</button>
-      <button class="btn save" id="btnRelatorio" onclick="abrirRelatorio()">Gerar Relatório PDF</button>
-      <div id="authChip" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--hair);border-radius:9px"><span id="authEmail" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button class="btn" style="padding:4px 8px;font-size:11px" onclick="signOut()">Sair</button></div>
-      <button class="btn" id="btnEntrar" style="display:none" onclick="location.href='login.html?returnTo=index.html'">Entrar</button>
-    </div>
-  </header>
-
-  <div class="ctx-bar">
-    <div class="ctx-item"><div class="ctx-label">Empresa</div><div class="ctx-value" id="ctxEmpresa">—</div></div>
-    <div class="ctx-sep">·</div>
-    <div class="ctx-item"><div class="ctx-label">Projeto</div><div class="ctx-value" id="ctxProjeto">—</div></div>
-    <div class="ctx-sep">·</div>
-    <div class="ctx-item"><div class="ctx-label">Potência</div><div class="ctx-value" id="ctxKwp">—</div></div>
-    <div class="ctx-sep">·</div>
-    <div class="ctx-item"><div class="ctx-label">Módulos</div><div class="ctx-value" id="ctxModulos">—</div></div>
-    <button class="ctx-novo" onclick="novoProjetoConfirm()">+ Novo projeto</button>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpis" id="kpis"></div>
-
-  <div class="main">
-    <!-- ENTRADAS -->
-    <div class="col left">
-      <div class="card">
-        <div class="sec-title"><span class="idx">01</span><h3>Custos diretos / projeto</h3><a href="projeto.html" style="font-size:11px;color:var(--muted);text-decoration:none;margin-left:auto;font-weight:600" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">← ajustar projeto</a></div>
-        <label class="fld">
-          <span class="lbl">Custo do KIT</span>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="kit"></div>
-          <span class="hint">Faturado direto pela distribuidora</span>
-        </label>
-        <label class="fld">
-          <div class="lbl-row"><span class="lbl">Material adicional CA<span class="cfg-badge" id="badge-ca"></span></span><button class="btn-cfg" onclick="abrirConfig('ca',event)" aria-label="Configurar Material adicional CA">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="ca"></div>
-        </label>
-        <label class="fld">
-          <div class="lbl-row"><span class="lbl">Instalação<span class="cfg-badge" id="badge-inst"></span></span><button class="btn-cfg" onclick="abrirConfig('inst',event)" aria-label="Configurar Instalação">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="inst"></div>
-        </label>
-        <label class="fld">
-          <div class="lbl-row"><span class="lbl">Projeto elétrico<span class="cfg-badge" id="badge-proj"></span></span><button class="btn-cfg" onclick="abrirConfig('proj',event)" aria-label="Configurar Projeto elétrico">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="proj"></div>
-        </label>
-        <label class="fld">
-          <div class="lbl-row"><span class="lbl">Homologação<span class="cfg-badge" id="badge-homol"></span></span><button class="btn-cfg" onclick="abrirConfig('homol',event)" aria-label="Configurar Homologação">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="homol"></div>
-        </label>
-        <label class="fld">
-          <div class="lbl-row"><span class="lbl">ART do Projeto<span class="cfg-badge" id="badge-art"></span></span><button class="btn-cfg" onclick="abrirConfig('art',event)" aria-label="Configurar ART do Projeto">⚙ config</button></div>
-          <div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="art"></div>
-        </label>
-        <div id="extrasContainer"></div>
-        <button class="btn-add" onclick="adicionarCusto()">+ Adicionar custo</button>
-        <div class="total-row"><span class="lbl">Custo direto total</span><span class="val" id="cdtOut"></span></div>
-      </div>
-
-      <div class="card">
-        <div class="sec-title"><span class="idx">02</span><h3>Comercial</h3></div>
-        <label class="fld"><span class="lbl">Valor de Venda atual</span><div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="ticket"></div><span class="hint">Valor cheio: KIT + serviço</span></label>
-        <label class="fld"><span class="lbl">Projetos vendidos / mês</span><input class="plain" type="number" id="qtd"></label>
-        <div class="total-row"><span class="lbl">Faturamento mensal aprox.</span><span class="val" id="fatOut" style="color:var(--solar)"></span></div>
-      </div>
-
-      <div class="card">
-        <div class="sec-title"><span class="idx">03</span><h3>Despesas variáveis</h3></div>
-        <label class="fld"><span class="lbl">Comissão de vendas</span><div class="inwrap"><input type="number" step="0.1" id="comissao"><span class="affix r">%</span></div></label>
-        <div class="toggle" id="toggleComissao">
-          <button data-base="total" onclick="setBase('comissao','total')">sobre venda total</button>
-          <button data-base="servico" onclick="setBase('comissao','servico')">sobre serviço</button>
-        </div>
-        <label class="fld"><span class="lbl">Carga tributária</span><div class="inwrap"><input type="number" step="0.1" id="tributo"><span class="affix r">%</span></div><span class="hint" id="tribHint"></span></label>
-        <div class="toggle" id="toggleTributo">
-          <button data-base="total" onclick="setBase('tributo','total')">sobre venda total</button>
-          <button data-base="servico" onclick="setBase('tributo','servico')">sobre serviço</button>
-        </div>
-        <div id="outrasWrap" style="display:none">
-          <label class="fld"><span class="lbl">Outras despesas variáveis</span><div class="inwrap"><input type="number" step="0.1" id="outras"><span class="affix r">%</span></div><span class="hint">Sobre o ticket — campo flexível</span></label>
-        </div>
-        <div id="despExtrasContainer"></div>
-      </div>
-
-      <div class="card">
-        <div class="sec-title"><span class="idx">04</span><h3>Estrutura &amp; meta</h3></div>
-        <label class="fld"><span class="lbl">Despesas fixas / mês</span><div class="inwrap"><span class="affix l">R$</span><input type="text" inputmode="decimal" id="despFixa"></div><span class="hint">Aluguel, equipe, software, etc.</span></label>
-        <label class="fld"><span class="lbl">Margem de lucro líquida alvo</span><div class="inwrap"><input type="number" step="0.1" id="lucroAlvo"><span class="affix r">%</span></div><span class="hint">Usada no preço sugerido</span></label>
-      </div>
-    </div>
-
-    <!-- RESULTADOS -->
-    <div class="col">
-
-      <!-- VEREDITO -->
-      <div class="card" id="verdict" style="text-align:center;padding:20px 22px"></div>
-
-      <!-- ANÁLISE ATUAL × SUGERIDO -->
-      <div class="card">
-        <div class="sec-title"><span class="idx">⇄</span><h3>Análise Atual × Sugerido</h3></div>
-        <div class="base-toggles-row">
-          <div class="bt-group">
-            <div class="bt-lbl">Base comissão</div>
-            <div class="bt-btns" id="toggleComissao2">
-              <button data-base="total" onclick="setBase('comissao','total')">Venda total</button>
-              <button data-base="servico" onclick="setBase('comissao','servico')">Serviço</button>
-            </div>
-          </div>
-          <div class="bt-group">
-            <div class="bt-lbl">Base tributo</div>
-            <div class="bt-btns" id="toggleTributo2">
-              <button data-base="total" onclick="setBase('tributo','total')">Venda total</button>
-              <button data-base="servico" onclick="setBase('tributo','servico')">Serviço</button>
-            </div>
-          </div>
-        </div>
-        <div class="scroll-x">
-          <table class="pe-table">
-            <thead><tr><th></th><th>Atual</th><th>Sugerido</th><th>Δ</th></tr></thead>
-            <tbody id="uniBody"></tbody>
-          </table>
-        </div>
-        <button class="btn-adoptar" id="btnAdotar" onclick="adotarSugerido()" disabled>Adotar preço sugerido →</button>
-      </div>
-
-      <!-- CASCATA (recolhível) -->
-      <details class="coll">
-        <summary>Para onde vai cada real do ticket</summary>
-        <div class="coll-body">
-          <div class="bar" id="bar"></div>
-          <div class="legend" id="legend"></div>
-        </div>
-      </details>
-
-      <!-- DRE (recolhível) -->
-      <details class="coll">
-        <summary>DRE gerencial</summary>
-        <div class="coll-body">
-          <div class="grid-dre" id="dre"></div>
-        </div>
-      </details>
-
-      <!-- IDs anteriores ocultos — render() ainda os popula; salvarOrcamento() lê lastCalc -->
-      <div style="display:none" aria-hidden="true">
-        <table><tbody id="peCmpBody"></tbody></table>
-        <p id="precoP"></p><div id="precoOut"></div><div id="precoNote"></div>
-        <table><tbody id="markupBody"></tbody></table>
-        <div id="cmp"></div><p id="cmpFoot"></p>
-      </div>
-
-      <p class="foot">Premissas: a carga tributária e a comissão podem incidir sobre a venda total ou somente sobre o serviço (seletores acima). Quando incidem só sobre o serviço, o KIT escapa da base e gera um abatimento de %alíquota × KIT no numerador do preço sugerido. Ajuste os percentuais conforme seu regime tributário real.</p>
+      <div class="brand-name">Auditor de Precificação</div>
+      <div class="brand-sub">FAVO Educação</div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <!-- B1 ─────────────────────────────────────────────────────── -->
+  <h1>Seu diagnóstico de preço</h1>
+  <p class="sub" id="ctxLinha"></p>
+  <div class="ctx"><a href="custos.html">← corrigir meus números</a></div>
 
-<!-- Modal de configuração de custo -->
-<div class="modal-ov" id="modalCfg" role="dialog" aria-modal="true" aria-label="Configurar custo" onclick="fecharModalFora(event)">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3 id="cfgTitulo">Configurar</h3>
-      <button class="btn-close" onclick="fecharModal()" aria-label="Fechar">×</button>
-    </div>
+  <div id="avisoDados"></div>
 
-    <div class="opt-list">
-      <div class="opt-item" id="opt-fixo" onclick="selecionarModo('fixo')">
-        <input type="radio" name="cfgModo" value="fixo">
-        <div class="opt-texts"><div class="ot">Valor fixo</div><div class="od">Um valor em reais definido por você</div></div>
-      </div>
-      <div class="opt-item" id="opt-modulo" onclick="selecionarModo('modulo')">
-        <input type="radio" name="cfgModo" value="modulo">
-        <div class="opt-texts"><div class="ot">R$ por módulo</div><div class="od" id="descMod">Multiplicado pela quantidade de módulos</div></div>
-      </div>
-      <div class="opt-item" id="opt-kwp" onclick="selecionarModo('kwp')">
-        <input type="radio" name="cfgModo" value="kwp">
-        <div class="opt-texts"><div class="ot">R$ por kWp</div><div class="od" id="descKwp">Multiplicado pela potência do sistema</div></div>
-      </div>
-      <div class="opt-item" id="opt-faixa" onclick="selecionarModo('faixa')">
-        <input type="radio" name="cfgModo" value="faixa">
-        <div class="opt-texts"><div class="ot">Por faixa de kWp</div><div class="od">Taxa diferente por faixa de potência — mais preciso</div></div>
-      </div>
-    </div>
+  <!-- B2 ─────────────────────────────────────────────────────── -->
+  <div id="veredito"></div>
 
-    <!-- Modo simples: fixo / módulo / kWp -->
-    <div class="rate-box" id="rateBox">
-      <div class="rl">Taxa / valor</div>
-      <div class="rate-inp">
-        <input type="number" id="cfgTaxa" placeholder="0" min="0" step="0.01" oninput="atualizarPreview()">
-        <span class="unit" id="cfgUnit">R$</span>
-      </div>
-    </div>
+  <!-- B3 ─────────────────────────────────────────────────────── -->
+  <div class="bloco" id="blocoCascata">
+    <h2 id="cascataTitulo">Para onde vai cada real que entra</h2>
+    <p class="ajuda">É o mesmo projeto, fatiado. A última linha é o que fica com a empresa.</p>
+    <div id="cascata"></div>
+  </div>
 
-    <!-- Modo faixa de kWp -->
-    <div id="faixaEditor" style="display:none">
-      <div class="rate-box" style="margin-bottom:10px">
-        <div class="rl">Calcular cada faixa por:</div>
-        <div class="submodo-row">
-          <button class="smb" data-sm="fixo"   onclick="setSubModo('fixo')">Valor fixo</button>
-          <button class="smb" data-sm="modulo" onclick="setSubModo('modulo')">R$/módulo</button>
-          <button class="smb" data-sm="kwp"    onclick="setSubModo('kwp')">R$/kWp</button>
-        </div>
-      </div>
-      <div id="faixasList"></div>
-      <button class="btn-add-faixa" onclick="addFaixa()">+ Adicionar faixa</button>
-    </div>
+  <!-- B4 ─────────────────────────────────────────────────────── -->
+  <div class="bloco" id="blocoEquilibrio">
+    <h2>Quantos projetos pagam suas contas</h2>
+    <p class="ajuda">O mínimo por mês só para não ter prejuízo.</p>
+    <div class="destaque" id="peValor">—</div>
+    <p class="ajuda" style="margin:10px 0 0" id="peTexto"></p>
+  </div>
 
-    <!-- Preview sempre visível -->
-    <div class="rate-box" style="margin-top:10px;margin-bottom:16px">
-      <div class="prev-val" id="prevVal">R$ 0,00</div>
-      <div class="prev-desc" id="prevDesc">resultado calculado</div>
-    </div>
-
-    <div class="modal-foot">
-      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-apply" onclick="aplicarConfig()">Aplicar</button>
+  <!-- B5 ─────────────────────────────────────────────────────── -->
+  <div class="bloco" id="blocoDesconto">
+    <h2>Quanto custa cada desconto que você dá</h2>
+    <p class="ajuda" id="descontoResumo"></p>
+    <div class="desc-rolagem">
+      <table class="desc-tabela">
+        <thead><tr><th>Desconto</th><th>Preço</th><th>Sobra no mês</th><th>Deixa de ganhar</th></tr></thead>
+        <tbody id="descontoLinhas"></tbody>
+      </table>
     </div>
   </div>
+
+  <!-- B6 ─────────────────────────────────────────────────────── -->
+  <details class="como">
+    <summary>Como chegamos nesses números</summary>
+    <div class="como-corpo">
+      <p class="ajuda" style="margin-bottom:10px"><b>Você informou</b></p>
+      <dl class="lista-dados" id="listaInformou"></dl>
+      <p class="ajuda" style="margin-bottom:10px"><b>A gente assumiu</b></p>
+      <ul class="assumido" id="listaAssumido"></ul>
+      <p class="ressalva" id="ressalva"></p>
+    </div>
+  </details>
+
+  <!-- B7 ─────────────────────────────────────────────────────── -->
+  <div class="cta" id="cta"></div>
+
+  <p class="rodape"><a href="custos.html">Ajustar meus números</a> · <a href="configuracoes.html">Configuração avançada de custos</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="app-core.js"></script>
+<script src="calculo.js"></script>
 <script>
 const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
+const brl = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+const brl0 = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
+const pct = v => isFinite(v) ? (v*100).toFixed(1).replace('.',',')+'%' : '—';
+const esc = AppCore.escapeHtml;
+
 const integrador = AppCore.safeParse('integrador', null);
 const projeto    = AppCore.safeParse('projeto', null);
+const despesas   = AppCore.safeParse('despesas', null);
+const configCustos = AppCore.safeParse('configCustos', {});
 
-function initCtx() {
-  // M-11: onboarding parcial não deve expulsar para o cadastro se apenas o
-  // projeto estiver faltando — retoma a etapa pendente (projeto.html).
-  if(!integrador?.nome_empresa) {
-    window.location.href='cadastro.html';
+// ── Estado ────────────────────────────────────────────────────────────
+// O diagnóstico é função PURA do que o funil capturou. Não há mais estado
+// local paralelo (precSolar) nem valores padrão de fábrica: um número que o
+// usuário não informou não pode aparecer aqui como se fosse dele.
+function montarEstado() {
+  const custo = k => {
+    const doProjeto = projeto?.custos_diretos?.[k];
+    if (doProjeto !== undefined) return AppCore.parseNum(doProjeto);
+    return AppCore.parseNum(configCustos?.[k]?.taxa || 0);
+  };
+  return {
+    kit:   AppCore.parseNum(projeto?.custo_kit),
+    ca:    custo('ca'),
+    inst:  custo('inst'),
+    proj:  custo('proj'),
+    homol: custo('homol'),
+    art:   custo('art'),
+    ticket: AppCore.parseNum(projeto?.valor_venda),
+    qtd:    AppCore.parseNum(despesas?.projetosMes),
+    comissao: AppCore.parseNum(despesas?.comissao?.valor),
+    tributo:  AppCore.parseNum(despesas?.tributo?.valor),
+    outras:   AppCore.parseNum(despesas?.outras || 0),
+    despFixa: AppCore.parseNum(despesas?.despFixa),
+    lucroAlvo: AppCore.parseNum(integrador?.lucro_alvo ?? 12),
+    comissaoBase: despesas?.comissao?.base || 'total',
+    tributoBase:  despesas?.tributo?.base  || 'servico',
+  };
+}
+
+// ── B2 Veredito ───────────────────────────────────────────────────────
+// O estado é decidido pelo LUCRO, não pela diferença entre preço e piso.
+// Cobrar acima do piso é folga de margem — nunca deve ser sinalizado como erro.
+const ESTADOS = {
+  saudavel: {
+    cor:'var(--positive)', corSuave:'#E9F7EF',
+    selo:'Seu preço cobre tudo e ainda sobra',
+  },
+  abaixo_da_meta: {
+    cor:'#C05A00', corSuave:'#FFF3E0',
+    selo:'Você lucra, mas abaixo da sua meta',
+  },
+  prejuizo: {
+    cor:'var(--negative)', corSuave:'#FDECEA',
+    selo:'Neste preço, a conta não fecha',
+  },
+};
+
+function renderVeredito(r) {
+  const el = document.getElementById('veredito');
+
+  if (!r.valido) {
+    el.innerHTML = `<div class="veredito" style="--cor:var(--muted);--corSuave:var(--bg)">
+      <span class="selo">Faltam dados para calcular</span>
+      <p>Não foi possível calcular seu preço mínimo com os números informados.
+      Isso costuma acontecer quando comissão, impostos e margem desejada somam
+      100% ou mais — nesse caso não sobra espaço no preço para os custos.</p>
+      <div class="piso-linha"><a href="custos.html">Revisar meus números →</a></div>
+    </div>`;
     return;
   }
-  if(!projeto?.nome_projeto) {
-    window.location.href='projeto.html';
+
+  const e = ESTADOS[r.situacao];
+  const a = r.atual;
+  const sobraProjeto = a.lucroUnit;
+
+  const heroi = r.situacao === 'prejuizo'
+    ? 'Faltam ' + brl0(Math.abs(a.lucroMes)) + ' por mês'
+    : 'Sobram ' + brl0(sobraProjeto) + ' por projeto';
+
+  const legenda = r.situacao === 'prejuizo'
+    ? 'É quanto o mês fecha no vermelho no preço de hoje.'
+    : brl0(a.lucroMes) + ' por mês, somando os ' + r.dados.qtd + ' projetos que você faz.';
+
+  const explicacao = 'É o que fica com a empresa depois do kit, da instalação, do projeto, '
+    + 'da comissão, do imposto e da fatia do mês em estrutura.';
+
+  // A linha do piso é o ponto mais delicado da tela: precisa dizer que estar
+  // acima dele é bom, senão o empresário lê como convite a dar desconto.
+  let piso;
+  if (r.abaixoDoPiso) {
+    piso = `Para lucrar ${pct(r.dados.lucroAlvo/100)} você precisaria cobrar no mínimo
+      <b>${brl0(r.piso)}</b>. Hoje você cobra <b>${brl0(r.dados.ticket)}</b> —
+      faltam <b>${brl0(r.piso - r.dados.ticket)}</b>.`;
+  } else {
+    piso = `Seu <b>preço mínimo</b> para lucrar ${pct(r.dados.lucroAlvo/100)} é
+      <b>${brl0(r.piso)}</b>. Você cobra <b>${brl0(r.dados.ticket)}</b>, ou seja
+      <b>${brl0(r.folga)}</b> acima do mínimo.
+      <span class="piso-nota">Isso é folga de margem, não convite a dar desconto.</span>`;
+  }
+
+  el.innerHTML = `<div class="veredito" style="--cor:${e.cor};--corSuave:${e.corSuave}">
+    <span class="selo">${e.selo}</span>
+    <div class="heroi">${heroi}</div>
+    <div class="heroi-leg">${legenda}</div>
+    <p>${explicacao}</p>
+    <div class="piso-linha">${piso}</div>
+  </div>`;
+}
+
+// ── B3 Cascata ────────────────────────────────────────────────────────
+function renderCascata(r) {
+  const d = r.dados, a = r.atual;
+  const tk = d.ticket;
+  document.getElementById('cascataTitulo').textContent =
+    'Para onde vai cada ' + brl0(tk) + ' que entram';
+
+  const fatias = [
+    { nome:'Kit', sub:'faturado pela distribuidora', v:d.kit, c:'#A9AEB6' },
+    { nome:'Instalação', sub:'', v:d.inst, c:'#7E8B94' },
+    { nome:'Projeto, ART e homologação', sub:'', v:d.proj + d.ca + d.homol + d.art, c:'#9AA7AE' },
+    { nome:'Comissão do vendedor', sub:'', v:a.comissaoR, c:'#D9663B' },
+    { nome:'Imposto', sub:d.tributoBase==='servico' ? 'sobre a parte de serviço' : 'sobre a venda total', v:a.tributoR, c:'#C4552C' },
+    { nome:'Sua estrutura', sub:'a fatia do mês que cabe a este projeto', v:a.despFixaUnit, c:'#E08A5E' },
+  ].filter(f => f.v > 0);
+
+  if (a.outrasR > 0) fatias.push({ nome:'Outras despesas variáveis', sub:'', v:a.outrasR, c:'#D9663B' });
+
+  const linha = f => `<div class="fatia" style="--c:${f.c}">
+      <div class="nome">${esc(f.nome)}${f.sub?`<small>${esc(f.sub)}</small>`:''}</div>
+      <div class="val">${brl0(f.v)}</div>
+      <div class="barra"><i style="width:${tk>0?Math.max(0,Math.min(100,f.v/tk*100)):0}%"></i></div>
+    </div>`;
+
+  const sobra = a.lucroUnit;
+  const corSobra = sobra >= 0 ? 'var(--positive)' : 'var(--negative)';
+  const sobraHtml = `<div class="fatia sobra" style="--c:${corSobra}">
+      <div class="nome">${sobra>=0?'Sobra pra você':'Falta'}</div>
+      <div class="val" style="color:${corSobra}">${brl0(sobra)}</div>
+      <div class="barra"><i style="width:${tk>0?Math.max(0,Math.min(100,Math.abs(sobra)/tk*100)):0}%"></i></div>
+    </div>`;
+
+  document.getElementById('cascata').innerHTML = fatias.map(linha).join('') + sobraHtml;
+}
+
+// ── B4 Ponto de equilíbrio ────────────────────────────────────────────
+function renderEquilibrio(r) {
+  const pe = r.pontoEquilibrio, d = r.dados, a = r.atual;
+  const bloco = document.getElementById('blocoEquilibrio');
+
+  if (!isFinite(pe) || pe <= 0) {
+    bloco.style.display = 'none';
     return;
   }
-  document.getElementById('ctxEmpresa').textContent  = integrador.nome_empresa;
-  document.getElementById('ctxProjeto').textContent  = projeto.nome_projeto;
-  document.getElementById('ctxKwp').textContent      = (projeto.kwp_sistema||'—')+' kWp';
-  document.getElementById('ctxModulos').textContent  = (projeto.quantidade_modulos||'—')+' un';
+  bloco.style.display = '';
+
+  // Sem arredondar para cima: "pouco mais de 1" informa, "2" apaga a diferença.
+  const texto = pe < 1 ? 'menos de 1 projeto'
+    : pe < 2 ? 'pouco mais de 1 projeto'
+    : pe.toFixed(1).replace('.',',') + ' projetos';
+
+  document.getElementById('peValor').textContent = texto;
+  document.getElementById('peTexto').innerHTML =
+    `Sua estrutura custa <b>${brl0(a.despFixaMes)}</b> por mês e cada projeto deixa
+     <b>${brl0(a.mcUnit)}</b> antes dela. Você vende <b>${d.qtd}</b> por mês.`;
 }
 
-function novoProjetoConfirm() {
-  if(confirm('Iniciar análise de um novo projeto?')) {
-    localStorage.removeItem('projeto');
-    window.location.href='projeto.html';
-  }
+// ── B5 Custo do desconto ──────────────────────────────────────────────
+// É o argumento comercial da ferramenta: o desconto sai inteiro da margem,
+// então some do lucro num múltiplo do que foi dado no preço.
+function renderDesconto(r) {
+  const bloco = document.getElementById('blocoDesconto');
+  const a = r.atual;
+
+  if (a.lucroMes <= 0) { bloco.style.display = 'none'; return; }
+  bloco.style.display = '';
+
+  const linhas = r.descontos;
+  const umPct = linhas.find(l => l.desconto === 2);
+  const mult = umPct?.multiplicador;
+
+  document.getElementById('descontoResumo').innerHTML = mult
+    ? `Cada 1% de desconto tira cerca de <b>${brl0(a.lucroMes * 0.01 * mult)}</b> do seu lucro no mês —
+       <b>${mult.toFixed(1).replace('.',',')} vezes</b> o que você deu de desconto.`
+    : 'Veja o efeito de cada desconto sobre o que sobra no mês.';
+
+  document.getElementById('descontoLinhas').innerHTML = linhas.map(l => `
+    <tr class="${l.desconto===0?'hoje':''}">
+      <td>${l.desconto===0?'Preço de hoje':'−'+l.desconto+'%'}</td>
+      <td>${brl0(l.preco)}</td>
+      <td>${brl0(l.lucroMes)}</td>
+      <td class="${l.perdaMes>0?'perda':''}">${l.perdaMes>0?'− '+brl0(l.perdaMes):'—'}</td>
+    </tr>`).join('');
 }
 
-const C={ink:"#1B1A16",muted:"#736F64",hair:"#DFF0E8",solar:"#00B140",teal:"#183029",kit:"#A9AEB6",variable:"#D9663B",positive:"#00B140",negative:"#B23A2E"};
-const DEFAULTS={kit:12000,ca:800,inst:2500,proj:600,homol:400,art:0,ticket:22000,qtd:1,comissao:5,tributo:6,outras:1,despFixa:15000,lucroAlvo:12,comissaoBase:"total",tributoBase:"servico"};
-const FIELDS=["kit","ca","inst","proj","homol","art","ticket","qtd","comissao","tributo","outras","despFixa","lucroAlvo"];
-const MONEY_FIELDS=new Set(["kit","ca","inst","proj","homol","art","ticket","despFixa"]);
-function fmtField(id,v){ return MONEY_FIELDS.has(id) ? Number(v).toFixed(2).replace('.',',') : v; }
-let comissaoBase="total";
-let tributoBase="servico";
-let despesasExtras=[];
-let despFixaPct=0;
-let V12_saz=0;
-let lastCalc=null;
-let authUser=null;
-// M-2: quando true, a sazonalidade NÃO deve sobrescrever o #ticket
-// (projeto.valor_venda tem prioridade). Definida no boot.
-let ticketTemValorVenda=false;
-
-const brl=v=>isFinite(v)?v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2}):"—";
-const pct=v=>isFinite(v)?(v*100).toFixed(1).replace(".",",")+"%":"—";
-const num=id=>AppCore.parseNum(document.getElementById(id).value);
-
-let initDone = false;
-
-function load(){
-  // B-8: precSolar é estado LOCAL exclusivo deste dashboard — nenhuma outra
-  // página (cadastro/projeto/etc.) o popula. Por isso, no primeiro acesso os
-  // DEFAULTS cobrem todos os campos; a partir daí precSolar guarda o que o
-  // usuário editou aqui (via save()). Não há contrato de precSolar entre páginas.
-  const s=AppCore.safeParse("precSolar",{});
-  FIELDS.forEach(f=>document.getElementById(f).value = fmtField(f, s[f]!==undefined?s[f]:DEFAULTS[f]));
-  // A base de comissão/tributo NÃO vem de precSolar (fonte de verdade é `despesas`,
-  // aplicada por aplicarDespesas() após o load). Aqui só garantimos o DEFAULT
-  // como fallback quando não há despesas do onboarding.
-  comissaoBase = DEFAULTS.comissaoBase;
-  tributoBase = DEFAULTS.tributoBase;
-  syncBaseButtons();
-}
-function save(){
-  // comissaoBase/tributoBase NÃO são persistidos aqui: fonte de verdade é `despesas`.
-  const s={}; FIELDS.forEach(f=>s[f]=num(f));
-  try{ localStorage.setItem("precSolar",JSON.stringify(s)); }catch(e){}
-}
-function resetDefaults(){
-  FIELDS.forEach(f=>document.getElementById(f).value=fmtField(f,DEFAULTS[f]));
-  comissaoBase=DEFAULTS.comissaoBase; tributoBase=DEFAULTS.tributoBase;
-  // M-12: "Restaurar padrões" agora zera TUDO que o reset deve cobrir, não só
-  // os campos numéricos. Limpa custos extras dinâmicos, as configurações de
-  // cálculo por campo (fixo/módulo/kWp/faixa) e o rateio de despesa fixa (%).
-  // Só toca nas chaves relacionadas ao motor de precificação — não apaga
-  // integrador/projeto/despesas/sazonalidade nem persiste no banco.
-  custosExtras=[]; configs={}; despFixaPct=0;
-  try{ localStorage.removeItem('custosExtras'); localStorage.removeItem('configCustos'); }catch(e){}
-  atualizarBadges(); renderExtras();
-  syncBaseButtons(); render();
-}
-function setBase(campo,val){
-  if(campo==="comissao") comissaoBase=val; else tributoBase=val;
-  syncBaseButtons(); render();
-}
-function syncBaseButtons(){
-  document.querySelectorAll("#toggleComissao button,#toggleComissao2 button").forEach(b=>b.classList.toggle("on",b.dataset.base===comissaoBase));
-  document.querySelectorAll("#toggleTributo button,#toggleTributo2 button").forEach(b=>b.classList.toggle("on",b.dataset.base===tributoBase));
-}
-
-function cenario(tk,d){
-  const baseServico=tk-d.kit;
-  const cBase=comissaoBase==="total"?tk:baseServico;
-  const tBase=tributoBase==="total"?tk:baseServico;
-  const comissaoR=d.comissao/100*cBase;
-  const tributoR=d.tributo/100*tBase;
-  const outrasR=d.outras/100*tk;
-  const extrasDetalhes=despesasExtras.map(e=>{
-    const base=e.base==="servico"?baseServico:tk;
-    const v=(parseFloat(e.valor)||0)/100*base;
-    return{nome:e.nome||"Extra",v,vMes:v*d.qtd};
-  });
-  const extrasR=extrasDetalhes.reduce((s,e)=>s+e.v,0);
-  const dvUnit=comissaoR+tributoR+outrasR+extrasR;
-  const faturamento=tk*d.qtd, dvMes=dvUnit*d.qtd;
-  const custoVariavelPct=tk>0?dvUnit/tk:0;
-  const mcUnit=tk-d.cdt-dvUnit, mcPct=tk>0?mcUnit/tk:0, mcMes=mcUnit*d.qtd;
-  const despFixaUnit=despFixaPct>0?tk*(despFixaPct/100):(d.qtd>0?d.despFixa/d.qtd:0);
-  const despFixaMes=despFixaPct>0?despFixaUnit*d.qtd:d.despFixa;
-  const lucroUnit=mcUnit-despFixaUnit, lucroMes=mcMes-despFixaMes, lucroPct=tk>0?lucroUnit/tk:0;
-  return{ticket:tk,baseServico,comissaoR,tributoR,outrasR,extrasR,extrasDetalhes,dvUnit,faturamento,dvMes,custoVariavelPct,mcUnit,mcPct,mcMes,despFixaUnit,despFixaMes,lucroUnit,lucroMes,lucroPct};
-}
-
-function render(){
-  const d={kit:num("kit"),ca:num("ca"),inst:num("inst"),proj:num("proj"),homol:num("homol"),art:num("art"),ticket:num("ticket"),qtd:num("qtd"),comissao:num("comissao"),tributo:num("tributo"),outras:num("outras"),despFixa:num("despFixa"),lucroAlvo:num("lucroAlvo")};
-  d.cdt=d.kit+d.ca+d.inst+d.proj+d.homol+d.art+totalExtras();
-
-  const cPctServ=comissaoBase==="servico"?d.comissao/100:0;
-  const tPctServ=tributoBase==="servico"?d.tributo/100:0;
-  const abat=(cPctServ+tPctServ)*d.kit;
-  const baseVar=d.comissao/100+d.tributo/100+d.outras/100;
-
-  const fatAtual=d.ticket*d.qtd;
-  const dfPct=despFixaPct>0?despFixaPct/100:(fatAtual>0?d.despFixa/fatAtual:Infinity);
-  const denom=1-baseVar-dfPct-d.lucroAlvo/100;
-  const V12eff=V12_saz>0?V12_saz:(d.qtd*12);
-  const fixUnit=V12eff>0?(d.despFixa*12)/V12eff:Infinity;
-  const denomSug=1-baseVar-d.lucroAlvo/100;
-  const precoSugerido=(isFinite(fixUnit)&&denomSug>0)?(fixUnit+d.cdt-abat)/denomSug:Infinity;
-
-  const a=cenario(d.ticket,d);
-  const sug=isFinite(precoSugerido)?cenario(precoSugerido,d):null;
-  const peFat=a.mcPct>0?a.despFixaMes/a.mcPct:Infinity;
-  const peQtd=a.mcUnit>0?a.despFixaMes/a.mcUnit:Infinity;
-  const peFatSug=sug&&sug.mcPct>0?sug.despFixaMes/sug.mcPct:Infinity;
-  const peQtdSug=sug&&sug.mcUnit>0?sug.despFixaMes/sug.mcUnit:Infinity;
-
-  lastCalc={d,a,peQtd,peFat,precoSugerido,dfPct};
-
-  document.getElementById("cdtOut").textContent=brl(d.cdt);
-  document.getElementById("fatOut").textContent=brl(a.faturamento);
-  document.getElementById("tribHint").textContent = tributoBase==="servico"
-    ? "Incide sobre o serviço: "+brl(a.baseServico)
-    : "Incide sobre a venda total: "+brl(d.ticket);
-
-  const lucrativo=a.lucroMes>=0;
-  const kpis=[
-    {k:"Faturamento mensal",v:brl(a.faturamento),s:d.qtd+" projetos × "+brl(d.ticket),c:C.ink},
-    {k:"Despesas variáveis %",v:pct(a.custoVariavelPct),s:brl(a.dvUnit)+" por projeto",c:C.variable},
-    {k:"Margem de contribuição",v:pct(a.mcPct),s:brl(a.mcMes)+" no mês",c:C.positive},
-    {k:lucrativo?"Lucro mensal":"Prejuízo mensal",v:brl(a.lucroMes),s:pct(a.lucroPct)+" sobre o ticket",c:lucrativo?C.positive:C.negative}
+// ── B6 Como chegamos ──────────────────────────────────────────────────
+function renderComo(r) {
+  const d = r.dados;
+  const itens = [
+    ['Preço que você pratica hoje', brl0(d.ticket)],
+    ['Projetos por mês', d.qtd],
+    ['Custo do kit', brl0(d.kit)],
+    ['Instalação', brl0(d.inst)],
+    ['Projeto e documentação', brl0(d.proj)],
+    ['Comissão de vendas', pct(d.comissao/100)],
+    ['Imposto sobre a venda', pct(d.tributo/100)],
+    ['Despesa fixa mensal', brl0(d.despFixa)],
+    ['Margem que você quer', pct(d.lucroAlvo/100)],
   ];
-  document.getElementById("kpis").innerHTML=kpis.map(x=>
-    `<div class="kpi" style="border-top-color:${x.c}"><div class="k">${x.k}</div><div class="v" style="color:${x.c}">${x.v}</div><div class="s">${x.s}</div></div>`).join("");
+  document.getElementById('listaInformou').innerHTML =
+    itens.map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(String(v))}</dd>`).join('');
 
-  const segs=[
-    {label:"KIT (repassado)",val:d.kit,color:C.kit},
-    {label:"Custos de serviço",val:d.cdt-d.kit,color:C.solar},
-    {label:"Despesas variáveis",val:a.dvUnit,color:C.variable},
-    {label:a.mcUnit>=0?"Margem de contribuição":"Prejuízo",val:Math.abs(a.mcUnit),color:a.mcUnit>=0?C.positive:C.negative}
+  const assumido = [
+    d.tributoBase === 'servico'
+      ? 'O kit é faturado pela distribuidora direto ao cliente, então o imposto incide só sobre a sua parte de serviço.'
+      : 'A nota do kit sai no seu CNPJ, então o imposto incide sobre o valor cheio da venda.',
+    d.comissaoBase === 'total'
+      ? 'A comissão do vendedor é calculada sobre o valor cheio da venda.'
+      : 'A comissão do vendedor é calculada só sobre a parte de serviço.',
+    'Você vende ' + d.qtd + ' projetos parecidos com este todo mês, o ano inteiro.',
+    'Não há outras despesas variáveis além de comissão e imposto.',
   ];
-  const segTotal=segs.reduce((s,x)=>s+x.val,0)||1;
-  document.getElementById("bar").innerHTML=segs.map(s=>{
-    const w=s.val/segTotal*100;
-    return `<div class="seg" title="${s.label}: ${brl(s.val)}" style="width:${w}%;background:${s.color}">${w>9?'<span>'+w.toFixed(0)+'%</span>':''}</div>`;
-  }).join("");
-  document.getElementById("legend").innerHTML=segs.map(s=>
-    `<div class="item"><span class="dot" style="background:${s.color}"></span><div><div class="lt">${s.label}</div><div class="lv" style="color:${s.color}">${brl(s.val)}</div></div></div>`).join("");
+  document.getElementById('listaAssumido').innerHTML =
+    assumido.map(t => `<li>${esc(t)}</li>`).join('');
 
-  const dreRows=[
-    ["Receita (ticket)",d.ticket,a.faturamento,{b:1}],
-    ["(−) Custo do KIT",-d.kit,-d.kit*d.qtd,{muted:1}],
-    ["(−) Custos de serviço",-(d.cdt-d.kit),-(d.cdt-d.kit)*d.qtd,{muted:1}],
-    ["(−) Comissão de vendas",-a.comissaoR,-a.comissaoR*d.qtd,{muted:1}],
-    ["(−) Carga tributária",-a.tributoR,-a.tributoR*d.qtd,{muted:1}],
-    ...a.extrasDetalhes.map(e=>[`(−) ${AppCore.escapeHtml(e.nome)}`,-e.v,-e.vMes,{muted:1}]),
-    ...(d.outras>0?[["(−) Outras desp. variáveis",-a.outrasR,-a.outrasR*d.qtd,{muted:1}]]:[]),
-    ["= Despesas variáveis",-a.dvUnit,-a.dvMes,{b:1,div:1}],
-    ["= Margem de contribuição",a.mcUnit,a.mcMes,{b:1,div:1,color:a.mcUnit>=0?C.positive:C.negative}],
-    ["(−) Despesas fixas",-a.despFixaUnit,-a.despFixaMes,{muted:1, note: despFixaPct>0 ? `Por projeto: rateio histórico com base nos dados cadastrados no Diagnóstico — ${despFixaPct.toFixed(1).replace('.',',')}% do ticket` : `Por projeto: rateio baseado em ${brl(a.despFixaMes)} ÷ ${d.qtd} projetos`}],
-    ["= Resultado",a.lucroUnit,a.lucroMes,{b:1,div:1,colX:a.lucroUnit>=0?C.positive:C.negative,colY:a.lucroMes>=0?C.positive:C.negative}]
-  ];
-  let dreHtml=`<div class="h">Linha</div><div class="h r">Por projeto</div><div class="h r">No mês</div>`;
-  dreRows.forEach(([lbl,x,y,o])=>{
-    const col=o.color||(o.muted?C.muted:C.ink);
-    const colX=o.colX||col;
-    const colY=o.colY||col;
-    const cls=(o.b?"b ":"")+(o.div?"div":"");
-    const noteHtml=o.note?`<div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:3px;line-height:1.3">${o.note}</div>`:'';
-    dreHtml+=`<div class="lbl-cell ${cls}" style="color:${colX}">${lbl}${noteHtml}</div>`+
-             `<div class="cell ${cls}" style="color:${colX}">${brl(x)}</div>`+
-             `<div class="cell ${cls}" style="color:${colY}">${brl(y)}</div>`;
-  });
-  document.getElementById("dre").innerHTML=dreHtml;
-
-  const fmtPeQtd=(v,qtd)=>isFinite(v)?`${Math.ceil(v)}<small>de ${qtd} planejados</small>`:'—';
-  const fmtPeFat=(v)=>isFinite(v)?brl(v):'—';
-  const clsSug=(atual,sug,menor)=>{
-    if(!isFinite(sug)) return 'neutro';
-    if(!isFinite(atual)) return 'melhor';
-    return (menor?sug<atual:sug>atual)?'melhor':'pior';
-  };
-  document.getElementById("peCmpBody").innerHTML=`
-    <tr>
-      <td>Ticket</td>
-      <td class="atual">${brl(d.ticket)}</td>
-      <td class="${clsSug(d.ticket,precoSugerido,false)}">${isFinite(precoSugerido)?brl(precoSugerido):'—'}</td>
-    </tr>
-    <tr>
-      <td>PE · projetos / mês</td>
-      <td class="atual">${isFinite(peQtd)?Math.ceil(peQtd):'—'}<small>de ${d.qtd} planejados</small></td>
-      <td class="${clsSug(peQtd,peQtdSug,true)}">${isFinite(peQtdSug)?Math.ceil(peQtdSug)+'<small>de '+d.qtd+' planejados</small>':'—'}</td>
-    </tr>
-    <tr>
-      <td>PE · faturamento</td>
-      <td class="atual">${fmtPeFat(peFat)}</td>
-      <td class="${clsSug(peFat,peFatSug,true)}">${fmtPeFat(peFatSug)}</td>
-    </tr>`;
-
-  // Markup: CDT / PV
-  const mkAtual   = d.ticket > 0 ? d.cdt / d.ticket : null;
-  const mkSug     = isFinite(precoSugerido) && precoSugerido > 0 ? d.cdt / precoSugerido : null;
-  const multiAtual= d.cdt > 0 && d.ticket > 0 ? d.ticket / d.cdt : null;
-  const multiSug  = d.cdt > 0 && isFinite(precoSugerido) && precoSugerido > 0 ? precoSugerido / d.cdt : null;
-  const fmtPct=(v)=>v!=null?Number(v*100).toFixed(1).replace('.',',')+'%':'—';
-  const fmtMulti=(v)=>v!=null?Number(v).toFixed(2).replace('.',',')+'×':'—';
-  const clsMk=(a,s,menor)=>{
-    if(s==null) return 'neutro';
-    return (menor?s<a:s>a)?'melhor':'pior';
-  };
-  document.getElementById("markupBody").innerHTML=`
-    <tr>
-      <td>Custo Direto Total</td>
-      <td class="atual">${brl(d.cdt)}</td>
-      <td class="neutro">${brl(d.cdt)}</td>
-    </tr>
-    <tr>
-      <td>Preço de Venda</td>
-      <td class="atual">${brl(d.ticket)}</td>
-      <td class="${mkSug!=null?'melhor':'neutro'}">${isFinite(precoSugerido)?brl(precoSugerido):'—'}</td>
-    </tr>
-    <tr>
-      <td>CDT / PV</td>
-      <td class="atual">${fmtPct(mkAtual)}</td>
-      <td class="${clsMk(mkAtual,mkSug,true)}">${fmtPct(mkSug)}</td>
-    </tr>
-    <tr>
-      <td>Markup (PV / CDT)</td>
-      <td class="atual">${fmtMulti(multiAtual)}</td>
-      <td class="${clsMk(multiAtual,multiSug,false)}">${fmtMulti(multiSug)}</td>
-    </tr>`;
-
-  const valido=isFinite(precoSugerido)&&denom>0;
-  // Diferencia a causa da indefinição do preço sugerido:
-  //  - dfPct indefinido (despFixaPct<=0 E faturamento atual=0) => faltam dados de entrada
-  //  - denom<=0 (meta + custos variáveis + desp. fixa % >= 100%) => meta inviável
-  const semDados = !isFinite(dfPct);
-  const precoInvalidoMsg = semDados ? "informe os dados" : "ajuste a meta";
-  document.getElementById("precoP").innerHTML=`Para atingir ${d.lucroAlvo}% de lucro líquido.${abat>0?" Inclui o abatimento fiscal do KIT.":""} Despesa fixa = <b style="color:#fff">${pct(dfPct)}</b> do faturamento atual (${brl(fatAtual)}).`;
-  document.getElementById("precoOut").textContent=valido?brl(precoSugerido):precoInvalidoMsg;
-  const note=document.getElementById("precoNote");
-  if(valido){
-    note.innerHTML = precoSugerido>d.ticket
-      ? `Ticket atual está <b style="color:${C.solar}">${brl(precoSugerido-d.ticket)}</b> abaixo do ideal.`
-      : `Ticket atual já supera o alvo em <b style="color:#8FD3A8">${brl(d.ticket-precoSugerido)}</b>.`;
-  } else {
-    note.innerHTML = semDados
-      ? `Informe quantidade/ticket ou a despesa fixa para calcular o preço sugerido.`
-      : `Meta de lucro + custos variáveis + despesa fixa somam <b style="color:${C.negative}">≥ 100%</b> do ticket — inviável. Reduza a meta ou os custos.`;
+  let ressalva = 'Este é um diagnóstico gerencial, não uma consultoria contábil ou tributária. '
+    + 'Usamos o percentual de imposto que você informou — sua alíquota real varia conforme o regime, '
+    + 'o faturamento dos últimos 12 meses e o ISS do seu município. '
+    + 'Confirme com seu contador antes de mudar preços.';
+  const reg = integrador?.regime_tributario;
+  if (reg === 'Lucro Presumido' || reg === 'Lucro Real') {
+    ressalva += ' Como sua empresa é ' + reg + ', o valor que sobra ainda é antes de IRPJ e CSLL.';
   }
-
-  const cmpEl=document.getElementById("cmp");
-  if(!sug){
-    cmpEl.innerHTML=`<p style="font-size:13px;color:var(--muted);margin:0;grid-column:1/-1">Ajuste a margem de contribuição alvo (seção 04) para gerar o cenário sugerido.</p>`;
-  } else {
-    const rows=[
-      ["Preço de venda",a.ticket,sug.ticket,{b:1}],
-      ["Comissão de vendas",a.comissaoR,sug.comissaoR,{muted:1,invert:1}],
-      ["Carga tributária",a.tributoR,sug.tributoR,{muted:1,invert:1}],
-      ...a.extrasDetalhes.map((e,i)=>[AppCore.escapeHtml(e.nome),e.v,sug.extrasDetalhes[i]?.v??0,{muted:1,invert:1}]),
-      ...(d.outras>0?[["Outras desp. variáveis",a.outrasR,sug.outrasR,{muted:1,invert:1}]]:[]),
-      ["= Despesas variáveis",a.dvUnit,sug.dvUnit,{b:1,invert:1,div:1}],
-      ["Despesas variáveis %",a.custoVariavelPct,sug.custoVariavelPct,{pct:1,invert:1}],
-      ["Margem de contribuição",a.mcUnit,sug.mcUnit,{b:1,div:1,pos:1}],
-      ["Margem de contribuição %",a.mcPct,sug.mcPct,{pct:1,pos:1}]
-    ];
-    let h=`<div class="h">Por projeto</div><div class="h r">Atual</div><div class="h r">Sugerido</div><div class="h r">Δ</div>`;
-    rows.forEach(([lbl,x,y,o])=>{
-      const f=o.pct?pct:brl;
-      const delta=y-x;
-      let dc=C.muted;
-      if(Math.abs(delta)>(o.pct?0.0001:0.005)){ const fav=o.invert?delta<0:delta>0; dc=fav?C.positive:C.negative; }
-      const dstr=o.pct?`${delta>=0?"+":"−"}${Math.abs(delta*100).toFixed(1).replace(".",",")} pp`
-                      :`${delta>=0?"+":"−"}${brl(Math.abs(delta)).replace("R$","").trim()}`;
-      const colL=o.pos?(y>=0?C.positive:C.negative):C.ink;
-      const colA=o.pos?(x>=0?C.positive:C.negative):(o.muted?C.muted:C.ink);
-      const colB=o.pos?(y>=0?C.positive:C.negative):(o.muted?C.muted:C.ink);
-      const cls=(o.b?"b ":"")+(o.div?"div":"");
-      h+=`<div class="lbl-cell ${cls}" style="color:${colL}">${lbl}</div>`+
-         `<div class="cell ${cls}" style="color:${colA}">${f(x)}</div>`+
-         `<div class="cell ${cls}" style="color:${colB}">${f(y)}</div>`+
-         `<div class="cell ${cls}" style="color:${dc};font-size:13px">${dstr}</div>`;
-    });
-    cmpEl.innerHTML=h;
-  }
-  document.getElementById("cmpFoot").textContent=`O preço sugerido embute a despesa fixa (${pct(dfPct)} do faturamento atual) e busca ${d.lucroAlvo}% de lucro líquido. As despesas variáveis são recalculadas em cada cenário. Como a despesa fixa é diluída sobre o volume atual, no preço sugerido o lucro efetivo (linha "Resultado mensal") pode diferir levemente da meta, pois o faturamento muda. Δ = diferença do sugerido em relação ao atual.`;
-
-  // ── Veredito ────────────────────────────────────────────────────────
-  const verdEl=document.getElementById('verdict');
-  if(valido){
-    const diffV=precoSugerido-d.ticket;
-    const isAbaixo=diffV>50;
-    const badge=isAbaixo
-      ?'<span class="verdict-badge bad">Preço abaixo do ideal</span>'
-      :'<span class="verdict-badge ok">Precificação saudável</span>';
-    const priceColor=isAbaixo?C.negative:C.positive;
-    const msg=isAbaixo
-      ?'Seu preço está <strong>'+brl(Math.abs(diffV))+'</strong> abaixo do mínimo para garantir '+d.lucroAlvo+'% de lucro.'
-      :'Você está <strong>'+brl(Math.abs(diffV))+'</strong> acima do mínimo para '+d.lucroAlvo+'% de lucro.';
-    verdEl.innerHTML=badge+
-      '<div class="verdict-prices">'+
-        '<div class="verdict-col"><div class="verdict-label">Preço atual</div>'+
-          '<div class="verdict-price" style="color:'+priceColor+'">'+brl(d.ticket)+'</div></div>'+
-        '<div class="verdict-arrow">→</div>'+
-        '<div class="verdict-col"><div class="verdict-label">Preço sugerido</div>'+
-          '<div class="verdict-price" style="color:'+C.positive+'">'+brl(precoSugerido)+'</div></div>'+
-      '</div>'+
-      '<p class="verdict-msg">'+msg+'</p>';
-  } else {
-    verdEl.innerHTML='<p class="verdict-msg">Ajuste os parâmetros para calcular o preço sugerido.</p>';
-  }
-
-  // ── Tabela unificada Atual × Sugerido ───────────────────────────────
-  const fmtDelta=(v,pp)=>{
-    if(!isFinite(v)) return '—';
-    const s=v>=0?'+':'−';
-    if(pp) return s+Math.abs(v*100).toFixed(1).replace('.',',')+' pp';
-    return s+' '+brl(Math.abs(v));
-  };
-  const uniRows=[
-    {lbl:'Preço de venda',  bold:true,
-     aV:brl(d.ticket), sV:valido?brl(precoSugerido):'—',
-     dV:valido?fmtDelta(precoSugerido-d.ticket,false):'—',
-     dc:valido?(precoSugerido>d.ticket?C.negative:C.positive):C.muted},
-    {lbl:'Margem de contribuição',
-     aV:pct(a.mcPct), sV:sug?pct(sug.mcPct):'—',
-     dV:sug?fmtDelta(sug.mcPct-a.mcPct,true):'—',
-     dc:sug?(sug.mcPct>a.mcPct?C.positive:C.negative):C.muted},
-    {lbl:'Lucro líquido %',
-     aV:pct(a.lucroPct), sV:sug?pct(sug.lucroPct):'—',
-     dV:sug?fmtDelta(sug.lucroPct-a.lucroPct,true):'—',
-     dc:sug?(sug.lucroPct>a.lucroPct?C.positive:C.negative):C.muted},
-    {lbl:'Lucro mensal',
-     aV:brl(a.lucroMes), sV:sug?brl(sug.lucroMes):'—',
-     dV:sug?fmtDelta(sug.lucroMes-a.lucroMes,false):'—',
-     dc:sug?(sug.lucroMes>a.lucroMes?C.positive:C.negative):C.muted},
-    {lbl:'PE · projetos/mês',
-     aV:isFinite(peQtd)?Math.ceil(peQtd)+'':'—',
-     sV:isFinite(peQtdSug)?Math.ceil(peQtdSug)+'':'—',
-     dV:(!isFinite(peQtd)||!isFinite(peQtdSug))?'—':(Math.ceil(peQtdSug)-Math.ceil(peQtd)>=0?'+':'')+String(Math.ceil(peQtdSug)-Math.ceil(peQtd)),
-     dc:isFinite(peQtd)&&isFinite(peQtdSug)?(peQtdSug<peQtd?C.positive:C.negative):C.muted},
-    {lbl:'PE · faturamento',
-     aV:isFinite(peFat)?brl(peFat):'—',
-     sV:isFinite(peFatSug)?brl(peFatSug):'—',
-     dV:(!isFinite(peFat)||!isFinite(peFatSug))?'—':fmtDelta(peFatSug-peFat,false),
-     dc:isFinite(peFat)&&isFinite(peFatSug)?(peFatSug<peFat?C.positive:C.negative):C.muted},
-    {lbl:'Markup CDT/PV',
-     aV:mkAtual!=null?fmtPct(mkAtual):'—',
-     sV:mkSug!=null?fmtPct(mkSug):'—',
-     dV:mkAtual!=null&&mkSug!=null?fmtDelta(mkSug-mkAtual,true):'—',
-     dc:mkAtual!=null&&mkSug!=null?(mkSug<mkAtual?C.positive:C.negative):C.muted},
-    {lbl:'Markup PV/CDT',
-     aV:multiAtual!=null?fmtMulti(multiAtual):'—',
-     sV:multiSug!=null?fmtMulti(multiSug):'—',
-     dV:multiAtual!=null&&multiSug!=null?(multiSug>=multiAtual?'+':'−')+Math.abs(multiSug-multiAtual).toFixed(2).replace('.',',')+'×':'—',
-     dc:multiAtual!=null&&multiSug!=null?(multiSug>multiAtual?C.positive:C.negative):C.muted},
-  ];
-  document.getElementById('uniBody').innerHTML=uniRows.map(r=>
-    '<tr><td'+(r.bold?' style="font-weight:700"':'')+'>'+r.lbl+'</td>'+
-    '<td class="atual">'+r.aV+'</td><td>'+r.sV+'</td>'+
-    '<td style="font-size:12px;font-weight:700;color:'+r.dc+'">'+r.dV+'</td></tr>').join('');
-  document.getElementById('btnAdotar').disabled=!valido;
-
-  if (initDone) save();
+  document.getElementById('ressalva').textContent = ressalva;
 }
 
-async function salvarOrcamento(){
-  if(!lastCalc) return;
-  if(!authUser){ window.location.href='login.html?returnTo=index.html'; return; }
-  const btn=document.getElementById("btnSalvar");
-  btn.disabled=true;
-  btn.textContent="Salvando…";
+// ── B7 CTA ────────────────────────────────────────────────────────────
+function renderCta(r) {
+  const a = r.atual;
+  const positivo = a.lucroMes > 0;
 
-  const {d,a,peQtd,precoSugerido}=lastCalc;
-  if(!db){
-    btn.disabled=false;
-    btn.textContent="Salvar análise";
-    showToast("Sem conexão: não foi possível salvar no servidor.", true);
-    return;
-  }
-  const {error}=await AppCore.dbTry(db.from("orcamentos").insert({
-    integrador_id: integrador?.id||null,
-    projeto_id:    projeto?.id||null,
+  const titulo = positivo
+    ? `Sobram ${brl0(a.lucroUnit)} por projeto. Dá para sobrar mais.`
+    : 'Dá para virar esse jogo.';
+  const apoio = positivo
+    ? 'Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.'
+    : 'Em uma conversa a gente identifica o que precisa mudar no seu preço e na sua estrutura.';
+
+  // Sem link configurado, nada de botão morto: mostramos só o relatório.
+  const link = (AppConfig.ctaWhatsapp || '').trim();
+  const botao = link
+    ? `<a class="cta-btn" href="${esc(link)}" target="_blank" rel="noopener">Quero conversar sobre esses números</a>`
+    : '';
+
+  document.getElementById('cta').innerHTML = `
+    <h2>${esc(titulo)}</h2>
+    <p>${esc(apoio)}</p>
+    ${botao}
+    <button class="cta-sec" onclick="abrirRelatorio()">Ver o relatório completo</button>`;
+}
+
+// ── Relatório ─────────────────────────────────────────────────────────
+// Sem login: o relatório É o entregável do lead, que já se identificou no
+// passo 1. Pedir conta de novo é atrito sobre quem já converteu.
+function abrirRelatorio() {
+  try {
+    sessionStorage.setItem('relatorioState', JSON.stringify({
+      lastCalc: { d: ESTADO, a: RESULTADO.atual, peQtd: RESULTADO.pontoEquilibrio,
+                  precoSugerido: RESULTADO.piso, dfPct: 0 },
+      comissaoBase: ESTADO.comissaoBase,
+      tributoBase:  ESTADO.tributoBase,
+      despesasExtras: [],
+      despFixaPct: 0,
+      V12: ESTADO.qtd * 12,
+      meses: null,
+    }));
+  } catch (e) {}
+  window.location.href = 'relatorio.html';
+}
+
+// ── Registro do lead ──────────────────────────────────────────────────
+// Grava o diagnóstico automaticamente: é o dado comercial do lead. Silencioso
+// de propósito — falha de rede não é problema do usuário e não pode virar alerta.
+async function registrarOrcamento(r) {
+  if (!db || !integrador?.id) return;
+  const d = r.dados, a = r.atual;
+  const { error } = await AppCore.dbTry(db.from('orcamentos').insert({
+    integrador_id: integrador.id,
+    projeto_id: projeto?.id || null,
     kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol, art:d.art,
     ticket:d.ticket, qtd_projetos:d.qtd,
-    comissao_pct:d.comissao, comissao_base:comissaoBase,
-    tributo_pct:d.tributo, tributo_base:tributoBase,
+    comissao_pct:d.comissao, comissao_base:d.comissaoBase,
+    tributo_pct:d.tributo, tributo_base:d.tributoBase,
     outras_pct:d.outras,
     despesas_fixas:d.despFixa, lucro_alvo_pct:d.lucroAlvo,
     custo_direto_total:d.cdt,
     faturamento_mensal:a.faturamento,
     margem_contribuicao_pct:parseFloat((a.mcPct*100).toFixed(2)),
     lucro_mensal:a.lucroMes,
-    ponto_equilibrio_qtd:isFinite(peQtd)?parseFloat(peQtd.toFixed(2)):null,
-    preco_sugerido:isFinite(precoSugerido)?parseFloat(precoSugerido.toFixed(2)):null
-  }));
-
-  btn.disabled=false;
-  btn.textContent="Salvar análise";
-
-  if(error){ showToast("Erro ao salvar: "+error.message, true); }
-  else { showToast("Orçamento salvo com sucesso!"); }
+    ponto_equilibrio_qtd:isFinite(r.pontoEquilibrio)?parseFloat(r.pontoEquilibrio.toFixed(2)):null,
+    preco_sugerido:isFinite(r.piso)?parseFloat(r.piso.toFixed(2)):null
+  }), AppCore.PRAZO_BOOT);
+  if (error) console.warn('Diagnóstico não sincronizado:', error.message);
 }
 
-function showToast(msg, erro=false){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.style.background=erro?"var(--negative)":"var(--teal)";
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),3500);
-}
+// ── Boot ──────────────────────────────────────────────────────────────
+let ESTADO, RESULTADO;
 
-function adotarSugerido(){
-  if(!lastCalc||!isFinite(lastCalc.precoSugerido)) return;
-  document.getElementById('ticket').value=lastCalc.precoSugerido.toFixed(2).replace('.',',');
-  render();
-}
+function init() {
+  // Sem os dados do funil não há diagnóstico possível — volta para a etapa que falta.
+  if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
+  if (!projeto?.valor_venda)     { window.location.href = 'projeto.html'; return; }
+  if (!despesas?.projetosMes)    { window.location.href = 'custos.html'; return; }
 
-function atualizarAuthUI(){
-  const chip=document.getElementById('authChip');
-  const emailEl=document.getElementById('authEmail');
-  const btnEntrar=document.getElementById('btnEntrar');
-  if(authUser){chip.style.display='flex';emailEl.textContent=authUser.email;btnEntrar.style.display='none';}
-  else{chip.style.display='none';btnEntrar.style.display='';}
-}
-function abrirRelatorio(){
-  if(!authUser){window.location.href='login.html?returnTo=relatorio.html';return;}
-  const sazonLS=JSON.parse(localStorage.getItem('sazonalidade')||'{}');
-  const V12=sazonLS.meses
-    ?Object.values(sazonLS.meses).reduce((s,m)=>s+(parseFloat(m.projetos)||0),0)
-    :(lastCalc?.d?.qtd||1)*12;
-  sessionStorage.setItem('relatorioState',JSON.stringify({
-    lastCalc,comissaoBase,tributoBase,despesasExtras,despFixaPct,V12,
-    meses:sazonLS.meses||null
-  }));
-  window.location.href='relatorio.html';
-}
-async function signOut(){
-  if (db) await AppCore.dbTry(db.auth.signOut());
-  authUser=null;
-  atualizarAuthUI();
-}
+  document.getElementById('ctxLinha').textContent = [
+    integrador.nome_empresa, projeto.nome_projeto,
+    projeto.kwp_sistema ? projeto.kwp_sistema + ' kWp' : null,
+    projeto.quantidade_modulos ? projeto.quantidade_modulos + ' módulos' : null,
+  ].filter(Boolean).join(' · ');
 
-// ── Configuração de custos ──────────────────────────────────────────
-const CAMPOS_CFG = {
-  kit:   'Custo do KIT',
-  ca:    'Material adicional CA',
-  inst:  'Instalação',
-  proj:  'Projeto elétrico',
-  homol: 'Homologação',
-  art:   'ART do Projeto',
-};
-const BADGE_LABEL = { fixo:'fixo', modulo:'R$/mod', kwp:'R$/kWp', faixa:'faixas' };
-const UNIT_LABEL  = { fixo:'R$',   modulo:'R$/módulo', kwp:'R$/kWp' };
+  ESTADO = montarEstado();
+  RESULTADO = Calculo.diagnostico(ESTADO);
 
-let configs = {};
-let campoCfgAtual = null;
-let modoAtual = 'fixo';
-let faixasTemp = [];
-let subModoAtual = 'modulo';
-
-async function carregarConfigs() {
-  // Carrega do cache local imediatamente (sem latência)
-  configs      = AppCore.safeParse('configCustos', {});
-  custosExtras = AppCore.safeParse('custosExtras', []);
-  atualizarBadges();
-
-  // M-6: sincroniza com Supabase, MAS sem descartar edições offline.
-  // Decisão (mínima e segura, sem merge): só aplicamos os dados do banco quando
-  // o estado LOCAL está vazio para essas chaves. Se já há configs/custosExtras
-  // locais, eles refletem a edição mais recente do usuário nesta sessão e
-  // prevalecem — evitando que o banco vença cegamente (last-write sem merge).
-  const temConfigLocal = Object.keys(configs).length > 0 || custosExtras.length > 0;
-  if (temConfigLocal) return;
-  if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('configs').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
-  if (data?.configs && Object.keys(data.configs).length) {
-    configs      = data.configs.campos || {};
-    custosExtras = data.configs.extras || [];
-    localStorage.setItem('configCustos', JSON.stringify(configs));
-    localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-    atualizarBadges();
-    renderExtras();
-    aplicarTodasConfigs();
-    render();
-  }
-}
-
-async function carregarDespesas() {
-  const local = AppCore.safeParse('despesas', {});
-  const temDespesaLocal = Object.keys(local).length > 0;
-  if (temDespesaLocal) aplicarDespesas(local);
-
-  // M-6: se já há despesas locais (edição mais recente do usuário), preferimos
-  // o local e NÃO sobrescrevemos com o banco. Só puxamos do banco quando o
-  // estado local está ausente/vazio. Sem merge — decisão mínima e segura.
-  if (temDespesaLocal) return;
-  if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
-  if (data?.despesas && Object.keys(data.despesas).length) {
-    localStorage.setItem('despesas', JSON.stringify(data.despesas));
-    aplicarDespesas(data.despesas);
-  }
-}
-
-function aplicarDespesas(d) {
-  if (d.comissao != null) {
-    document.getElementById('comissao').value = d.comissao.valor ?? 0;
-    comissaoBase = d.comissao.base || 'total';
-  }
-  if (d.tributo != null) {
-    document.getElementById('tributo').value = d.tributo.valor ?? 0;
-    tributoBase = d.tributo.base || 'servico';
-  }
-  despesasExtras = Array.isArray(d.extras) ? d.extras : [];
-  if (d.despFixa) {
-    document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
-  }
-  // Volume mensal: divisor do custo fixo. Vem do passo Custos. Sem ele o campo
-  // ficaria no DEFAULT 1 e o mês inteiro de despesa fixa recairia sobre uma
-  // única venda, inflando o preço sugerido em várias vezes.
-  if (d.projetosMes > 0) {
-    document.getElementById('qtd').value = d.projetosMes;
-  }
-  // 'outras' não é perguntado no funil; quando as despesas vêm de lá, o valor
-  // correto é o informado (zero), não o palpite dos DEFAULTS.
-  if (d.outras != null) {
-    document.getElementById('outras').value = d.outras;
-  }
-  syncBaseButtons();
-  renderDespExtras();
-  render();
-}
-
-function renderDespExtras() {
-  const container = document.getElementById('despExtrasContainer');
-  if (!container) return;
-  const temExtras = despesasExtras.length > 0;
-  const outrasWrap = document.getElementById('outrasWrap');
-  outrasWrap.style.display = temExtras ? 'block' : 'none';
-  if (!temExtras) document.getElementById('outras').value = 0;
-  container.innerHTML = '';
-  despesasExtras.forEach((e, i) => {
-    const baseHint = e.base === 'servico' ? 'Sobre serviços' : 'Sobre venda total';
-    const lbl = document.createElement('label');
-    lbl.className = 'fld';
-    lbl.innerHTML =
-      `<span class="lbl">${AppCore.escapeHtml(e.nome || 'Despesa extra ' + (i+1))}</span>` +
-      `<div class="inwrap"><input type="number" step="0.1" value="${e.valor}" oninput="despesasExtras[${i}].valor=parseFloat(this.value)||0;render()"><span class="affix r">%</span></div>` +
-      `<span class="hint">${baseHint}</span>`;
-    container.appendChild(lbl);
-  });
-}
-
-async function carregarSazonalidade() {
-  const local = AppCore.safeParse('sazonalidade', {});
-  if (local.meses) aplicarSazonalidade(local.meses);
-
-  if (!db || !integrador?.id) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single(), AppCore.PRAZO_BOOT);
-  if (data?.sazonalidade?.meses) {
-    localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
-    aplicarSazonalidade(data.sazonalidade.meses);
-  }
-}
-
-function aplicarSazonalidade(meses) {
-  let totalProjetos = 0, totalValor = 0;
-  Object.values(meses).forEach(m => {
-    totalProjetos += parseFloat(m.projetos) || 0;
-    totalValor    += parseFloat(m.valor)    || 0;
-  });
-  if (totalProjetos === 0 && totalValor === 0) return;
-
-  const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
-  const fatMedio    = totalValor / 12;
-
-  const despesas = AppCore.safeParse('despesas', {});
-  const despFixaR = parseFloat(despesas.despFixa) || 0;
-  despFixaPct = fatMedio > 0 ? (despFixaR / fatMedio) * 100 : 0;
-  V12_saz = totalProjetos;
-
-  // M-2: só assume o #ticket se projeto.valor_venda não tiver prioridade.
-  if (ticketMedio > 0 && !ticketTemValorVenda) {
-    document.getElementById('ticket').value = Number(ticketMedio).toFixed(2).replace('.', ',');
-  }
-}
-
-async function salvarConfigsDB() {
-  localStorage.setItem('configCustos', JSON.stringify(configs));
-  localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-  if (!db || !integrador?.id) return;
-  await AppCore.dbTry(db.from('integradores')
-    .update({ configs: { campos: configs, extras: custosExtras } })
-    .eq('id', integrador.id));
-}
-
-function salvarConfigs() { salvarConfigsDB(); }
-function salvarExtras()  { salvarConfigsDB(); }
-
-function calcValorFaixa(cfg, kwp, mods) {
-  const faixas = cfg.faixas;
-  if (!faixas?.length) return 0;
-  const varVal = cfg.faixaVariavel === 'modulos' ? mods : kwp;
-  const sorted = [...faixas].sort((a, b) => (a.ate ?? Infinity) - (b.ate ?? Infinity));
-  const faixa  = sorted.find(f => f.ate === null || varVal <= f.ate) || sorted[sorted.length - 1];
-  const taxa   = faixa?.taxa || 0;
-  const sm     = cfg.subModo || 'kwp';
-  if (sm === 'fixo')   return taxa;
-  if (sm === 'modulo') return taxa * mods;
-  if (sm === 'kwp')    return taxa * kwp;
-  return 0;
-}
-
-function calcValor(campo) {
-  const cfg = configs[campo];
-  if (!cfg) return null;
-  const kwp  = projeto?.kwp_sistema        || 0;
-  const mods = projeto?.quantidade_modulos || 0;
-  if (cfg.modo === 'fixo')   return cfg.taxa ?? null;
-  if (cfg.modo === 'modulo') return (cfg.taxa ?? null) !== null ? cfg.taxa * mods : null;
-  if (cfg.modo === 'kwp')    return (cfg.taxa ?? null) !== null ? cfg.taxa * kwp  : null;
-  if (cfg.modo === 'faixa')  return calcValorFaixa(cfg, kwp, mods);
-  return null;
-}
-
-function aplicarTodasConfigs() {
-  const custosDiretos = projeto?.custos_diretos || {};
-  Object.keys(CAMPOS_CFG).forEach(campo => {
-    if (custosDiretos[campo] !== undefined) {
-      document.getElementById(campo).value = Number(custosDiretos[campo]).toFixed(2).replace('.', ',');
-    } else {
-      const val = calcValor(campo);
-      if (val !== null) document.getElementById(campo).value = val.toFixed(2).replace('.',',');
-    }
-  });
-  render();
-}
-
-function tornarCustosReadonly() {
-  ['kit','ca','inst','proj','homol','art'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.closest('.inwrap').classList.add('readonly-cost');
-  });
-  document.querySelectorAll('.btn-cfg').forEach(b => b.style.display = 'none');
-  document.querySelectorAll('.cfg-badge').forEach(b => b.style.display = 'none');
-  const btnAdd = document.querySelector('.btn-add');
-  if (btnAdd) btnAdd.style.display = 'none';
-}
-
-function atualizarBadges() {
-  Object.keys(CAMPOS_CFG).forEach(campo => {
-    const el = document.getElementById('badge-' + campo);
-    if (!el) return;
-    const cfg = configs[campo];
-    const ativo = cfg?.modo === 'faixa' ? cfg.faixas?.length > 0 : cfg?.taxa > 0;
-    if (cfg?.modo && ativo) {
-      el.textContent = BADGE_LABEL[cfg.modo];
-      el.style.display = 'inline';
-    } else {
-      el.style.display = 'none';
-    }
-  });
-}
-
-function selecionarModo(modo) {
-  modoAtual = modo;
-  document.querySelector(`input[name="cfgModo"][value="${modo}"]`).checked = true;
-  ['fixo','modulo','kwp','faixa'].forEach(m =>
-    document.getElementById('opt-' + m).classList.toggle('sel', m === modo)
-  );
-  const isFaixa = modo === 'faixa';
-  document.getElementById('rateBox').style.display    = isFaixa ? 'none' : 'block';
-  document.getElementById('faixaEditor').style.display = isFaixa ? 'block' : 'none';
-  if (!isFaixa) document.getElementById('cfgUnit').textContent = UNIT_LABEL[modo] || 'R$';
-  if (isFaixa && !faixasTemp.length) faixasTemp = [{ ate: null, taxa: 0 }];
-  if (isFaixa) renderFaixaEditor();
-  atualizarPreview();
-}
-
-function abrirConfig(campo, event) {
-  event.preventDefault();
-  campoCfgAtual = campo;
-  const cfg  = configs[campo] || { modo: 'fixo', taxa: 0 };
-  const kwp  = projeto?.kwp_sistema        || 0;
-  const mods = projeto?.quantidade_modulos || 0;
-
-  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + CAMPOS_CFG[campo];
-  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulo${mods !== 1 ? 's' : ''} do projeto`;
-  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp do projeto`;
-  document.getElementById('cfgTaxa').value = cfg.taxa || '';
-
-  if (cfg.modo === 'faixa') {
-    faixasTemp   = cfg.faixas?.length ? JSON.parse(JSON.stringify(cfg.faixas)) : [{ ate: null, taxa: 0 }];
-    subModoAtual = cfg.subModo || 'modulo';
-  }
-  selecionarModo(cfg.modo || 'fixo');
-  document.getElementById('modalCfg').classList.add('open');
-  if (cfg.modo !== 'faixa') setTimeout(() => document.getElementById('cfgTaxa').focus(), 50);
-}
-
-function fecharModal() {
-  document.getElementById('modalCfg').classList.remove('open');
-  campoCfgAtual = null;
-}
-
-function fecharModalFora(e) {
-  if (e.target === document.getElementById('modalCfg')) fecharModal();
-}
-
-function atualizarPreview() {
-  const kwp  = projeto?.kwp_sistema        || 0;
-  const mods = projeto?.quantidade_modulos || 0;
-  let val = 0, desc = '';
-
-  if (modoAtual === 'faixa') {
-    const cfg    = { modo:'faixa', subModo: subModoAtual, faixas: faixasTemp };
-    val          = calcValorFaixa(cfg, kwp, mods);
-    const sorted = [...faixasTemp].sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
-    const fi     = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
-    const fiIdx  = sorted.indexOf(fi);
-    const de     = fiIdx === 0 ? 0 : sorted[fiIdx-1].ate;
-    const faixaDesc = fi?.ate===null ? `acima de ${de} kWp` : `${de===0?'até':`${de}–`}${fi.ate} kWp`;
-    const smDesc = subModoAtual==='modulo' ? ` × ${mods} mod` : subModoAtual==='kwp' ? ` × ${kwp} kWp` : '';
-    desc = `${kwp} kWp → faixa ${faixaDesc} → ${brl(fi?.taxa||0)}${smDesc}`;
+  renderVeredito(RESULTADO);
+  if (RESULTADO.valido) {
+    renderCascata(RESULTADO);
+    renderEquilibrio(RESULTADO);
+    renderDesconto(RESULTADO);
+    renderComo(RESULTADO);
+    renderCta(RESULTADO);
+    registrarOrcamento(RESULTADO);
   } else {
-    const taxa = parseFloat(document.getElementById('cfgTaxa').value) || 0;
-    if (modoAtual === 'fixo')   { val = taxa;        desc = 'valor fixo'; }
-    if (modoAtual === 'modulo') { val = taxa * mods; desc = `${brl(taxa)} × ${mods} módulo${mods!==1?'s':''}`; }
-    if (modoAtual === 'kwp')    { val = taxa * kwp;  desc = `${brl(taxa)} × ${kwp} kWp`; }
+    ['blocoCascata','blocoEquilibrio','blocoDesconto','cta'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    document.querySelector('details.como').style.display = 'none';
   }
-
-  document.getElementById('prevVal').textContent  = brl(val);
-  document.getElementById('prevDesc').textContent = desc;
 }
 
-// ── Faixa de kWp ────────────────────────────────────────────────────
-function setSubModo(sm) {
-  subModoAtual = sm;
-  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === sm));
-  renderFaixaEditor();
-  atualizarPreview();
-}
-
-function addFaixa() {
-  const nonNull = faixasTemp.filter(f => f.ate !== null);
-  const ultimo  = nonNull.length ? nonNull[nonNull.length - 1].ate : 0;
-  const idx     = faixasTemp.findIndex(f => f.ate === null);
-  faixasTemp.splice(idx >= 0 ? idx : faixasTemp.length, 0, { ate: ultimo + 5, taxa: 0 });
-  if (!faixasTemp.find(f => f.ate === null)) faixasTemp.push({ ate: null, taxa: 0 });
-  renderFaixaEditor();
-  atualizarPreview();
-}
-
-function removeFaixa(idx) {
-  if (faixasTemp.length <= 1) return;
-  faixasTemp.splice(idx, 1);
-  if (!faixasTemp.find(f => f.ate === null)) faixasTemp[faixasTemp.length - 1].ate = null;
-  renderFaixaEditor();
-  atualizarPreview();
-}
-
-function renderFaixaEditor() {
-  const kwp    = projeto?.kwp_sistema || 0;
-  const ulMap  = { fixo:'R$', modulo:'R$/mod', kwp:'R$/kWp' };
-  const ul     = ulMap[subModoAtual];
-  const sorted = [...faixasTemp].map((f,i)=>({...f,_i:i}))
-    .sort((a,b)=>(a.ate??Infinity)-(b.ate??Infinity));
-  const ativo  = sorted.find(f => f.ate===null || kwp<=f.ate) || sorted[sorted.length-1];
-
-  document.getElementById('faixasList').innerHTML = sorted.map((f, si) => {
-    const de      = si === 0 ? 0 : (sorted[si-1].ate ?? '?');
-    const isLast  = f.ate === null;
-    const isAtivo = f === ativo;
-    const canDel  = sorted.length > 1;
-
-    const rangeHtml = isLast
-      ? `<span class="fr-label">Acima de <b>${de}</b> kWp</span>`
-      : `<span class="fr-label">${de===0?'Até':`<b>${de}</b> –`}&nbsp;<input class="fr-limit" type="number"
-           value="${f.ate}" min="0.1" step="0.5"
-           oninput="faixasTemp[${f._i}].ate=parseFloat(this.value)||0;atualizarPreview()"
-           onblur="renderFaixaEditor()">&nbsp;kWp</span>`;
-
-    return `<div class="faixa-row${isAtivo?' faixa-active':''}">
-      ${rangeHtml}
-      <div class="fr-taxa">
-        <input class="fr-taxa-inp" type="number" value="${f.taxa||''}" min="0" step="0.01" placeholder="0"
-               oninput="faixasTemp[${f._i}].taxa=parseFloat(this.value)||0;atualizarPreview()">
-        <span class="fr-unit">${ul}</span>
-      </div>
-      ${canDel?`<button class="btn-remove" onclick="removeFaixa(${f._i})" title="Remover" aria-label="Remover faixa">×</button>`:'<span></span>'}
-    </div>`;
-  }).join('');
-
-  document.querySelectorAll('.smb').forEach(b => b.classList.toggle('on', b.dataset.sm === subModoAtual));
-}
-// ────────────────────────────────────────────────────────────────────
-
-function aplicarConfig() {
-  const isExtra = campoCfgAtual.startsWith('extra:');
-  const taxa    = parseFloat(document.getElementById('cfgTaxa').value) || 0;
-
-  let cfgSalva;
-  if (modoAtual === 'faixa') {
-    cfgSalva = { modo: 'faixa', subModo: subModoAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
-  } else {
-    cfgSalva = { modo: modoAtual, taxa };
-  }
-
-  if (isExtra) {
-    const id   = campoCfgAtual.slice(6);
-    const item = custosExtras.find(e => e.id === id);
-    if (item) { Object.assign(item, cfgSalva); salvarExtras(); renderExtras(); }
-  } else {
-    configs[campoCfgAtual] = cfgSalva;
-    salvarConfigs();
-    atualizarBadges();
-    const val = calcValor(campoCfgAtual);
-    if (val !== null) document.getElementById(campoCfgAtual).value = parseFloat(val.toFixed(2));
-  }
-  render();
-  fecharModal();
-}
-
-// ── Custos extras dinâmicos ─────────────────────────────────────────
-let custosExtras = [];
-function calcValorExtra(item) {
-  const kwp  = projeto?.kwp_sistema        || 0;
-  const mods = projeto?.quantidade_modulos || 0;
-  if (item.modo === 'faixa')  return calcValorFaixa(item, kwp, mods);
-  if (!item.taxa) return 0;
-  if (item.modo === 'fixo')   return item.taxa;
-  if (item.modo === 'modulo') return item.taxa * mods;
-  if (item.modo === 'kwp')    return item.taxa * kwp;
-  return 0;
-}
-function totalExtras() {
-  return custosExtras.reduce((s, e) => s + calcValorExtra(e), 0);
-}
-function adicionarCusto() {
-  const id = Date.now().toString();
-  custosExtras.push({ id, label: 'Novo custo', modo: 'fixo', taxa: 0 });
-  salvarExtras();
-  renderExtras();
-  abrirConfigExtra(id, null);
-}
-function removerExtra(id) {
-  custosExtras = custosExtras.filter(e => e.id !== id);
-  salvarExtras();
-  renderExtras();
-  render();
-}
-function atualizarLabelExtra(id, label) {
-  const item = custosExtras.find(e => e.id === id);
-  if (item) { item.label = label.trim() || 'Custo'; salvarExtras(); }
-}
-function renderExtras() {
-  const container = document.getElementById('extrasContainer');
-  if (!custosExtras.length) { container.innerHTML = ''; return; }
-  container.innerHTML = custosExtras.map(item => {
-    const val = calcValorExtra(item);
-    return `<div class="extra-item">
-      <div class="lbl-row"><span class="lbl">${AppCore.escapeHtml(item.label) || 'Custo extra'}</span></div>
-      <div class="inwrap readonly-cost"><span class="affix l">R$</span>
-        <input type="text" value="${val.toFixed(2).replace('.',',')}" readonly
-               aria-label="Valor calculado do custo extra">
-      </div>
-    </div>`;
-  }).join('');
-}
-function abrirConfigExtra(id, event) {
-  if (event) event.preventDefault();
-  const item = custosExtras.find(e => e.id === id);
-  if (!item) return;
-  campoCfgAtual = 'extra:' + id;
-  const kwp  = projeto?.kwp_sistema        || 0;
-  const mods = projeto?.quantidade_modulos || 0;
-  document.getElementById('cfgTitulo').textContent = 'Configurar: ' + item.label;
-  document.getElementById('descMod').textContent   = `Multiplicado por ${mods} módulo${mods!==1?'s':''} do projeto`;
-  document.getElementById('descKwp').textContent   = `Multiplicado por ${kwp} kWp do projeto`;
-  document.getElementById('cfgTaxa').value = item.taxa || '';
-  if (item.modo === 'faixa') {
-    faixasTemp   = item.faixas?.length ? JSON.parse(JSON.stringify(item.faixas)) : [{ ate: null, taxa: 0 }];
-    subModoAtual = item.subModo || 'modulo';
-  }
-  selecionarModo(item.modo || 'fixo');
-  document.getElementById('modalCfg').classList.add('open');
-  if (item.modo !== 'faixa') setTimeout(() => document.getElementById('cfgTaxa').focus(), 50);
-}
-// ────────────────────────────────────────────────────────────────────
-
-// Fechar modal com Escape
-document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
-// ────────────────────────────────────────────────────────────────────
-
-FIELDS.forEach(f=>document.getElementById(f).addEventListener("input",render));
-initCtx();
-(async () => {
-  // 1) Restaura os valores persistidos (precSolar) / DEFAULTS primeiro,
-  //    para que a precedência de escrita nos inputs seja única e determinística.
-  load();
-  // M-2 (parte 1): sinalizar ANTES de qualquer carga assíncrona. aplicarSazonalidade()
-  // consulta esta flag para não sobrescrever o #ticket quando o projeto já tem
-  // valor de venda — e agora a sazonalidade carrega junto com o resto.
-  ticketTemValorVenda = !!projeto?.valor_venda;
-
-  // 2) Carrega configs, despesas e sazonalidade do onboarding. Todas rodam DEPOIS
-  //    do load(), então os dados do onboarding prevalecem sobre um precSolar
-  //    zerado no primeiro acesso.
-  //    Em paralelo de propósito: são leituras independentes e, em série, cada uma
-  //    somava o próprio tempo de espera — com rede ruim a tela levava o triplo
-  //    do tempo para mostrar os números reais do usuário.
-  await Promise.all([carregarConfigs(), carregarDespesas(), carregarSazonalidade()]);
-  renderExtras();
-  aplicarTodasConfigs();
-  if (projeto?.custo_kit) {
-    document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');
-  }
-  // Precedência do #qtd (projetos por mês), do mais específico ao mais genérico:
-  //   1º despesas.projetosMes — resposta do usuário no passo Custos
-  //   2º precSolar.qtd        — ajuste feito aqui no diagnóstico
-  //   3º DEFAULT 1
-  // Os dois primeiros já foram aplicados: load() cobre precSolar/DEFAULT e
-  // aplicarDespesas() escreve por cima quando o funil informou o volume.
-  // Não há nada a fazer aqui — havia um bloco que reescrevia qtd=1 neste ponto
-  // e anulava a resposta do funil, jogando a despesa fixa do mês inteiro sobre
-  // um único projeto.
-  // M-2 (parte 2): precedência ÚNICA e determinística para #ticket. Três fontes
-  // disputam esse campo; a ordem abaixo é a fonte de verdade (mais específico vence):
-  //   1º projeto.valor_venda  (se existir)  — valor do projeto atual
-  //   2º sazonalidade (ticket médio)         — histórico do integrador
-  //   3º precSolar / DEFAULT                  — já aplicado por load() antes daqui
-  // carregarSazonalidade() sempre roda (define despFixaPct, usado no cálculo),
-  // MAS só escreve no #ticket quando ticketTemValorVenda é falso.
-  if (projeto?.valor_venda) {
-    document.getElementById('ticket').value = Number(projeto.valor_venda).toFixed(2).replace('.', ',');
-  }
-  if (integrador?.lucro_alvo != null) {
-    document.getElementById('lucroAlvo').value = integrador.lucro_alvo;
-  }
-  // 3) Init concluída: habilita persistência e renderiza uma única vez.
-  initDone = true;
-  render();
-  tornarCustosReadonly();
-  if (db) {
-    const { data } = await AppCore.dbTry(db.auth.getSession(), AppCore.PRAZO_BOOT);
-    authUser = data?.session?.user || null;
-    atualizarAuthUI();
-    db.auth.onAuthStateChange((_, s) => { authUser = s?.user || null; atualizarAuthUI(); });
-  } else {
-    atualizarAuthUI();
-  }
-})();
+init();
 </script>
 </body>
 </html>

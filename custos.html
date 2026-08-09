@@ -112,6 +112,15 @@
       </div>
 
       <label class="fld">
+        <span class="lbl">Quem emite a nota do kit? <span class="req">*</span></span>
+        <select class="plain" id="notaKit">
+          <option value="distribuidora">A distribuidora fatura direto para o cliente</option>
+          <option value="integrador">Sai no meu CNPJ (eu faturo o kit)</option>
+        </select>
+        <span class="hint">Muda bastante a conta: quando a nota do kit sai no seu CNPJ, o imposto incide sobre o valor cheio da venda, e não só sobre o seu serviço.</span>
+      </label>
+
+      <label class="fld">
         <span class="lbl">Margem de lucro que você quer <span class="req">*</span></span>
         <div class="inwrap">
           <input type="text" inputmode="decimal" id="lucroAlvo" placeholder="12">
@@ -173,6 +182,7 @@ function init() {
   v('tributo',     desp.tributo?.valor ?? '');
   v('lucroAlvo',   integrador?.lucro_alvo ?? 12);
   v('regime',      integrador?.regime_tributario || '');
+  v('notaKit',     desp.notaKit || 'distribuidora');
 }
 
 const fmt = n => Number(n).toFixed(2).replace('.', ',');
@@ -225,9 +235,14 @@ async function salvar(e) {
   configCustos.inst.taxa = num('inst');
   configCustos.proj.taxa = num('proj');
 
+  // Quem emite a nota decide a base do imposto. Antes isso era uma premissa
+  // fixa no código; agora é resposta do usuário e vale ~10% no preço mínimo.
+  const notaKit = document.getElementById('notaKit').value;
+
   const despesas = {
-    comissao:    { valor: num('comissao'), base: 'total'   },
-    tributo:     { valor: num('tributo'),  base: 'servico' },
+    comissao:    { valor: num('comissao'), base: 'total' },
+    tributo:     { valor: num('tributo'),  base: notaKit === 'integrador' ? 'total' : 'servico' },
+    notaKit:     notaKit,
     extras:      [],
     outras:      0,
     despFixa:    num('despFixa'),

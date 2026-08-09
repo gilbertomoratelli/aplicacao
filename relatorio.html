@@ -185,18 +185,9 @@ const CTA_URL_ANALISE  = 'index.html';
 const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
 
 (async () => {
-  // 1. Auth — sem o SDK (CDN fora do ar) não há como validar sessão.
-  if (!db) {
-    document.body.innerHTML =
-      '<div class="wrap" style="padding:40px 20px"><h1>Relatório indisponível</h1>' +
-      '<p class="sub">Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue a página.</p>' +
-      '<p><a class="btn" href="index.html">← Voltar ao diagnóstico</a></p></div>';
-    return;
-  }
-  const { data: _sess } = await AppCore.dbTry(db.auth.getSession());
-  const session = _sess?.session;
-  if (!session?.user) { window.location.href = 'login.html?returnTo=relatorio.html'; return; }
-  const authUser = session.user;
+  // Sem gate de login: o relatório É o entregável do lead, que já se identificou
+  // no passo 1 (nome, CNPJ, e-mail, WhatsApp). Exigir conta aqui seria atrito em
+  // cima de quem já converteu. A página também não depende do banco para render.
 
   // 2. Estado salvo por abrirRelatorio() no index.html
   let state;
@@ -212,6 +203,7 @@ const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
   // 4. Dados de contexto
   const integrador = JSON.parse(localStorage.getItem('integrador') || 'null');
   const projeto    = JSON.parse(localStorage.getItem('projeto')    || 'null');
+  const authUser = { email: integrador?.email || '', id: null };
 
   // 5. Renderizar
   renderRelatorio(result, d, precoSugerido, integrador, projeto, authUser, comissaoBase, tributoBase, V12, despesasExtras);
@@ -754,6 +746,9 @@ function secFooter(authUser) {
 
 // ── Snapshot para diagnosticos ────────────────────────────────────────
 async function salvarSnapshot(result, d, integ, proj, authUser, cbBase, tbBase) {
+  // A tabela exige usuário autenticado. Sem login, o registro comercial do lead
+  // já foi gravado em `orcamentos` pelo diagnóstico — não há perda de dado aqui.
+  if (!db || !authUser?.id) return;
   try {
     const snap = sc => sc ? {
       ticket:sc.ticket, totalProj:sc.totalProj, fatAnual:sc.fatAnual,

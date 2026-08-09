@@ -36,7 +36,9 @@
   .resumo-hint{font-size:11px;color:var(--muted);margin-top:4px}
 
   @media(max-width:480px){
-    .season-grid{grid-template-columns:80px 1fr 1fr 90px}
+    /* Filhos de grid precisam poder encolher, senão o conteúdo impõe a largura. */
+    .season-grid,.sg-cell,.sg-inp-wrap{min-width:0}
+    .season-grid{grid-template-columns:72px 1fr 1fr 84px}
     .resumo{grid-template-columns:1fr}
   }
 </style>

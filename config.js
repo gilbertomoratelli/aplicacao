@@ -16,9 +16,16 @@
               /^192\.168\./.test(location.hostname) ||   // testando pelo celular na rede local
               /^10\./.test(location.hostname);
 
+  // Canal de conversão exibido no fim do diagnóstico. Preencher com o link do
+  // WhatsApp no formato https://wa.me/55DDDNUMERO (opcionalmente ?text=...).
+  // Enquanto estiver vazio o botão não aparece — melhor não ter chamada do que
+  // ter uma que não leva a lugar nenhum.
+  var CTA_WHATSAPP = '';
+
   window.AppConfig = local
     ? {
         ambiente: 'local',
+        ctaWhatsapp: CTA_WHATSAPP,
         // Deriva do próprio host: no Mac vira 127.0.0.1, e ao abrir do celular
         // pelo IP da rede vira esse mesmo IP — que é o único endereço pelo qual
         // o celular consegue enxergar o Supabase rodando na sua máquina.
@@ -27,6 +34,7 @@
       }
     : {
         ambiente: 'producao',
+        ctaWhatsapp: CTA_WHATSAPP,
         supabaseUrl: 'https://dfsmwzmtainiclcwpigw.supabase.co',
         supabaseKey: 'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
       };
