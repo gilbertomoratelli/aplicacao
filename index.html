@@ -4,21 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  :root{
-    --bg:#F2F9F5; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#DFF0E8;
-    --solar:#00B140; --teal:#183029; --kit:#A9AEB6; --variable:#D9663B;
-    --positive:#00B140; --negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px 22px;-webkit-font-smoothing:antialiased}
+  /* Ajustes desta página sobre o padrão do shared.css */
   .wrap{max-width:1180px;margin:0 auto}
+  .card{padding:22px;border-radius:14px}
+
   .mono{font-family:var(--mono)}
 
   header.top{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-  .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#40C1AC;text-transform:uppercase;font-weight:700}
   h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
   .sub{margin:0;color:var(--muted);font-size:14px;max-width:640px}
@@ -47,7 +41,6 @@
   .main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}
   .col{display:flex;flex-direction:column;gap:22px}
   .col.left{gap:18px}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:22px}
   .card.teal{background:var(--teal);border-color:var(--teal)}
 
   .sec-title{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
@@ -55,9 +48,6 @@
   .sec-title h3{margin:0;font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
   .card.teal .sec-title h3{color:#fff}
 
-  label.fld{display:block;margin-bottom:14px}
-  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
-  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
   .lbl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
   .lbl-row .lbl{margin-bottom:0}
   .btn-cfg{background:none;border:1px solid var(--hair);border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--sans);line-height:1.6;transition:.15s}
@@ -65,14 +55,6 @@
   .cfg-badge{display:none;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--teal);color:#fff;margin-left:5px;font-family:var(--mono);vertical-align:middle}
 
   /* Modal de configuração */
-  .modal-ov{position:fixed;inset:0;background:rgba(27,26,22,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:.2s;padding:20px}
-  .modal-ov.open{opacity:1;pointer-events:all}
-  .modal-card{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 12px 48px rgba(0,0,0,.2);transform:translateY(10px);transition:.2s}
-  .modal-ov.open .modal-card{transform:translateY(0)}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  .modal-head h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.2px}
-  .btn-close{background:none;border:1px solid var(--hair);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
-  .btn-close:hover{border-color:var(--ink);color:var(--ink)}
   .opt-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
   .opt-item{border:1.5px solid var(--hair);border-radius:10px;padding:11px 14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
   .opt-item:hover{border-color:var(--teal)}
@@ -119,14 +101,8 @@
   .btn-remove:hover{border-color:var(--negative);color:var(--negative)}
   .btn-add{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin:6px 0 14px}
   .btn-add:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
-  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--surface);overflow:hidden}
   .inwrap.readonly-cost{background:var(--bg);pointer-events:none}
   .inwrap.readonly-cost input{color:var(--muted)}
-  .inwrap .affix{padding:0 10px;color:var(--muted);font-size:13px}
-  .inwrap .affix.l{border-right:1px solid var(--hair)}
-  .inwrap .affix.r{border-left:1px solid var(--hair)}
-  .inwrap input{flex:1;border:none;outline:none;padding:9px 10px;font-size:15px;font-family:var(--mono);color:var(--ink);width:100%;background:transparent}
-  input.plain{width:100%;border:1px solid var(--hair);border-radius:8px;padding:9px 10px;font-size:15px;font-family:var(--mono);color:var(--ink);outline:none;background:var(--surface)}
   input:focus,.inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
 
   .total-row{border-top:1px solid var(--hair);padding-top:12px;margin-top:2px;display:flex;justify-content:space-between;align-items:baseline}
@@ -217,7 +193,6 @@
     .grid-2{grid-template-columns:1fr}
   }
   @media print{
-    body{background:#fff;padding:0}
     .actions{display:none}
     .card,.kpi{break-inside:avoid}
     details.coll{display:block}
@@ -356,10 +331,12 @@
             </div>
           </div>
         </div>
-        <table class="pe-table">
-          <thead><tr><th></th><th>Atual</th><th>Sugerido</th><th>Δ</th></tr></thead>
-          <tbody id="uniBody"></tbody>
-        </table>
+        <div class="scroll-x">
+          <table class="pe-table">
+            <thead><tr><th></th><th>Atual</th><th>Sugerido</th><th>Δ</th></tr></thead>
+            <tbody id="uniBody"></tbody>
+          </table>
+        </div>
         <button class="btn-adoptar" id="btnAdotar" onclick="adotarSugerido()" disabled>Adotar preço sugerido →</button>
       </div>
 

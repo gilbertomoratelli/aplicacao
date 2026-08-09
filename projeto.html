@@ -4,64 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dados do Projeto · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
-  .wrap{width:100%;max-width:480px}
-
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
-  .btn-back:hover{color:var(--ink)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
-  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
-  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
-
-  .stepper{display:flex;align-items:center;margin-bottom:28px}
-  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
-  .sn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--hair);color:var(--muted)}
-  .sl{font-size:10px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .step.active .sn{background:var(--solar);color:#fff}
-  .step.active .sl{color:var(--solar)}
-  .step.done .sn{background:var(--teal);color:#fff}
-  .step.done .sl{color:var(--teal)}
-  .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
-  .sline.done{background:var(--teal)}
-  .step[onclick]{cursor:pointer}
-  .step[onclick]:hover .sn{opacity:.7}
-
-  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .empresa-badge .nome{font-weight:700;font-size:14px}
-  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
-  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
-  .btn-trocar:hover{background:rgba(255,255,255,.25)}
-
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px}
-  .card-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
-  .card-sub{font-size:13px;color:var(--muted);margin:0 0 24px}
-
-  label.fld{display:block;margin-bottom:16px}
-  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
-  label.fld .req{color:var(--solar)}
-  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
-  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
-  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
-  .inwrap .affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--mono)}
-  .inwrap .affix.l{border-right:1px solid var(--hair)}
-  .inwrap .affix.r{border-left:1px solid var(--hair)}
-  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%}
-  input.plain{width:100%;border:1px solid var(--hair);border-radius:9px;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--surface)}
-  input.plain:focus{outline:2px solid var(--solar);outline-offset:1px}
-  .err{font-size:11px;color:var(--negative);margin-top:4px;display:none}
-
-  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:4px}
-  .btn-primary:hover{opacity:.9}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  /* Tudo que esta página usa vem do shared.css. */
 </style>
 </head>
 <body>
@@ -75,21 +20,7 @@
     </div>
   </div>
 
-  <div class="stepper">
-    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Empresa" onclick="location.href='cadastro.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Empresa</div></div>
-    <div class="sline done"></div>
-    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Custos" onclick="location.href='configuracoes.html?onboarding=1'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Custos</div></div>
-    <div class="sline done"></div>
-    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Despesas" onclick="location.href='despesas.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Despesas</div></div>
-    <div class="sline done"></div>
-    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Sazonalidade" onclick="location.href='sazonalidade.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
-    <div class="sline done"></div>
-    <div class="step done" role="button" tabindex="0" aria-label="Ir para etapa Indicadores" onclick="location.href='indicadores.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">✓</div><div class="sl">Indicad.</div></div>
-    <div class="sline done"></div>
-    <div class="step active"><div class="sn">6</div><div class="sl">Projeto</div></div>
-    <div class="sline"></div>
-    <div class="step" role="button" tabindex="0" aria-label="Ir para etapa Preço" onclick="location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"><div class="sn">7</div><div class="sl">Preço</div></div>
-  </div>
+  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge" id="empresaBadge">
     <div>
@@ -217,21 +148,23 @@ function trocarEmpresa() {
   window.location.href='cadastro.html';
 }
 
+const CAMPOS_OBRIGATORIOS=[
+  {id:'nome_projeto',err:'errNome',
+   check:v=>v.trim().length>1,
+   msg:()=>'Dê um nome para identificar este projeto'},
+  {id:'qtd_modulos',err:'errModulos',
+   check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;},
+   msg:v=>v.trim()===''?'Informe a quantidade de módulos':'Use um número inteiro maior que zero'},
+  {id:'kwp_sistema',err:'errKwp',
+   check:v=>parseFloat(v)>0,
+   msg:v=>v.trim()===''?'Informe a potência do sistema':'A potência precisa ser maior que zero'},
+  {id:'custo_kit',err:'errKit',
+   check:v=>v.trim().length>0 && AppCore.parseNum(v)>0,
+   msg:v=>v.trim()===''?'Informe o custo do KIT':'O custo precisa ser maior que zero'},
+];
+
 function validar() {
-  let ok=true;
-  const campos=[
-    {id:'nome_projeto',err:'errNome',check:v=>v.trim().length>1},
-    {id:'qtd_modulos',err:'errModulos',check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;}},
-    {id:'kwp_sistema',err:'errKwp',check:v=>parseFloat(v)>0},
-    {id:'custo_kit',err:'errKit',check:v=>v.trim().length>0 && AppCore.parseNum(v)>0},
-  ];
-  campos.forEach(c=>{
-    const v=document.getElementById(c.id).value;
-    const valido=c.check(v);
-    document.getElementById(c.err).style.display=valido?'none':'block';
-    if(!valido) ok=false;
-  });
-  return ok;
+  return AppCore.validarCampos(CAMPOS_OBRIGATORIOS);
 }
 
 async function salvar(e) {
@@ -288,6 +221,7 @@ async function salvar(e) {
   window.location.href='index.html';
 }
 
+AppCore.renderStepper('stepper','projeto');
 init();
 </script>
 </body>

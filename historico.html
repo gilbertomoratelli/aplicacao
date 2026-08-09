@@ -4,19 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico de Orçamentos · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
 <style>
-  :root{
-    --bg:#F2F9F5; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#DFF0E8;
-    --solar:#00B140; --teal:#183029; --positive:#00B140; --negative:#B23A2E;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px 22px;-webkit-font-smoothing:antialiased}
+  /* Ajustes desta página sobre o padrão do shared.css */
   .wrap{max-width:1180px;margin:0 auto}
+  .card{padding:0;border-radius:14px;overflow:hidden;margin-bottom:22px}
 
   header{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-  .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#40C1AC;text-transform:uppercase;font-weight:700}
   h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
   .sub{margin:0;color:var(--muted);font-size:14px}
@@ -29,7 +23,6 @@
   .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
   .kpi .v{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
 
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;overflow:hidden;margin-bottom:22px}
   .card-head{padding:16px 20px;border-bottom:1px solid var(--hair);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .card-head h3{margin:0;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 
@@ -94,7 +87,7 @@
         <input type="text" id="busca" placeholder="Buscar empresa ou projeto…" aria-label="Buscar por empresa ou projeto" oninput="filtrar()">
       </div>
     </div>
-    <div id="tabela"><div class="loading">Carregando…</div></div>
+    <div id="tabela" class="scroll-x"><div class="loading">Carregando…</div></div>
   </div>
 </div>
 

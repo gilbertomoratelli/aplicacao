@@ -103,5 +103,136 @@
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
   };
 
+  // 7. PASSOS — fonte ÚNICA do funil de captação.
+  //    A ordem do array É a ordem do funil. Para mudar o funil (adicionar, remover
+  //    ou reordenar etapa) edita-se SÓ esta lista: o stepper de todas as páginas
+  //    é derivado daqui, então não existe marcação de passo duplicada em HTML.
+  //      id     — identificador da etapa, usado pela página para se localizar.
+  //      rotulo — texto curto exibido no desktop (cabe embaixo do círculo).
+  //      href   — destino ao clicar numa etapa já concluída.
+  AppCore.PASSOS = [
+    { id: 'empresa',      rotulo: 'Empresa',   href: 'cadastro.html' },
+    { id: 'custos',       rotulo: 'Custos',    href: 'configuracoes.html?onboarding=1' },
+    { id: 'despesas',     rotulo: 'Despesas',  href: 'despesas.html' },
+    { id: 'sazonalidade', rotulo: 'Sazonal.',  href: 'sazonalidade.html' },
+    { id: 'indicadores',  rotulo: 'Indicad.',  href: 'indicadores.html' },
+    { id: 'projeto',      rotulo: 'Projeto',   href: 'projeto.html' },
+    { id: 'preco',        rotulo: 'Preço',     href: 'index.html' }
+  ];
+
+  // 8. renderStepper(container, passoAtualId) — desenha o indicador de progresso.
+  //    Emite as DUAS versões (compacta e completa); o shared.css escolhe qual
+  //    aparece conforme a largura da tela, sem depender de JS de resize.
+  //
+  //    Regras de navegação (decisão de UX, não acidente):
+  //      - etapa concluída  → link real (<a>), dá para voltar e corrigir.
+  //      - etapa atual      → não é link, marcada com aria-current="step".
+  //      - etapa futura     → NÃO é clicável: pular etapa adiante levaria o
+  //                           usuário a uma tela sem os dados que ela exige.
+  AppCore.renderStepper = function (container, passoAtualId) {
+    var el = typeof container === 'string' ? document.getElementById(container) : container;
+    if (!el) return;
+
+    var passos = AppCore.PASSOS;
+    var atual = -1;
+    for (var i = 0; i < passos.length; i++) {
+      if (passos[i].id === passoAtualId) { atual = i; break; }
+    }
+    if (atual === -1) return;
+
+    var esc = AppCore.escapeHtml;
+    var total = passos.length;
+    var posicao = atual + 1;
+    var pctConcluido = Math.round((posicao / total) * 1000) / 10;
+
+    // Versão compacta: "Passo 2 de 7" + nome da etapa + barra de progresso.
+    var compacta =
+      '<div class="stepper-compact">' +
+        '<div class="sc-head">' +
+          '<span class="sc-count">Passo ' + posicao + ' de ' + total + '</span>' +
+          '<span class="sc-name">' + esc(passos[atual].rotulo) + '</span>' +
+        '</div>' +
+        '<div class="sc-bar"><div class="sc-fill" style="width:' + pctConcluido + '%"></div></div>' +
+      '</div>';
+
+    // Versão completa: círculo + rótulo por etapa, ligados por linha.
+    var itens = [];
+    for (var j = 0; j < total; j++) {
+      var p = passos[j];
+      var concluido = j < atual;
+      var ehAtual = j === atual;
+      var classe = concluido ? 'step done' : (ehAtual ? 'step active' : 'step');
+      var simbolo = concluido ? '✓' : String(j + 1);
+      var miolo = '<span class="sn" aria-hidden="true">' + simbolo + '</span>' +
+                  '<span class="sl">' + esc(p.rotulo) + '</span>';
+
+      if (j > 0) {
+        itens.push('<li class="sline' + (concluido || ehAtual ? ' done' : '') + '" aria-hidden="true"></li>');
+      }
+
+      if (concluido) {
+        itens.push(
+          '<li class="' + classe + '">' +
+            '<a class="step-link" href="' + esc(p.href) + '">' +
+              miolo + '<span class="sr-only">(etapa concluída — clique para revisar)</span>' +
+            '</a>' +
+          '</li>'
+        );
+      } else {
+        itens.push(
+          '<li class="' + classe + '"' + (ehAtual ? ' aria-current="step"' : '') + '>' +
+            '<span class="step-link">' + miolo + '</span>' +
+          '</li>'
+        );
+      }
+    }
+
+    el.className = 'stepper';
+    el.innerHTML = compacta + '<ol class="stepper-full">' + itens.join('') + '</ol>';
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'Progresso do cadastro');
+  };
+
+  // 9. validarCampos(campos) — validação declarativa de formulário, usada por
+  //    todas as telas do funil (antes cada página repetia o mesmo laço).
+  //    Cada item da lista descreve UM campo:
+  //      id    — id do <input>/<select>.
+  //      err   — id do elemento que exibe a mensagem de erro.
+  //      check — (valor) => boolean. Verdadeiro quando o campo está válido.
+  //      msg   — opcional. (valor) => texto do erro. Recebe o valor para poder
+  //              diferenciar "não preencheu" de "preencheu errado". Se omitido,
+  //              mantém o texto que já estiver no HTML.
+  //    Além de marcar os erros, foca e rola até o PRIMEIRO campo inválido: no
+  //    celular o formulário não cabe todo na tela e, sem isso, o usuário clica
+  //    em "Continuar" e nada parece acontecer.
+  //    Retorna true quando todos os campos passaram.
+  AppCore.validarCampos = function (campos) {
+    var primeiroInvalido = null;
+
+    campos.forEach(function (c) {
+      var el = document.getElementById(c.id);
+      var errEl = document.getElementById(c.err);
+      if (!el) return;
+
+      var valido = c.check(el.value);
+
+      if (errEl) {
+        if (!valido && typeof c.msg === 'function') errEl.textContent = c.msg(el.value);
+        errEl.style.display = valido ? 'none' : 'block';
+      }
+      el.setAttribute('aria-invalid', valido ? 'false' : 'true');
+      if (!valido && !primeiroInvalido) primeiroInvalido = el;
+    });
+
+    if (primeiroInvalido) {
+      primeiroInvalido.focus({ preventScroll: true });
+      // scrollIntoView não existe em todo ambiente (ex.: jsdom nos testes);
+      // rolar é um conforto, não pode derrubar a validação.
+      if (typeof primeiroInvalido.scrollIntoView === 'function') {
+        primeiroInvalido.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+    return !primeiroInvalido;
+  };
+
   window.AppCore = AppCore;
 })();
