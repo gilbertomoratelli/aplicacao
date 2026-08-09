@@ -92,12 +92,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="app-core.js"></script>
 <script>
-const db = AppCore.getClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const brl = v => isFinite(v) && v !== null
   ? Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0})

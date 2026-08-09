@@ -61,12 +61,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const params   = new URLSearchParams(location.search);
 const returnTo = params.get('returnTo') || 'index.html';

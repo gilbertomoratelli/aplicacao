@@ -87,12 +87,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="app-core.js"></script>
 <script>
-const db = AppCore.getClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const integrador = AppCore.safeParse('integrador', null);
 const projetoAtual = AppCore.safeParse('projeto', null);
@@ -210,7 +208,12 @@ async function salvar(e) {
       ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
     }
 
-    if (error) { alert('Salvo localmente. Erro ao sincronizar com o servidor: '+error.message); }
+    // Falha de sincronização não é problema do usuário: o dado já está salvo
+    // localmente e o funil segue normalmente. Interromper com um alerta (ainda
+    // por cima com mensagem técnica do Postgres) transforma um não-evento em
+    // erro assustador bem no meio da captação. Fica no console, para quem
+    // desenvolve — que é quem pode agir a respeito.
+    if (error) console.warn('Projeto salvo localmente; sincronização com o servidor falhou:', error.message);
 
     // Preserva o id real do DB quando vier, sem sobrescrever com o local.
     if (data) {
