@@ -1,8 +1,8 @@
-// calculo.js — Motor de precificação. Funções puras: recebem números, devolvem
+// calculo.js: Motor de precificação. Funções puras: recebem números, devolvem
 // números. Sem DOM, sem localStorage, sem formatação.
 //
 // Extraído de index.html para que o diagnóstico e o relatório em PDF usem
-// exatamente a mesma conta — antes o relatório recebia um estado já calculado
+// exatamente a mesma conta, antes o relatório recebia um estado já calculado
 // por sessionStorage e qualquer divergência passava despercebida.
 //
 // As fórmulas foram auditadas e mantidas idênticas ao original. As únicas
@@ -26,7 +26,7 @@
     return (d.kit || 0) + (d.ca || 0) + (d.inst || 0) + (d.proj || 0) + (d.homol || 0) + (d.art || 0);
   };
 
-  // cenario(tk, d) — como fica o negócio se o preço for tk.
+  // cenario(tk, d): como fica o negócio se o preço for tk.
   Calculo.cenario = function (tk, d) {
     var cdt = d.cdt != null ? d.cdt : Calculo.custoDiretoTotal(d);
 
@@ -67,7 +67,7 @@
     };
   };
 
-  // precoMinimo(d) — menor preço que ainda entrega a margem alvo.
+  // precoMinimo(d): menor preço que ainda entrega a margem alvo.
   //
   // É um PISO, não um alvo: por construção o lucro nele é exatamente lucroAlvo.
   // Todo texto de interface deve chamá-lo de "preço mínimo". Chamá-lo de
@@ -92,14 +92,14 @@
     return (fixUnit + cdt - abat) / denom;
   };
 
-  // pontoEquilibrio(a) — quantos projetos por mês pagam a estrutura.
+  // pontoEquilibrio(a): quantos projetos por mês pagam a estrutura.
   // Sem arredondar: "1,07 projeto" informa; "2" arredondado apagava a diferença
   // entre os cenários e imprimia "2 vs 2".
   Calculo.pontoEquilibrio = function (a) {
     return a.mcUnit > 0 ? a.despFixaMes / a.mcUnit : Infinity;
   };
 
-  // impactoDesconto(d, percentuais) — quanto cada desconto custa por mês.
+  // impactoDesconto(d, percentuais): quanto cada desconto custa por mês.
   // É o argumento comercial da ferramenta: desconto pequeno no preço vira
   // rombo grande no lucro, porque sai inteiro da margem.
   Calculo.impactoDesconto = function (d, percentuais) {
@@ -120,7 +120,7 @@
     });
   };
 
-  // custoMaximo(d) — maior custo direto por projeto que ainda entrega a margem
+  // custoMaximo(d): maior custo direto por projeto que ainda entrega a margem
   // alvo SEM mexer no preço. É a alternativa honesta a "aumente o preço":
   // muita integradora tem mais espaço para negociar kit e instalação do que
   // para repassar reajuste ao cliente.
@@ -140,7 +140,7 @@
     return d.ticket * denom - fixUnit + abat;
   };
 
-  // projecaoAnual(a) — o mesmo cenário esticado para 12 meses.
+  // projecaoAnual(a): o mesmo cenário esticado para 12 meses.
   Calculo.projecaoAnual = function (a, qtd) {
     return {
       projetos: (qtd || 0) * 12,
@@ -151,7 +151,7 @@
     };
   };
 
-  // diagnostico(d) — tudo que a tela precisa, em uma chamada.
+  // diagnostico(d): tudo que a tela precisa, em uma chamada.
   Calculo.diagnostico = function (d) {
     var dados = Object.assign({}, d);
     dados.cdt = Calculo.custoDiretoTotal(dados);
@@ -161,7 +161,7 @@
     var cenarioPiso = isFinite(piso) ? Calculo.cenario(piso, dados) : null;
 
     // CORREÇÃO: a exibição depende do piso ser calculável e do preço informado
-    // existir — não da viabilidade do cenário atual. Antes, empresa com estrutura
+    // existir: não da viabilidade do cenário atual. Antes, empresa com estrutura
     // pesada recebia "ajuste a meta" mesmo com o piso corretamente calculado.
     var valido = isFinite(piso) && piso > 0 && dados.ticket > 0;
 

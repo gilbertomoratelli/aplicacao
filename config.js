@@ -1,4 +1,4 @@
-// config.js — Endereço do banco, em um lugar só.
+// config.js: Endereço do banco, em um lugar só.
 //
 // Antes, a URL e a chave do Supabase estavam copiadas nos 8 HTMLs. Trocar de
 // ambiente exigia editar os 8 (e bastava esquecer um para a página falar com o
@@ -18,7 +18,7 @@
 
   // Canal de conversão exibido no fim do diagnóstico. Preencher com o link do
   // WhatsApp no formato https://wa.me/55DDDNUMERO (opcionalmente ?text=...).
-  // Enquanto estiver vazio o botão não aparece — melhor não ter chamada do que
+  // Enquanto estiver vazio o botão não aparece, melhor não ter chamada do que
   // ter uma que não leva a lugar nenhum.
   var CTA_WHATSAPP = '';
 
@@ -27,7 +27,7 @@
         ambiente: 'local',
         ctaWhatsapp: CTA_WHATSAPP,
         // Deriva do próprio host: no Mac vira 127.0.0.1, e ao abrir do celular
-        // pelo IP da rede vira esse mesmo IP — que é o único endereço pelo qual
+        // pelo IP da rede vira esse mesmo IP, que é o único endereço pelo qual
         // o celular consegue enxergar o Supabase rodando na sua máquina.
         supabaseUrl: 'http://' + location.hostname + ':54321',
         supabaseKey: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'

@@ -200,7 +200,7 @@ async function salvar(e) {
   if (db) {
     if (projetoAtual?.id) {
       ({data,error} = await AppCore.dbTry(db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single()));
-      // Registro não existe na base atual (ID de outro ambiente) — tenta inserir
+      // Registro não existe na base atual (ID de outro ambiente): tenta inserir
       if (!data || error?.code === 'PGRST116') {
         ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
       }
@@ -212,7 +212,7 @@ async function salvar(e) {
     // localmente e o funil segue normalmente. Interromper com um alerta (ainda
     // por cima com mensagem técnica do Postgres) transforma um não-evento em
     // erro assustador bem no meio da captação. Fica no console, para quem
-    // desenvolve — que é quem pode agir a respeito.
+    // desenvolve: que é quem pode agir a respeito.
     if (error) console.warn('Projeto salvo localmente; sincronização com o servidor falhou:', error.message);
 
     // Preserva o id real do DB quando vier, sem sobrescrever com o local.

@@ -208,7 +208,7 @@ function montarEstado() {
 
 // ── B2 Veredito ───────────────────────────────────────────────────────
 // O estado é decidido pelo LUCRO, não pela diferença entre preço e piso.
-// Cobrar acima do piso é folga de margem — nunca deve ser sinalizado como erro.
+// Cobrar acima do piso é folga de margem, nunca deve ser sinalizado como erro.
 const ESTADOS = {
   saudavel: {
     cor:'var(--positive)', corSuave:'#E9F7EF',
@@ -232,7 +232,7 @@ function renderVeredito(r) {
       <span class="selo">Faltam dados para calcular</span>
       <p>Não foi possível calcular seu preço mínimo com os números informados.
       Isso costuma acontecer quando comissão, impostos e margem desejada somam
-      100% ou mais — nesse caso não sobra espaço no preço para os custos.</p>
+      100% ou mais. Nesse caso não sobra espaço no preço para os custos.</p>
       <div class="piso-linha"><a href="custos.html">Revisar meus números →</a></div>
     </div>`;
     return;
@@ -258,8 +258,8 @@ function renderVeredito(r) {
   let piso;
   if (r.abaixoDoPiso) {
     piso = `Para lucrar ${pct(r.dados.lucroAlvo/100)} você precisaria cobrar no mínimo
-      <b>${brl0(r.piso)}</b>. Hoje você cobra <b>${brl0(r.dados.ticket)}</b> —
-      faltam <b>${brl0(r.piso - r.dados.ticket)}</b>.`;
+      <b>${brl0(r.piso)}</b>. Hoje você cobra <b>${brl0(r.dados.ticket)}</b>,
+      então faltam <b>${brl0(r.piso - r.dados.ticket)}</b>.`;
   } else {
     piso = `Seu <b>preço mínimo</b> para lucrar ${pct(r.dados.lucroAlvo/100)} é
       <b>${brl0(r.piso)}</b>. Você cobra <b>${brl0(r.dados.ticket)}</b>, ou seja
@@ -348,7 +348,7 @@ function renderDesconto(r) {
   const mult = umPct?.multiplicador;
 
   document.getElementById('descontoResumo').innerHTML = mult
-    ? `Cada 1% de desconto tira cerca de <b>${brl0(a.lucroMes * 0.01 * mult)}</b> do seu lucro no mês —
+    ? `Cada 1% de desconto tira cerca de <b>${brl0(a.lucroMes * 0.01 * mult)}</b> do seu lucro no mês,
        <b>${mult.toFixed(1).replace('.',',')} vezes</b> o que você deu de desconto.`
     : 'Veja o efeito de cada desconto sobre o que sobra no mês.';
 
@@ -392,7 +392,7 @@ function renderComo(r) {
     assumido.map(t => `<li>${esc(t)}</li>`).join('');
 
   let ressalva = 'Este é um diagnóstico gerencial, não uma consultoria contábil ou tributária. '
-    + 'Usamos o percentual de imposto que você informou — sua alíquota real varia conforme o regime, '
+    + 'Usamos o percentual de imposto que você informou. Sua alíquota real varia conforme o regime, '
     + 'o faturamento dos últimos 12 meses e o ISS do seu município. '
     + 'Confirme com seu contador antes de mudar preços.';
   const reg = integrador?.regime_tributario;
@@ -448,7 +448,7 @@ function abrirRelatorio() {
 
 // ── Registro do lead ──────────────────────────────────────────────────
 // Grava o diagnóstico automaticamente: é o dado comercial do lead. Silencioso
-// de propósito — falha de rede não é problema do usuário e não pode virar alerta.
+// de propósito, falha de rede não é problema do usuário e não pode virar alerta.
 async function registrarOrcamento(r) {
   if (!db || !integrador?.id) return;
   const d = r.dados, a = r.atual;
@@ -475,7 +475,7 @@ async function registrarOrcamento(r) {
 let ESTADO, RESULTADO;
 
 function init() {
-  // Sem os dados do funil não há diagnóstico possível — volta para a etapa que falta.
+  // Sem os dados do funil não há diagnóstico possível, volta para a etapa que falta.
   if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
   if (!projeto?.valor_venda)     { window.location.href = 'projeto.html'; return; }
   if (!despesas?.projetosMes)    { window.location.href = 'custos.html'; return; }

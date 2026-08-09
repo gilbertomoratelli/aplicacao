@@ -109,7 +109,7 @@ let todos = [];
 async function carregar() {
   if (!db) {
     document.getElementById("tabela").innerHTML =
-      `<div class="empty"><div class="icon">📡</div><p><strong>Sem conexão — histórico indisponível.</strong></p><p>Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue.</p></div>`;
+      `<div class="empty"><div class="icon">📡</div><p><strong>Sem conexão. Histórico indisponível.</strong></p><p>Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue.</p></div>`;
     return;
   }
 

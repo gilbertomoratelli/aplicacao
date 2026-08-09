@@ -66,7 +66,7 @@
 
     <div class="card">
       <h2 class="card-title">Quanto custa cada projeto</h2>
-      <p class="card-sub">Além do kit, que você já informou. Pode ser uma média — dá para refinar depois.</p>
+      <p class="card-sub">Além do kit, que você já informou. Pode ser uma média, dá para refinar depois.</p>
 
       <label class="fld">
         <span class="lbl">Instalação (mão de obra) <span class="req">*</span></span>
@@ -156,7 +156,7 @@ const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 const integrador = AppCore.safeParse('integrador', null);
 
 // Esta tela é o passo 3 do funil de captação. Ela pergunta o MÍNIMO que o motor
-// de precificação precisa para produzir um diagnóstico honesto — nada além.
+// de precificação precisa para produzir um diagnóstico honesto, nada além.
 // A configuração completa (custo por módulo, por kWp, por faixa, custos extras)
 // continua existindo em configuracoes.html, fora do funil, para quem já converteu.
 //
@@ -194,7 +194,7 @@ function trocarEmpresa() {
 }
 
 // Percentual e volume têm faixa de valores com significado: 300% de comissão ou
-// 0 projetos por mês não são erro de digitação inofensivo — quebram o cálculo.
+// 0 projetos por mês não são erro de digitação inofensivo, quebram o cálculo.
 const pct = v => { const n = AppCore.parseNum(v); return n >= 0 && n < 100; };
 
 const CAMPOS_OBRIGATORIOS = [

@@ -133,7 +133,7 @@
         <span class="eyebrow">FAVO Educação</span>
       </div>
       <h1 style="display:flex;align-items:center;gap:10px">Configuração avançada de custos <button class="btn-help" onclick="abrirHelp()" title="O que são custos diretos?" aria-label="Ajuda: o que são custos diretos">?</button></h1>
-      <p class="sub">Estrutura de custos da empresa — aplicada automaticamente a todos os projetos.</p>
+      <p class="sub">Estrutura de custos da empresa, aplicada automaticamente a todos os projetos.</p>
     </div>
     <a class="btn primary" id="btnHeaderVoltar" href="index.html">← Voltar ao diagnóstico</a>
   </header>
@@ -299,7 +299,7 @@
       </div>
       <div class="opt-item" id="opt-faixa" onclick="selecionarModo('faixa')">
         <input type="radio" name="cfgModo" value="faixa">
-        <div class="opt-texts"><div class="ot">Por faixa</div><div class="od">Taxa diferente por faixa de kWp ou de módulos — mais preciso</div></div>
+        <div class="opt-texts"><div class="ot">Por faixa</div><div class="od">Taxa diferente por faixa de kWp ou de módulos (mais preciso)</div></div>
       </div>
     </div>
 
@@ -410,7 +410,7 @@ async function salvarConfigsDB() {
 
 // ── Valores de referência para prévia ───────────────────────────────
 // M-8: 0/vazio/negativo em kWp ou módulos caía no fallback (||5 / ||12), mas o
-// campo continuava mostrando "0" — o valor exibido divergia do valor calculado.
+// campo continuava mostrando "0", o valor exibido divergia do valor calculado.
 // Correção conservadora: quando o valor digitado é inválido (<=0 ou vazio),
 // usamos o fallback E o refletimos de volta no próprio campo, garantindo
 // coerência entre o que o usuário vê e o que a prévia calcula.
@@ -450,7 +450,7 @@ function renderConfigs() {
     return `<div class="cfg-row">
       <div class="cfg-info">
         <div class="cfg-label">${label}</div>
-        <div class="cfg-desc ${desc ? 'active' : 'dim'}">${desc || 'Sem configuração — preenchimento manual no projeto'}</div>
+        <div class="cfg-desc ${desc ? 'active' : 'dim'}">${desc || 'Sem configuração. Preenchimento manual no projeto'}</div>
       </div>
       <button class="btn-cfg" onclick="abrirConfig('${id}', event)" aria-label="Configurar ${label}">⚙ configurar</button>
     </div>`;
@@ -712,13 +712,13 @@ async function aplicarConfig() {
     const limites = faixasTemp.filter(f => f.ate !== null).map(f => f.ate).sort((a, b) => a - b);
     for (let i = 1; i < limites.length; i++) {
       if (limites[i] <= limites[i - 1]) {
-        showToast('Faixas sobrepostas ou duplicadas — ajuste os limites.');
+        showToast('Faixas sobrepostas ou duplicadas. Ajuste os limites.');
         return;
       }
     }
     cfgSalva = { modo:'faixa', subModo: subModoAtual, faixaVariavel: faixaVarAtual, faixas: JSON.parse(JSON.stringify(faixasTemp)) };
     // M-9: gaps entre faixas são permitidos por design (cenário legítimo).
-    // Continuamos sem bloquear o salvamento — a faixa "acima de" (ate:null)
+    // Continuamos sem bloquear o salvamento, a faixa "acima de" (ate:null)
     // sempre captura os valores intermediários, então nenhum valor fica sem
     // taxa. Não emitimos toast de aviso para não gerar falso-positivo irritante
     // em fluxos que usam saltos propositais. Ver decisão no resumo.
@@ -753,7 +753,7 @@ function showToast(msg) {
 // ── Despesas do negócio e dados fiscais ────────────────────────────────
 // Vieram de despesas.html (variáveis/fixas) e de cadastro.html (regime e
 // margem-alvo). Moram aqui porque é onde o usuário raciocina sobre "quanto
-// custa operar" — foi o que permitiu encurtar o funil de 7 para 4 passos.
+// custa operar", foi o que permitiu encurtar o funil de 7 para 4 passos.
 // Seguem o mesmo contrato de gravação dos custos: salva sozinho ao mudar,
 // localStorage primeiro e banco como sincronização opcional.
 

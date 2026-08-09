@@ -134,7 +134,7 @@ function continuar() {
 }
 
 // Cada campo declara a própria regra e a mensagem do erro. A mensagem é função
-// do valor para separar "não preencheu" de "preencheu errado" — dizer só
+// do valor para separar "não preencheu" de "preencheu errado", dizer só
 // "inválido" obriga o usuário a adivinhar o que corrigir.
 const CAMPOS_OBRIGATORIOS=[
   {id:'nome_empresa',err:'errNome',
@@ -142,13 +142,13 @@ const CAMPOS_OBRIGATORIOS=[
    msg:()=>'Informe o nome da empresa'},
   {id:'cnpj',err:'errCnpj',
    check:v=>cnpjValido(v),
-   msg:v=>v.trim()===''?'Informe o CNPJ da empresa':'CNPJ inválido — confira os 14 dígitos'},
+   msg:v=>v.trim()===''?'Informe o CNPJ da empresa':'CNPJ inválido. Confira os 14 dígitos'},
   {id:'email',err:'errEmail',
    check:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-   msg:v=>v.trim()===''?'Informe o e-mail de contato':'E-mail inválido — ex.: contato@suaempresa.com.br'},
+   msg:v=>v.trim()===''?'Informe o e-mail de contato':'E-mail inválido. Exemplo: contato@suaempresa.com.br'},
   {id:'whatsapp',err:'errWhats',
    check:v=>v.replace(/\D/g,'').length>=10,
-   msg:v=>v.trim()===''?'Informe o WhatsApp':'WhatsApp incompleto — inclua o DDD'},
+   msg:v=>v.trim()===''?'Informe o WhatsApp':'WhatsApp incompleto. Inclua o DDD'},
 ];
 
 function validar() {

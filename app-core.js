@@ -1,4 +1,4 @@
-// app-core.js — Fonte ÚNICA de verdade para os helpers compartilhados do app de precificação solar.
+// app-core.js: Fonte ÚNICA de verdade para os helpers compartilhados do app de precificação solar.
 // Expõe window.AppCore (IIFE clássica, sem build/modules). Todos os HTMLs devem usar estes helpers em vez de duplicar lógica.
 (function () {
   'use strict';
@@ -10,7 +10,7 @@
   // temos do que travar a tela esperando o servidor.
   AppCore.PRAZO_BOOT = 6000;
 
-  // 1. safeParse(key, fallback) — lê localStorage[key] e faz JSON.parse com try/catch.
+  // 1. safeParse(key, fallback): lê localStorage[key] e faz JSON.parse com try/catch.
   //    Se a chave não existir OU o parse falhar, retorna fallback. Nunca lança.
   AppCore.safeParse = function (key, fallback) {
     try {
@@ -22,7 +22,7 @@
     }
   };
 
-  // 2. parseNum(value) — parse robusto de número em formato pt-BR. Aceita string ou number.
+  // 2. parseNum(value): parse robusto de número em formato pt-BR. Aceita string ou number.
   //    Heurística escolhida (entrada humana é o caso dominante):
   //      - number finito → retorna ele mesmo.
   //      - remove tudo que não seja dígito, vírgula, ponto ou "-".
@@ -57,7 +57,7 @@
     return isNaN(n) ? 0 : n;
   };
 
-  // 3. escapeHtml(str) — escapa & < > " ' para entidades HTML.
+  // 3. escapeHtml(str): escapa & < > " ' para entidades HTML.
   //    Aceita qualquer tipo (coage para string; null/undefined → "").
   AppCore.escapeHtml = function (str) {
     if (str === null || str === undefined) return '';
@@ -69,7 +69,7 @@
       .replace(/'/g, '&#39;');
   };
 
-  // 4. dbTry(promise, prazoMs) — envolve uma Promise (tipicamente query supabase
+  // 4. dbTry(promise, prazoMs): envolve uma Promise (tipicamente query supabase
   //    que já retorna {data,error}) e SEMPRE resolve para { data, error }, nunca rejeita.
   //      - promise rejeita → { data: null, error: <erro> }
   //      - resolve com objeto que já tem {data,error} → repassa
@@ -102,7 +102,7 @@
     }
   };
 
-  // 5. getClient(url, key) — cria/retorna (memoizado) o client Supabase.
+  // 5. getClient(url, key): cria/retorna (memoizado) o client Supabase.
   //    Se window.supabase (SDK global da CDN) NÃO existir, retorna null SEM lançar,
   //    impedindo que a página morra quando a CDN cai/está offline.
   var _client = null;
@@ -115,7 +115,7 @@
     return _client;
   };
 
-  // 6. uuid() — retorna crypto.randomUUID() se disponível; senão fallback timestamp+random.
+  // 6. uuid(): retorna crypto.randomUUID() se disponível; senão fallback timestamp+random.
   //    Para ids gerados client-side.
   AppCore.uuid = function () {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -124,13 +124,13 @@
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
   };
 
-  // 7. PASSOS — fonte ÚNICA do funil de captação.
+  // 7. PASSOS: fonte ÚNICA do funil de captação.
   //    A ordem do array É a ordem do funil. Para mudar o funil (adicionar, remover
   //    ou reordenar etapa) edita-se SÓ esta lista: o stepper de todas as páginas
   //    é derivado daqui, então não existe marcação de passo duplicada em HTML.
-  //      id     — identificador da etapa, usado pela página para se localizar.
-  //      rotulo — texto curto exibido no desktop (cabe embaixo do círculo).
-  //      href   — destino ao clicar numa etapa já concluída.
+  //      id:     identificador da etapa, usado pela página para se localizar.
+  //      rotulo: texto curto exibido no desktop (cabe embaixo do círculo).
+  //      href:   destino ao clicar numa etapa já concluída.
   //    Projeto vem ANTES de Custos de propósito: a tela de custos calcula prévias
   //    ("quanto isso dá no seu projeto?") e, com o projeto já preenchido, ela usa
   //    os números reais do usuário em vez de uma referência genérica.
@@ -141,7 +141,7 @@
     { id: 'diagnostico',rotulo: 'Diagnóstico', href: 'index.html' }
   ];
 
-  // 8. renderStepper(container, passoAtualId) — desenha o indicador de progresso.
+  // 8. renderStepper(container, passoAtualId): desenha o indicador de progresso.
   //    Emite as DUAS versões (compacta e completa); o shared.css escolhe qual
   //    aparece conforme a largura da tela, sem depender de JS de resize.
   //
@@ -195,7 +195,7 @@
         itens.push(
           '<li class="' + classe + '">' +
             '<a class="step-link" href="' + esc(p.href) + '">' +
-              miolo + '<span class="sr-only">(etapa concluída — clique para revisar)</span>' +
+              miolo + '<span class="sr-only">(etapa concluída, clique para revisar)</span>' +
             '</a>' +
           '</li>'
         );
@@ -213,13 +213,13 @@
     if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'Progresso do cadastro');
   };
 
-  // 9. validarCampos(campos) — validação declarativa de formulário, usada por
+  // 9. validarCampos(campos): validação declarativa de formulário, usada por
   //    todas as telas do funil (antes cada página repetia o mesmo laço).
   //    Cada item da lista descreve UM campo:
-  //      id    — id do <input>/<select>.
-  //      err   — id do elemento que exibe a mensagem de erro.
-  //      check — (valor) => boolean. Verdadeiro quando o campo está válido.
-  //      msg   — opcional. (valor) => texto do erro. Recebe o valor para poder
+  //      id:    id do <input>/<select>.
+  //      err:   id do elemento que exibe a mensagem de erro.
+  //      check: (valor) => boolean. Verdadeiro quando o campo está válido.
+  //      msg:   opcional. (valor) => texto do erro. Recebe o valor para poder
   //              diferenciar "não preencheu" de "preencheu errado". Se omitido,
   //              mantém o texto que já estiver no HTML.
   //    Além de marcar os erros, foca e rola até o PRIMEIRO campo inválido: no

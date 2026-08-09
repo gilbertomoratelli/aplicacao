@@ -8,7 +8,7 @@
 <style>
   body{padding:0;display:block;background:var(--bg)}
 
-  /* Barra de ações — some na impressão. */
+  /* Barra de ações, some na impressão. */
   .acoes{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--hair);
     padding:12px 20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
   .acoes a,.acoes button{font-family:var(--sans);font-size:13px;font-weight:700;border-radius:9px;
@@ -209,8 +209,8 @@ function resumo(r) {
 
   const piso = r.abaixoDoPiso
     ? `Para lucrar ${pct(d.lucroAlvo/100)} você precisaria cobrar no mínimo
-       <b>${brl0(r.piso)}</b>. Hoje você cobra <b>${brl0(d.ticket)}</b> —
-       faltam <b>${brl0(r.piso - d.ticket)}</b> por projeto.`
+       <b>${brl0(r.piso)}</b>. Hoje você cobra <b>${brl0(d.ticket)}</b>,
+       então faltam <b>${brl0(r.piso - d.ticket)}</b> por projeto.`
     : `Seu <b>preço mínimo</b> para lucrar ${pct(d.lucroAlvo/100)} é <b>${brl0(r.piso)}</b>.
        Você cobra <b>${brl0(d.ticket)}</b>, ou seja <b>${brl0(r.folga)}</b> acima do mínimo.
        <span class="nota">Isso é folga de margem, não convite a dar desconto.</span>`;
@@ -278,8 +278,8 @@ function anual(r) {
   const peTexto = semEquilibrio ? 'Nenhum'
     : pe < 1 ? 'menos de 1' : pe < 2 ? 'pouco mais de 1' : pe.toFixed(1).replace('.',',');
   const peObs = semEquilibrio
-    ? `cada venda perde ${brl0(Math.abs(a.mcUnit))} antes mesmo da estrutura — vender mais aumenta o prejuízo`
-    : `por mês, só para não ter prejuízo — você vende ${r.dados.qtd}`;
+    ? `cada venda perde ${brl0(Math.abs(a.mcUnit))} antes mesmo da estrutura, então vender mais aumenta o prejuízo`
+    : `por mês, só para não ter prejuízo. Você vende ${r.dados.qtd}`;
 
   return `<section>
     <div class="sec-num">03</div>
@@ -313,7 +313,7 @@ function desconto(r) {
   const l2 = r.descontos.find(l => l.desconto === 2);
   const mult = l2 && l2.multiplicador;
   const chamada = mult
-    ? `Cada 1% de desconto tira cerca de <b>${brl0(a.lucroMes*0.01*mult)}</b> do seu lucro no mês —
+    ? `Cada 1% de desconto tira cerca de <b>${brl0(a.lucroMes*0.01*mult)}</b> do seu lucro no mês,
        <b>${mult.toFixed(1).replace('.',',')} vezes</b> o que você deu de desconto.`
     : '';
 
@@ -348,7 +348,7 @@ function acoes(r) {
   if (r.situacao === 'saudavel') {
     itens.push({
       tag:'Proteger', cor:'var(--positive)', corSuave:'#E9F7EF',
-      titulo:'Segure o preço — essa folga é sua margem',
+      titulo:'Segure o preço, essa folga é sua margem',
       texto:`Você cobra <b>${brl0(d.ticket)}</b> e seu piso é <b>${brl0(r.piso)}</b>.
         A diferença de <b>${brl0(r.folga)}</b> por projeto é o que cobre imprevisto, atraso de obra
         e o próprio crescimento. Tratar isso como espaço para desconto é abrir mão de
@@ -358,7 +358,7 @@ function acoes(r) {
       tag:'Disciplina', cor:'var(--teal)', corSuave:'#E9F7EF',
       titulo:'Dê à equipe um limite claro de desconto',
       texto:`Abaixo de <b>${brl0(r.piso)}</b> a venda deixa de entregar sua meta de ${pct(d.lucroAlvo/100)}.
-        Esse é o número que o vendedor precisa conhecer — não o preço de tabela.`
+        Esse é o número que o vendedor precisa conhecer, não o preço de tabela.`
     });
   }
 
@@ -379,8 +379,8 @@ function acoes(r) {
         tag:'Opção B', cor:'#C05A00', corSuave:'#FFF3E0',
         titulo:'Reduzir o custo do projeto, sem mexer no preço',
         texto:`Seu custo direto é <b>${brl0(d.cdt)}</b> por projeto. Para atingir a mesma meta
-          cobrando os mesmos <b>${brl0(d.ticket)}</b>, ele precisaria cair para <b>${brl0(r.custoMaximo)}</b> —
-          economia de <b>${brl0(corte)}</b> por projeto (${pct(corte/d.cdt)}).`,
+          cobrando os mesmos <b>${brl0(d.ticket)}</b>, ele precisaria cair para <b>${brl0(r.custoMaximo)}</b>,
+          uma economia de <b>${brl0(corte)}</b> por projeto (${pct(corte/d.cdt)}).`,
         texto2:'Costuma ser mais fácil negociar kit e instalação do que repassar reajuste ao cliente.'
       });
     }
@@ -389,7 +389,7 @@ function acoes(r) {
       tag:'Opção C', cor:'#C05A00', corSuave:'#FFF3E0',
       titulo:'Diluir a estrutura em mais projetos',
       texto:`Sua estrutura custa <b>${brl0(a.despFixaMes)}</b> por mês, hoje dividida por
-        <b>${d.qtd}</b> projetos — <b>${brl0(a.despFixaUnit)}</b> em cada um. Vender mais sem aumentar
+        <b>${d.qtd}</b> projetos, ou seja <b>${brl0(a.despFixaUnit)}</b> em cada um. Vender mais sem aumentar
         essa estrutura reduz esse peso e melhora a margem de todos os projetos.`
     });
   }
@@ -435,7 +435,7 @@ function premissas(r) {
   ];
 
   let ressalva = 'Este é um diagnóstico gerencial, não uma consultoria contábil ou tributária. '
-    + 'Usamos o percentual de imposto que você informou — sua alíquota real varia conforme o regime, '
+    + 'Usamos o percentual de imposto que você informou. Sua alíquota real varia conforme o regime, '
     + 'o faturamento dos últimos 12 meses e o ISS do seu município. Confirme com seu contador antes de mudar preços.';
   const reg = integrador?.regime_tributario;
   if (reg === 'Lucro Presumido' || reg === 'Lucro Real') {
@@ -478,7 +478,7 @@ function init() {
   if (!r.valido) {
     document.getElementById('folha').innerHTML = capa() + `<section>
       <h2>Não foi possível montar o relatório</h2>
-      <p class="intro">Com os números informados não existe preço que entregue a margem desejada —
+      <p class="intro">Com os números informados não existe preço que entregue a margem desejada:
       comissão, impostos e margem somam 100% ou mais.</p>
       <p><a href="custos.html">← Revisar meus números</a></p></section>`;
     return;
