@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custos e Operação · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .wrap{max-width:520px}
+  .card{padding:24px;margin-bottom:16px}
+  .card-title{font-size:17px}
+  .card-sub{margin:0 0 20px}
+  .dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:460px){ .dupla{grid-template-columns:1fr} }
+  .avancado{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
+  .avancado a{color:var(--teal);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="btn-back" href="projeto.html">← Voltar</a>
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
+    <div>
+      <div class="brand-name">Auditor de Precificação</div>
+      <div class="brand-sub">FAVO Educação</div>
+    </div>
+  </div>
+
+  <nav class="stepper" id="stepper"></nav>
+
+  <div class="empresa-badge">
+    <div>
+      <div class="nome" id="empresaNome">—</div>
+    </div>
+    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
+  </div>
+
+  <form id="form" onsubmit="salvar(event)">
+
+    <div class="card">
+      <h2 class="card-title">Quanto você faz por mês</h2>
+      <p class="card-sub">É o que permite dividir o custo fixo entre os projetos. Sem isso, a conta joga o mês inteiro em cima de uma venda só.</p>
+
+      <div class="dupla">
+        <label class="fld">
+          <span class="lbl">Projetos por mês <span class="req">*</span></span>
+          <div class="inwrap">
+            <input type="text" inputmode="numeric" id="projetosMes" placeholder="0" aria-required="true">
+            <span class="affix r">/mês</span>
+          </div>
+          <span class="err" id="errProjetos" role="alert" aria-live="assertive"></span>
+        </label>
+
+        <label class="fld">
+          <span class="lbl">Despesa fixa mensal <span class="req">*</span></span>
+          <div class="inwrap">
+            <span class="affix l">R$</span>
+            <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00" aria-required="true">
+          </div>
+          <span class="err" id="errDespFixa" role="alert" aria-live="assertive"></span>
+        </label>
+      </div>
+      <span class="hint">Despesa fixa é o que você paga todo mês mesmo sem vender: aluguel, equipe, pró-labore, contador, software.</span>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Quanto custa cada projeto</h2>
+      <p class="card-sub">Além do kit, que você já informou. Pode ser uma média — dá para refinar depois.</p>
+
+      <label class="fld">
+        <span class="lbl">Instalação (mão de obra) <span class="req">*</span></span>
+        <div class="inwrap">
+          <span class="affix l">R$</span>
+          <input type="text" inputmode="decimal" id="inst" placeholder="0,00" aria-required="true">
+        </div>
+        <span class="err" id="errInst" role="alert" aria-live="assertive"></span>
+      </label>
+
+      <label class="fld" style="margin-bottom:0">
+        <span class="lbl">Projeto e documentação</span>
+        <div class="inwrap">
+          <span class="affix l">R$</span>
+          <input type="text" inputmode="decimal" id="proj" placeholder="0,00">
+        </div>
+        <span class="hint">Projeto elétrico, ART e homologação junto com a concessionária.</span>
+      </label>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Quanto sai de cada venda</h2>
+      <p class="card-sub">Percentuais sobre o valor vendido.</p>
+
+      <div class="dupla">
+        <label class="fld">
+          <span class="lbl">Comissão de vendas <span class="req">*</span></span>
+          <div class="inwrap">
+            <input type="text" inputmode="decimal" id="comissao" placeholder="0,0">
+            <span class="affix r">%</span>
+          </div>
+          <span class="err" id="errComissao" role="alert" aria-live="assertive"></span>
+        </label>
+
+        <label class="fld">
+          <span class="lbl">Impostos sobre a venda <span class="req">*</span></span>
+          <div class="inwrap">
+            <input type="text" inputmode="decimal" id="tributo" placeholder="0,0">
+            <span class="affix r">%</span>
+          </div>
+          <span class="err" id="errTributo" role="alert" aria-live="assertive"></span>
+        </label>
+      </div>
+
+      <label class="fld">
+        <span class="lbl">Margem de lucro que você quer <span class="req">*</span></span>
+        <div class="inwrap">
+          <input type="text" inputmode="decimal" id="lucroAlvo" placeholder="12">
+          <span class="affix r">%</span>
+        </div>
+        <span class="hint">Quanto você quer que sobre, líquido, depois de pagar tudo.</span>
+        <span class="err" id="errLucro" role="alert" aria-live="assertive"></span>
+      </label>
+
+      <label class="fld" style="margin-bottom:0">
+        <span class="lbl">Regime tributário</span>
+        <select class="plain" id="regime">
+          <option value="">Prefiro não informar</option>
+          <option value="MEI">MEI</option>
+          <option value="Simples Nacional">Simples Nacional</option>
+          <option value="Lucro Presumido">Lucro Presumido</option>
+          <option value="Lucro Real">Lucro Real</option>
+        </select>
+      </label>
+    </div>
+
+    <button class="btn-primary" type="submit" id="btnSalvar">Ver meu diagnóstico →</button>
+  </form>
+
+  <p class="avancado">Precisa de custo por módulo, por kWp ou por faixa?<br><a href="configuracoes.html">Abrir configuração avançada</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
+<script>
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
+const integrador = AppCore.safeParse('integrador', null);
+
+// Esta tela é o passo 3 do funil de captação. Ela pergunta o MÍNIMO que o motor
+// de precificação precisa para produzir um diagnóstico honesto — nada além.
+// A configuração completa (custo por módulo, por kWp, por faixa, custos extras)
+// continua existindo em configuracoes.html, fora do funil, para quem já converteu.
+//
+// Contrato de gravação (as mesmas chaves que o diagnóstico lê):
+//   configCustos → custos diretos por projeto, todos no modo 'fixo'
+//   despesas     → percentuais, despesa fixa e volume mensal
+//   integrador   → regime tributário e margem-alvo
+const CAMPOS_CUSTO = ['ca','inst','proj','homol','art'];
+
+function init() {
+  if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
+  document.getElementById('empresaNome').textContent = integrador.nome_empresa;
+
+  const cfg  = AppCore.safeParse('configCustos', {});
+  const desp = AppCore.safeParse('despesas', {});
+  const v = (id, val) => { document.getElementById(id).value = val; };
+
+  v('projetosMes', desp.projetosMes ?? '');
+  v('despFixa',    desp.despFixa ? fmt(desp.despFixa) : '');
+  v('inst',        cfg.inst?.taxa ? fmt(cfg.inst.taxa) : '');
+  v('proj',        cfg.proj?.taxa ? fmt(cfg.proj.taxa) : '');
+  v('comissao',    desp.comissao?.valor ?? '');
+  v('tributo',     desp.tributo?.valor ?? '');
+  v('lucroAlvo',   integrador?.lucro_alvo ?? 12);
+  v('regime',      integrador?.regime_tributario || '');
+}
+
+const fmt = n => Number(n).toFixed(2).replace('.', ',');
+
+function trocarEmpresa() {
+  ['integrador','projeto','despesas','configCustos','custosExtras','sazonalidade','precSolar']
+    .forEach(k => localStorage.removeItem(k));
+  window.location.href = 'cadastro.html';
+}
+
+// Percentual e volume têm faixa de valores com significado: 300% de comissão ou
+// 0 projetos por mês não são erro de digitação inofensivo — quebram o cálculo.
+const pct = v => { const n = AppCore.parseNum(v); return n >= 0 && n < 100; };
+
+const CAMPOS_OBRIGATORIOS = [
+  {id:'projetosMes', err:'errProjetos',
+   check:v=>{const n=AppCore.parseNum(v); return n>0 && n<=1000;},
+   msg:v=>v.trim()===''?'Informe quantos projetos você faz por mês':'Precisa ser um número maior que zero'},
+  {id:'despFixa', err:'errDespFixa',
+   check:v=>AppCore.parseNum(v)>0,
+   msg:v=>v.trim()===''?'Informe sua despesa fixa mensal':'Precisa ser maior que zero'},
+  {id:'inst', err:'errInst',
+   check:v=>AppCore.parseNum(v)>0,
+   msg:v=>v.trim()===''?'Informe o custo de instalação por projeto':'Precisa ser maior que zero'},
+  {id:'comissao', err:'errComissao',
+   check:pct,
+   msg:v=>v.trim()===''?'Informe a comissão (use 0 se não paga)':'Use um percentual entre 0 e 100'},
+  {id:'tributo', err:'errTributo',
+   check:pct,
+   msg:v=>v.trim()===''?'Informe os impostos sobre a venda':'Use um percentual entre 0 e 100'},
+  {id:'lucroAlvo', err:'errLucro',
+   check:v=>{const n=AppCore.parseNum(v); return n>0 && n<100;},
+   msg:v=>v.trim()===''?'Informe a margem que você quer':'Use um percentual entre 0 e 100'},
+];
+
+async function salvar(e) {
+  e.preventDefault();
+  if (!AppCore.validarCampos(CAMPOS_OBRIGATORIOS)) return;
+
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true; btn.textContent = 'Calculando…';
+
+  const num = id => AppCore.parseNum(document.getElementById(id).value);
+
+  // Custos diretos: o que não foi perguntado vai a ZERO, nunca a um valor
+  // inventado. Um número plausível que o usuário não informou contamina o
+  // diagnóstico inteiro e ele não tem como saber que aquilo não é dele.
+  const configCustos = {};
+  CAMPOS_CUSTO.forEach(k => { configCustos[k] = { modo:'fixo', taxa:0 }; });
+  configCustos.inst.taxa = num('inst');
+  configCustos.proj.taxa = num('proj');
+
+  const despesas = {
+    comissao:    { valor: num('comissao'), base: 'total'   },
+    tributo:     { valor: num('tributo'),  base: 'servico' },
+    extras:      [],
+    outras:      0,
+    despFixa:    num('despFixa'),
+    projetosMes: num('projetosMes'),
+  };
+
+  const regime    = document.getElementById('regime').value || null;
+  const lucroAlvo = num('lucroAlvo');
+  const atual     = AppCore.safeParse('integrador', {}) || {};
+
+  // Local primeiro: o avanço do usuário nunca depende da rede.
+  localStorage.setItem('configCustos', JSON.stringify(configCustos));
+  localStorage.setItem('custosExtras', JSON.stringify([]));
+  localStorage.setItem('despesas', JSON.stringify(despesas));
+  localStorage.setItem('integrador', JSON.stringify({ ...atual, regime_tributario: regime, lucro_alvo: lucroAlvo }));
+
+  if (db && integrador?.id) {
+    await AppCore.dbTry(db.from('integradores').update({
+      despesas,
+      regime_tributario: regime,
+      configs: { campos: configCustos, extras: [] }
+    }).eq('id', integrador.id), AppCore.PRAZO_BOOT);
+  }
+
+  window.location.href = 'index.html';
+}
+
+AppCore.renderStepper('stepper','custos');
+init();
+</script>
+</body>
+</html>

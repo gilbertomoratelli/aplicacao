@@ -214,9 +214,9 @@
       <p class="sub">Modelo de venda em que o KIT é faturado pela distribuidora e o integrador fatura a prestação de serviço. O tributo incide somente sobre a parte de serviço.</p>
     </div>
     <div class="actions">
-      <button class="btn" onclick="location.href='projeto.html'">← Voltar</button>
+      <button class="btn" onclick="location.href='custos.html'">← Voltar</button>
       <button class="btn" onclick="resetDefaults()">Restaurar padrões</button>
-      <button class="btn" onclick="location.href='configuracoes.html'">⚙ Custos e despesas</button>
+      <button class="btn" onclick="location.href='custos.html'">✏️ Ajustar custos</button>
       <button class="btn" onclick="location.href='sazonalidade.html'">📅 Refinar sazonalidade</button>
       <button class="btn" onclick="location.href='historico.html'">Ver histórico</button>
       <button class="btn save" id="btnSalvar" onclick="salvarOrcamento()">Salvar análise</button>
@@ -980,6 +980,17 @@ function aplicarDespesas(d) {
   if (d.despFixa) {
     document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
   }
+  // Volume mensal: divisor do custo fixo. Vem do passo Custos. Sem ele o campo
+  // ficaria no DEFAULT 1 e o mês inteiro de despesa fixa recairia sobre uma
+  // única venda, inflando o preço sugerido em várias vezes.
+  if (d.projetosMes > 0) {
+    document.getElementById('qtd').value = d.projetosMes;
+  }
+  // 'outras' não é perguntado no funil; quando as despesas vêm de lá, o valor
+  // correto é o informado (zero), não o palpite dos DEFAULTS.
+  if (d.outras != null) {
+    document.getElementById('outras').value = d.outras;
+  }
   syncBaseButtons();
   renderDespExtras();
   render();
@@ -1369,12 +1380,15 @@ initCtx();
   if (projeto?.custo_kit) {
     document.getElementById('kit').value = Number(projeto.custo_kit).toFixed(2).replace('.', ',');
   }
-  // M-10: só forçar qtd=1 como DEFAULT quando NÃO há qtd salvo em precSolar.
-  // Se o usuário já salvou um valor, respeitá-lo (load() já o colocou no campo).
-  {
-    const _prec = AppCore.safeParse('precSolar', {});
-    if (_prec.qtd === undefined) document.getElementById('qtd').value = 1;
-  }
+  // Precedência do #qtd (projetos por mês), do mais específico ao mais genérico:
+  //   1º despesas.projetosMes — resposta do usuário no passo Custos
+  //   2º precSolar.qtd        — ajuste feito aqui no diagnóstico
+  //   3º DEFAULT 1
+  // Os dois primeiros já foram aplicados: load() cobre precSolar/DEFAULT e
+  // aplicarDespesas() escreve por cima quando o funil informou o volume.
+  // Não há nada a fazer aqui — havia um bloco que reescrevia qtd=1 neste ponto
+  // e anulava a resposta do funil, jogando a despesa fixa do mês inteiro sobre
+  // um único projeto.
   // M-2 (parte 2): precedência ÚNICA e determinística para #ticket. Três fontes
   // disputam esse campo; a ordem abaixo é a fonte de verdade (mais específico vence):
   //   1º projeto.valor_venda  (se existir)  — valor do projeto atual

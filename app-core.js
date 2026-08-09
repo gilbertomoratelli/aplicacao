@@ -137,7 +137,7 @@
   AppCore.PASSOS = [
     { id: 'contato',    rotulo: 'Contato',     href: 'cadastro.html' },
     { id: 'projeto',    rotulo: 'Projeto',     href: 'projeto.html' },
-    { id: 'custos',     rotulo: 'Custos',      href: 'configuracoes.html?onboarding=1' },
+    { id: 'custos',     rotulo: 'Custos',      href: 'custos.html' },
     { id: 'diagnostico',rotulo: 'Diagnóstico', href: 'index.html' }
   ];
 
