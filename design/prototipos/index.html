@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direções de design · Auditor de Precificação · FAVO</title>
+<style>
+:root{
+  --creme:#FAF7F0;--nata:#FFFDF8;--mint:#E2F2E9;--mel:#FBEACB;--areia:#EFE7D8;
+  --mata:#0E3A28;--verde:#00B140;--verde-esc:#00913A;--teal:#2FA894;
+  --tinta:#12241D;--tinta-70:rgba(18,36,29,.70);--tinta-45:rgba(18,36,29,.45);--tinta-12:rgba(18,36,29,.12);
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',Inter,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;
+  --macio:cubic-bezier(.32,.72,.24,1);
+  --r:28px;--parede:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--creme);color:var(--tinta);font-family:var(--sans);line-height:1.6;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.chao{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.chao::before,.chao::after{content:'';position:absolute;border-radius:50%}
+.chao::before{width:90vmax;height:90vmax;left:-28vmax;top:-42vmax;
+  background:radial-gradient(circle,rgba(64,193,172,.17),transparent 62%);animation:vaga 28s ease-in-out infinite alternate}
+.chao::after{width:80vmax;height:80vmax;right:-30vmax;bottom:-36vmax;
+  background:radial-gradient(circle,rgba(251,234,203,.6),transparent 60%);animation:vaga 34s ease-in-out infinite alternate-reverse}
+@keyframes vaga{to{transform:translate3d(7%,4%,0) scale(1.12)}}
+
+.pagina{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:72px 28px 96px}
+.rotulo{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-45);font-weight:500}
+.marca{display:flex;align-items:center;gap:12px;margin-bottom:52px}
+.marca .n{font-size:12.5px;font-weight:640}
+.marca .s{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);font-weight:500}
+h1{font-size:clamp(32px,5.6vw,50px);font-weight:640;letter-spacing:-.035em;line-height:1.06;
+  margin:18px 0 18px;text-wrap:balance;max-width:17ch}
+.intro{font-size:16.5px;color:var(--tinta-70);max-width:64ch;line-height:1.72}
+.intro b{color:var(--tinta);font-weight:620}
+
+.destaque{display:inline-flex;align-items:center;gap:9px;margin-top:26px;text-decoration:none;
+  background:var(--mata);color:#fff;border-radius:99px;padding:15px 26px;font-size:15px;font-weight:640;
+  transition:gap 260ms var(--macio),transform 260ms var(--macio)}
+.destaque:hover{gap:15px;transform:translateY(-2px)}
+.briefing{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--parede);margin:52px 0 60px}
+@media(max-width:900px){.briefing{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.briefing{grid-template-columns:1fr}}
+.briefing div{border-radius:20px;padding:18px 20px;background:var(--nata)}
+.briefing h4{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--teal);font-weight:500;margin-bottom:8px}
+.briefing p{font-size:13px;color:var(--tinta-70);line-height:1.6}
+
+.cartoes{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--parede)}
+@media(max-width:980px){.cartoes{grid-template-columns:1fr}}
+.cartao{display:block;text-decoration:none;color:inherit;overflow:hidden;border-radius:var(--r);
+  background:var(--nata);transition:transform 420ms var(--macio)}
+.cartao:hover{transform:translateY(-5px)}
+.vitrine{height:196px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+
+/* 04 Colmeia */
+.v4{background:#FBF8F1;gap:6px;padding:22px}
+.v4 .b{border-radius:16px;flex:1;height:100%}
+.v4 .col{display:flex;flex-direction:column;gap:6px;flex:1;height:100%}
+
+/* 05 Ilha */
+.v5{background:#EAF1EC}
+.v5::before{content:'';position:absolute;width:280px;height:280px;left:-40px;top:-120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(64,193,172,.35),transparent 62%)}
+.v5 .ilha{position:relative;width:76%;height:120px;border-radius:26px;background:#fff;
+  box-shadow:0 24px 44px -26px rgba(18,58,42,.36);padding:16px}
+.v5 .cap{height:22px;border-radius:99px;background:#DDE9E1;margin-bottom:12px;display:flex;
+  align-items:center;justify-content:flex-end;padding:0 5px;gap:3px}
+.v5 .cap i{width:11px;height:4px;border-radius:99px;background:rgba(20,38,31,.16)}
+.v5 .cap i.on{background:#00B140}
+.v5 .cap i.ag{width:18px;background:#00B140}
+.v5 .s{height:14px;border-radius:8px;background:#EEF4F0;margin-bottom:7px}
+.v5 .s.c{width:62%}
+
+/* 06 Cera */
+.v6{background:#F8F4EA}
+.v6 .tess{position:absolute;inset:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='146'%3E%3Cg fill='none' stroke='%2317322A' stroke-width='1.2'%3E%3Cpath d='M42 0 L84 24 L84 72 L42 96 L0 72 L0 24 Z'/%3E%3Cpath d='M42 96 L84 120 L84 168 L42 192 L0 168 L0 120 Z'/%3E%3C/g%3E%3C/svg%3E")}
+.v6 .fila{display:flex;gap:8px;position:relative}
+.v6 .p{width:60px;height:88px;background:#FFFCF6;border:1px solid rgba(23,50,42,.14);
+  border-radius:12px 12px 26px 12px}
+.v6 .p.dk{background:#17322A;border-color:#17322A}
+.v6 .p.on{background:#00B140;border-color:#00B140}
+
+.corpo{padding:22px 24px 26px}
+.corpo .num{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--teal)}
+.corpo h3{font-size:22px;font-weight:640;letter-spacing:-.022em;margin:6px 0 10px}
+.corpo p{font-size:13.5px;color:var(--tinta-70);line-height:1.65}
+.corpo .tag{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.corpo .tag span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:99px;background:var(--mint);color:#00713A}
+.corpo .abrir{display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-size:13.5px;
+  font-weight:620;color:var(--verde-esc);transition:gap 260ms var(--macio)}
+.cartao:hover .abrir{gap:13px}
+
+.arquivo{margin-top:64px;border-radius:var(--r);background:var(--areia);padding:26px 28px}
+.arquivo h4{font-size:15px;font-weight:640;margin-bottom:8px}
+.arquivo p{font-size:13px;color:var(--tinta-70);max-width:70ch;line-height:1.65}
+.arquivo .lista{display:flex;gap:var(--parede);flex-wrap:wrap;margin-top:16px}
+.arquivo a{text-decoration:none;color:var(--tinta);background:rgba(255,255,255,.6);border-radius:99px;
+  padding:9px 16px;font-size:12.5px;font-weight:600;transition:background 220ms var(--macio)}
+.arquivo a:hover{background:#fff}
+.arquivo .por{display:block;font-size:11px;color:var(--tinta-45);font-weight:500;margin-top:1px}
+
+[data-sobe]{opacity:0;animation:sobe 560ms var(--macio) both;animation-delay:var(--atraso,0ms)}
+@keyframes sobe{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;animation-delay:0ms!important}}
+</style>
+</head>
+<body>
+<div class="chao"></div>
+
+<main class="pagina">
+
+  <div class="marca">
+    <svg viewBox="0 0 509 534" width="32" height="32"><path fill="#2FA894" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+    <div><div class="n">Auditor de Precificação</div><div class="s">FAVO Educação</div></div>
+  </div>
+
+  <div data-sobe>
+    <span class="rotulo">Direção escolhida · Colmeia na gramática do iOS</span>
+    <h1>Colmeia, agora falando iOS</h1>
+    <p class="intro">A direção está definida: <b>Colmeia</b>. O protótipo <b>07</b> é ela levada para a gramática da Apple — lista agrupada com recuo no lugar de formulário solto, rampa tipográfica nomeada, material translúcido nas barras, folha em vez de modal. E com a regra que corrige o que incomodava: <b>verde saturado é cor de controle, nunca de área grande</b>.</p>
+    <a class="destaque" href="07-colmeia-ios.html">Abrir o sistema 07 · Colmeia iOS <span>→</span></a>
+  </div>
+
+  <div class="briefing" data-sobe style="--atraso:80ms">
+    <div><h4>O que ficou</h4><p>Campos de cor com significado — mel é custo, mint é informação, mata é o que fica com a empresa. Nenhum card branco.</p></div>
+    <div><h4>O que entrou</h4><p>Lista agrupada com separador recuado, rampa tipográfica nomeada, controles nativos, folha com puxador.</p></div>
+    <div><h4>O que saiu</h4><p>Verde chapado em área grande. Ele brilha, cansa e rouba a atenção do botão — que é o que precisa ser clicado.</p></div>
+    <div><h4>O que não muda</h4><p>Claro, arredondado, sem brilho e sem sombra colorida. Dinheiro sempre em mono tabular.</p></div>
+  </div>
+
+  <div data-sobe style="--atraso:120ms;margin-bottom:20px">
+    <span class="rotulo">Rodada 2 — de onde veio</span>
+    <p style="font-size:14px;color:var(--tinta-70);max-width:70ch;margin-top:8px;line-height:1.6">O 07 é o 04 levado adiante. Os outros dois ficam para comparação: o 05 pela ideia do corpo contínuo, que pode voltar como transição entre etapas; o 06 pelo canto assimétrico.</p>
+  </div>
+
+  <div class="cartoes">
+
+    <a class="cartao" href="04-colmeia.html" data-sobe style="--atraso:160ms">
+      <div class="vitrine v4">
+        <div class="col"><div class="b" style="background:#DFF2E8"></div><div class="b" style="background:#EFE7D8"></div></div>
+        <div class="col" style="flex:1.4"><div class="b" style="background:#0E3A28;flex:2"></div><div class="b" style="background:#FBEACB"></div></div>
+        <div class="col"><div class="b" style="background:#FBEACB"></div><div class="b" style="background:#00B140;flex:1.6"></div></div>
+      </div>
+      <div class="corpo">
+        <div class="num">04</div>
+        <h3>Colmeia</h3>
+        <p>Separa por <b>cor</b>. Uma colmeia vista de perto é um campo de células cheias, cada uma com a cor do que guarda. Então aqui não existe card branco: todo bloco é um campo de cor macio, e os blocos se encostam com 8 px de folga — a parede de cera. Mel é custo, mint é informação, mata é o que fica com a empresa.</p>
+        <div class="tag"><span>Cromático</span><span>Sem sombra</span><span>Raio 28</span><span>Quente</span></div>
+        <div class="abrir">Abrir sistema <span>→</span></div>
+      </div>
+    </a>
+
+    <a class="cartao" href="05-ilha.html" data-sobe style="--atraso:240ms">
+      <div class="vitrine v5">
+        <div class="ilha">
+          <div class="cap"><i class="on"></i><i class="on"></i><i class="ag"></i><i></i></div>
+          <div class="s"></div><div class="s c"></div>
+        </div>
+      </div>
+      <div class="corpo">
+        <div class="num">05</div>
+        <h3>Ilha</h3>
+        <p>Separa por <b>corpo</b>. O produto não é uma sequência de páginas: é um objeto que muda de forma. Uma única ilha arredondada no centro, que a cada etapa se reorganiza e muda de altura em vez de ser substituída. Dentro dela não há caixa dentro de caixa — só sulco e régua. Lógica de hardware.</p>
+        <div class="tag"><span>Uma sombra só</span><span>Raio 34</span><span>Cápsula</span><span>Contínuo</span></div>
+        <div class="abrir">Abrir sistema <span>→</span></div>
+      </div>
+    </a>
+
+    <a class="cartao" href="06-cera.html" data-sobe style="--atraso:320ms">
+      <div class="vitrine v6">
+        <div class="tess"></div>
+        <div class="fila">
+          <div class="p dk"></div><div class="p dk"></div><div class="p on"></div><div class="p"></div>
+        </div>
+      </div>
+      <div class="corpo">
+        <div class="num">06</div>
+        <h3>Cera</h3>
+        <p>Separa por <b>canto</b>. É o protótipo 01 com o canto resolvido: mantém a cera, o rigor da grade e a ausência de sombra, e troca o chanfro reto pelo que a marca já faz — o símbolo FAVO é um hexágono de pontas arredondadas. Vira raio assimétrico: três cantos em 16 px, um em 44 px, sempre o inferior direito.</p>
+        <div class="tag"><span>Herdeiro do 01</span><span>Raio assimétrico</span><span>Sem sombra</span><span>Cera</span></div>
+        <div class="abrir">Abrir sistema <span>→</span></div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="arquivo" data-sobe style="--atraso:400ms">
+    <h4>Rodada 1 — arquivo</h4>
+    <p>Ficam disponíveis para comparação. O 01 é o ancestral direto do 06; os outros dois foram descartados por serem escuro demais e burocrático demais, respectivamente.</p>
+    <div class="lista">
+      <a href="01-tectonica.html">01 · Tectônica<span class="por">base do 06</span></a>
+      <a href="02-luz-rasante.html">02 · Luz Rasante<span class="por">descartado — escuro</span></a>
+      <a href="03-laudo.html">03 · Laudo<span class="por">descartado — burocrático</span></a>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>

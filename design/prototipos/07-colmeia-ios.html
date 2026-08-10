@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colmeia iOS · Design System FAVO · Protótipo 07</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   COLMEIA · iOS — Design System FAVO · Protótipo 07
+
+   A alma continua a mesma do 04: campos de cor com significado, parede de
+   cera entre os blocos, nada de card branco genérico. O que muda é a
+   GRAMÁTICA. Em vez de inventar componentes, o sistema passa a falar a
+   língua da Apple:
+
+     · lista agrupada com recuo (o padrão de Ajustes do iOS) no lugar de
+       formulário com campos soltos;
+     · rampa tipográfica nomeada (Large Title → Caption), não tamanhos ad hoc;
+     · cores semânticas de rótulo (label / secundário / terciário) e
+       preenchimentos por TINTA, não por cor chapada;
+     · materiais translúcidos em barras, com desfoque de fundo;
+     · controles nativos: segmentado, chave, botão cápsula em três pesos;
+     · folha (sheet) que sobe com puxador, no lugar de modal centralizado;
+     · mola em vez de easing linear.
+
+   A REGRA QUE CORRIGE O QUE INCOMODAVA:
+   verde saturado (#00B140) é cor de ELEMENTO INTERATIVO, nunca de área
+   grande. A Apple nunca preenche um cartão inteiro com a cor de destaque —
+   ela usa a cor no botão e deixa o fundo em tinta de 12% ou em um tom
+   profundo. Área grande em verde puro brilha, cansa a vista e ainda rouba
+   a atenção do botão, que é o que de fato precisa ser clicado.
+   Ver a seção 09: antes e depois.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. TOKENS ─────────────────────────────────────────────────────── */
+:root{
+  /* FUNDOS — hierarquia de três níveis, como systemGroupedBackground.
+     O fundo é mais ESCURO que as linhas: é o que faz a lista "flutuar"
+     sem precisar de sombra. Invertido, vira o card branco de sempre. */
+  --fundo:#F1EEE6;          /* fundo agrupado — o chão */
+  --fundo-2:#FFFDF8;        /* superfície de linha (nata, nunca branco puro) */
+  --fundo-3:#F7F4EC;        /* superfície recuada dentro de uma linha */
+
+  /* CAMPOS DE COR — herdados do 04, agora como TINTA, não como chapado */
+  --mint:#DFF2E8; --mint-t:rgba(0,177,64,.10);
+  --mel:#FBEACB;  --mel-t:rgba(176,112,12,.12);
+  --areia:#EDE5D6;
+  --mata:#12382A;           /* profundo — substitui o verde chapado */
+  --mata-2:#1B4A38;
+
+  /* MARCA E AÇÃO */
+  --verde:#00A83C;          /* levemente rebaixado do #00B140 para passar
+                               em contraste sobre nata com texto branco */
+  --verde-vivo:#00B140;     /* institucional — usar em marca e preenchimento pequeno */
+  --verde-t:rgba(0,168,60,.12);
+  --teal:#2FA894;
+  --ambar:#A9700D; --ambar-t:rgba(169,112,13,.13);
+  --telha:#A8412A; --telha-t:rgba(168,65,42,.12);
+
+  /* RÓTULOS — semântica de texto, não tons de cinza avulsos */
+  --label:#101F1A;
+  --label-2:rgba(16,31,26,.58);
+  --label-3:rgba(16,31,26,.32);
+  --label-4:rgba(16,31,26,.20);
+  --separador:rgba(16,31,26,.11);
+  --preenche:rgba(16,31,26,.06);   /* fill de controle inativo */
+
+  /* RAIO — continuous corners quando o navegador suportar */
+  --r-lista:16px; --r-cartao:20px; --r-ctrl:12px; --r-folha:38px; --r-cap:999px;
+  --recuo:16px;                    /* recuo do separador — a marca da lista iOS */
+  --parede:10px;                   /* folga entre grupos */
+
+  /* RAMPA TIPOGRÁFICA — nomes reais do sistema, tamanhos reais */
+  --largeTitle:34px; --title1:28px; --title2:22px; --title3:20px;
+  --headline:17px;  --body:17px;   --callout:16px; --subhead:15px;
+  --footnote:13px;  --caption:12px; --caption2:11px;
+
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:28px; --e7:40px; --e8:64px;
+
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',Inter,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,'Roboto Mono',monospace;
+
+  /* MOLA — a curva do sistema. Sai forte, chega sem voltar. */
+  --mola:cubic-bezier(.32,.72,0,1);
+  --rapido:240ms; --medio:420ms; --lento:680ms;
+  --toque:44px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--sans);background:var(--fundo);color:var(--label);
+  font-size:var(--body);line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+
+/* Canto contínuo (squircle) onde houver suporte — é a diferença sutil
+   entre "arredondado" e "arredondado como um ícone da Apple". Progressivo:
+   quem não suporta continua com o border-radius normal. */
+@supports (corner-shape:squircle){
+  .lista,.cartao,.folha,.btn,.seg,.campo-linha{corner-shape:squircle}
+}
+
+/* ─── 2. FUNDO ──────────────────────────────────────────────────────── */
+.chao{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.chao::before,.chao::after{content:'';position:absolute;border-radius:50%}
+.chao::before{width:88vmax;height:88vmax;left:-26vmax;top:-42vmax;
+  background:radial-gradient(circle,rgba(47,168,148,.14),transparent 62%);
+  animation:vaga 30s ease-in-out infinite alternate}
+.chao::after{width:78vmax;height:78vmax;right:-28vmax;bottom:-34vmax;
+  background:radial-gradient(circle,rgba(251,234,203,.5),transparent 60%);
+  animation:vaga 36s ease-in-out infinite alternate-reverse}
+@keyframes vaga{to{transform:translate3d(6%,4%,0) scale(1.1)}}
+
+/* ─── 3. TIPOGRAFIA ─────────────────────────────────────────────────── */
+/* A rampa é fechada: se um tamanho não está aqui, ele não existe. */
+.largeTitle{font-size:var(--largeTitle);font-weight:700;letter-spacing:-.026em;line-height:1.12;text-wrap:balance}
+.title1{font-size:var(--title1);font-weight:700;letter-spacing:-.022em;line-height:1.18}
+.title2{font-size:var(--title2);font-weight:670;letter-spacing:-.018em;line-height:1.25}
+.title3{font-size:var(--title3);font-weight:650;letter-spacing:-.014em;line-height:1.3}
+.headline{font-size:var(--headline);font-weight:640;letter-spacing:-.012em}
+.body{font-size:var(--body);font-weight:400;letter-spacing:-.008em;line-height:1.5}
+.callout{font-size:var(--callout);letter-spacing:-.006em;line-height:1.5}
+.subhead{font-size:var(--subhead);letter-spacing:-.004em;line-height:1.5}
+.footnote{font-size:var(--footnote);line-height:1.5;color:var(--label-2)}
+.caption{font-size:var(--caption);line-height:1.45;color:var(--label-2)}
+.sec{color:var(--label-2)} .ter{color:var(--label-3)}
+
+/* Cabeçalho e rodapé de grupo — caixa alta pequena em cima, frase de apoio
+   embaixo. É o que dá à lista iOS a leitura de documento, e é o lugar
+   natural para as explicações que este produto precisa dar. */
+.grupo-tit{
+  font-size:var(--footnote);font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--label-3);padding:0 var(--e4) var(--e2);display:block;
+}
+.grupo-nota{font-size:var(--footnote);color:var(--label-2);padding:var(--e2) var(--e4) 0;display:block;line-height:1.45}
+
+/* Dinheiro — mono tabular, sempre. É a única exceção à fonte do sistema. */
+.cifra{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.cifra-heroi{font-size:clamp(40px,8vw,56px);line-height:.98;letter-spacing:-.045em;font-weight:600}
+
+/* ─── 4. LISTA AGRUPADA COM RECUO ───────────────────────────────────── */
+/* O componente central. Substitui o formulário de campos soltos: cada
+   pergunta é uma LINHA, e as linhas moram juntas num grupo arredondado.
+   O separador começa a 16px da esquerda e vai até a borda — esse recuo é
+   a assinatura da lista da Apple e a razão de ela parecer arrumada. */
+.lista{background:var(--fundo-2);border-radius:var(--r-lista);overflow:hidden}
+.linha{
+  display:flex;align-items:center;gap:var(--e2);
+  padding:var(--e3) var(--e4);min-height:var(--toque);position:relative;
+  transition:background var(--rapido) var(--mola);
+}
+.linha+.linha::before{
+  content:'';position:absolute;left:var(--recuo);right:0;top:0;height:1px;background:var(--separador);
+}
+.linha.tocavel{cursor:pointer}
+.linha.tocavel:active{background:var(--preenche)}
+.linha .rot{flex:none;color:var(--label)}
+.linha .vazio{flex:1}
+.linha .val{
+  font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--label-2);
+  text-align:right;letter-spacing:-.02em;
+}
+/* Seta de navegação — o chevron do iOS, desenhado em CSS para não depender
+   de fonte de ícone. */
+.chev{width:8px;height:8px;border-right:2px solid var(--label-4);border-bottom:2px solid var(--label-4);
+  transform:rotate(-45deg);flex:none;margin-left:2px}
+/* Ícone de linha: quadrado arredondado colorido, como em Ajustes. A cor é
+   semântica (mel = custo, mint = informação), não decorativa. */
+.icone{width:29px;height:29px;border-radius:7px;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:14px;color:#fff}
+
+/* Campo dentro da linha: o input vive à direita, alinhado, sem caixa
+   própria. Zero borda, zero fundo — a linha JÁ é o campo. Isso é o que
+   mais reduz ruído num formulário longo. */
+/* Numa linha de campo é o RÓTULO que estica; o prefixo (R$) e o número
+   ficam colados no canto direito. Se o input é que estica, o R$ gruda no
+   rótulo e fica longe da quantia que ele qualifica. */
+label.linha>.rot{flex:1;min-width:0}
+/* O input precisa ter a largura do CONTEÚDO, não a largura padrão do
+   navegador (~170px): senão o "R$" fica colado no rótulo, a meia tela de
+   distância da quantia que ele qualifica. field-sizing resolve isso de
+   verdade; a largura fixa é o fallback para quem ainda não suporta. */
+.campo-linha{
+  flex:0 1 auto;width:112px;border:none;outline:none;background:transparent;text-align:right;
+  font-family:var(--mono);font-size:var(--body);font-weight:550;color:var(--label);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;padding:var(--e2) 0;min-height:var(--toque);
+}
+.campo-linha::placeholder{color:var(--label-4)}
+@supports (field-sizing:content){
+  .campo-linha{field-sizing:content;width:auto;min-width:2ch;max-width:58%}
+}
+.linha:focus-within{background:var(--verde-t)}
+.un{font-family:var(--mono);font-size:var(--subhead);color:var(--label-3);flex:none}
+
+/* ─── 5. CONTROLES ──────────────────────────────────────────────────── */
+/* Segmentado — para escolhas de 2 a 4 opções. Substitui o <select> nativo,
+   que é o elemento mais feio de qualquer formulário web. */
+.seg{
+  display:flex;background:var(--preenche);border-radius:10px;padding:2px;gap:2px;
+}
+.seg button{
+  flex:1;border:none;background:transparent;border-radius:8px;cursor:pointer;
+  font-family:var(--sans);font-size:var(--subhead);font-weight:550;color:var(--label);
+  padding:7px 10px;min-height:36px;transition:background var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola);
+}
+.seg button.on{background:var(--fundo-2);box-shadow:0 1px 3px rgba(16,31,26,.10),0 0 0 .5px rgba(16,31,26,.06)}
+
+/* Chave (switch) */
+.chave{width:51px;height:31px;border-radius:var(--r-cap);background:var(--preenche);
+  position:relative;cursor:pointer;flex:none;transition:background var(--rapido) var(--mola);border:none}
+.chave.on{background:var(--verde)}
+.chave i{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 5px rgba(16,31,26,.2);transition:transform var(--rapido) var(--mola)}
+.chave.on i{transform:translateX(20px)}
+
+/* Botões — três pesos, como no sistema: preenchido, tingido, simples. */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--e2);
+  font-family:var(--sans);font-size:var(--headline);font-weight:620;letter-spacing:-.01em;
+  padding:var(--e3) var(--e5);min-height:50px;border-radius:14px;border:none;cursor:pointer;
+  text-decoration:none;transition:transform var(--rapido) var(--mola),background var(--rapido) var(--mola),opacity var(--rapido) var(--mola);
+}
+.btn:active{transform:scale(.97)}
+.btn-cheio{background:var(--verde);color:#fff;width:100%}
+.btn-cheio:hover{background:#009435}
+.btn-tinta{background:var(--verde-t);color:var(--verde)}      /* o peso do meio */
+.btn-tinta:hover{background:rgba(0,168,60,.18)}
+.btn-simples{background:none;color:var(--verde);min-height:var(--toque);padding:var(--e2) var(--e3)}
+.btn-simples:hover{opacity:.65}
+.btn-claro{background:#fff;color:var(--mata)}
+.btn.cap{border-radius:var(--r-cap)}
+.btn-linha{display:flex;gap:var(--e3)} .btn-linha .btn{flex:1}
+
+/* ─── 6. MATERIAL — barras translúcidas ─────────────────────────────── */
+/* O material é a única "profundidade" do sistema: fundo desfocado e
+   saturado, com uma hairline embaixo. Vale para a barra de navegação e
+   para a barra de ação fixa. Nada mais no sistema usa blur. */
+.material{
+  background:rgba(255,253,248,.72);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+}
+.barra-nav{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--e3);
+  padding:var(--e3) var(--e4);border-bottom:.5px solid var(--separador);
+}
+.barra-acao{
+  position:sticky;bottom:0;padding:var(--e3) var(--e4) var(--e4);
+  border-top:.5px solid var(--separador);
+}
+
+/* ─── 7. CARTÃO E FOLHA ─────────────────────────────────────────────── */
+.cartao{background:var(--fundo-2);border-radius:var(--r-cartao);padding:var(--e5)}
+.cartao.mint{background:var(--mint)}
+.cartao.mel{background:var(--mel)}
+.cartao.areia{background:var(--areia)}
+.cartao.mata{background:var(--mata);color:#EAF6EF}
+.cartao.mata .sec{color:rgba(234,246,239,.66)}
+.cartao.mata .ter{color:rgba(234,246,239,.42)}
+
+/* Folha: sobe de baixo, cantos grandes só em cima, puxador no topo.
+   Substitui o modal centralizado — no celular, folha é o padrão. */
+.folha{
+  background:var(--fundo-2);border-radius:var(--r-folha) var(--r-folha) 0 0;
+  padding:var(--e2) var(--e5) var(--e6);box-shadow:0 -8px 40px rgba(16,31,26,.14);
+}
+.puxador{width:36px;height:5px;border-radius:var(--r-cap);background:var(--label-4);margin:0 auto var(--e4)}
+
+/* ─── 8. DISTINTIVOS ────────────────────────────────────────────────── */
+.selo{
+  display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-cap);
+  font-size:var(--footnote);font-weight:600;padding:5px 11px;background:var(--st);color:var(--sc);
+}
+.selo::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+
+/* ─── 9. CASCATA ────────────────────────────────────────────────────── */
+.fatia{padding:var(--e3) 0;position:relative}
+.fatia+.fatia::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:var(--separador)}
+.fatia .topo{display:flex;justify-content:space-between;align-items:baseline;gap:var(--e3);margin-bottom:var(--e2)}
+.fatia .nome{font-size:var(--callout)}
+.fatia .nome small{display:block;font-size:var(--footnote);color:var(--label-3)}
+.fatia .val{font-family:var(--mono);font-size:var(--callout);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trilho{height:7px;border-radius:var(--r-cap);background:var(--preenche);overflow:hidden}
+.trilho i{display:block;height:100%;border-radius:var(--r-cap);background:var(--c);
+  transform-origin:left;animation:cresce var(--lento) var(--mola) both;animation-delay:var(--d,0ms)}
+@keyframes cresce{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.fatia.resto{margin-top:var(--e2);padding-top:var(--e4);border-top:1.5px solid var(--label-4)}
+.fatia.resto::before{display:none}
+.fatia.resto .nome{font-weight:660;font-size:var(--headline)}
+.fatia.resto .val{font-size:var(--title3);color:var(--verde)}
+
+/* ─── 10. TABELA ────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--footnote)}
+th{font-size:var(--caption2);letter-spacing:.05em;text-transform:uppercase;color:var(--label-3);
+   font-weight:600;text-align:right;padding:0 var(--e3) var(--e2)}
+th:first-child{text-align:left}
+td{padding:var(--e2) var(--e3);text-align:right;font-family:var(--mono);
+   font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--label-2)}
+td:first-child{text-align:left;font-family:var(--sans)}
+tr.hoje td{background:var(--mint);color:var(--label);font-weight:650}
+tr.hoje td:first-child{border-radius:10px 0 0 10px}
+tr.hoje td:last-child{border-radius:0 10px 10px 0}
+
+/* ─── 11. MOVIMENTO ─────────────────────────────────────────────────── */
+[data-sobe]{opacity:0;animation:sobe var(--medio) var(--mola) both;animation-delay:var(--atraso,0ms)}
+@keyframes sobe{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+.cifra-heroi{animation:sobe var(--lento) var(--mola) both;animation-delay:200ms}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+}
+
+/* ─── 12. DOC ───────────────────────────────────────────────────────── */
+.doc{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:var(--e8) var(--e5)}
+.cabeca{max-width:680px;margin-bottom:var(--e8)}
+.secao{margin-bottom:var(--e8)}
+.secao>.grupo-tit{padding-left:0;padding-bottom:var(--e3);border-bottom:1px solid var(--separador);margin-bottom:var(--e5)}
+.grade{display:grid;gap:var(--parede)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}.doc{padding:var(--e6) var(--e4)}}
+.amostra{height:84px;border-radius:14px;position:relative}
+.amostra span{position:absolute;left:12px;bottom:9px;font-family:var(--mono);font-size:10px}
+.tela{max-width:480px}
+.fone{
+  max-width:400px;border-radius:34px;overflow:hidden;background:var(--fundo);
+  box-shadow:0 30px 60px -30px rgba(16,31,26,.35),0 0 0 1px rgba(16,31,26,.07);
+}
+.fone-corpo{padding:var(--e4);max-height:none}
+.marca{display:flex;align-items:center;gap:var(--e3);margin-bottom:var(--e6)}
+.voltar{position:fixed;left:var(--e4);top:var(--e4);z-index:30;border-radius:var(--r-cap);
+  padding:9px 16px;font-size:var(--footnote);font-weight:600;text-decoration:none;color:var(--label);
+  border:.5px solid var(--separador)}
+</style>
+</head>
+<body>
+<div class="chao"></div>
+<a class="voltar material" href="index.html">← protótipos</a>
+
+<main class="doc">
+
+  <header class="cabeca">
+    <div class="marca">
+      <svg viewBox="0 0 509 534" width="34" height="34"><path fill="#2FA894" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+      <div><div class="headline">Auditor de Precificação</div><div class="caption ter" style="letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)">FAVO Educação</div></div>
+    </div>
+    <span class="grupo-tit" style="padding-left:0">Protótipo 07 · Colmeia na gramática do iOS</span>
+    <h1 class="largeTitle" style="margin-bottom:var(--e4)">Colmeia · iOS</h1>
+    <p class="body sec">A alma é a mesma do 04: campos de cor com significado, parede de cera entre os blocos, nenhum card branco genérico. O que muda é a <b>gramática</b>. Em vez de inventar componentes, o sistema passa a falar a língua da Apple — lista agrupada com recuo no lugar de formulário solto, rampa tipográfica nomeada, cor semântica de rótulo, material translúcido nas barras, folha que sobe com puxador, e mola no lugar de easing linear.</p>
+  </header>
+
+  <!-- ═══ 09 EM PRIMEIRO: a correção ═══════════════════════════════════ -->
+  <section class="secao">
+    <span class="grupo-tit">01 · A correção — verde não é cor de área</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">Você apontou o bloco de chamada e estava certo. Verde saturado preenchendo uma área grande brilha, cansa a vista e — pior — <b>rouba a atenção do botão</b>, que é justamente o que precisa ser clicado. A Apple nunca faz isso: a cor de destaque vive no controle, e o fundo fica em tinta de 12% ou num tom profundo. Esta é a regra número um do sistema.</p>
+    <div class="grade g2">
+      <div>
+        <span class="grupo-tit">Antes — verde chapado</span>
+        <div class="cartao" style="background:#00B140;text-align:center;padding:var(--e6) var(--e5)">
+          <h3 class="title3" style="color:#fff;margin-bottom:var(--e2)">Sobram R$ 7.140 por projeto.<br>Dá para sobrar mais.</h3>
+          <p class="subhead" style="color:rgba(255,255,255,.8);margin-bottom:var(--e5)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+          <button class="btn btn-claro cap" style="width:auto;padding:var(--e3) var(--e6)">Quero conversar sobre esses números</button>
+        </div>
+        <span class="grupo-nota">A área compete com o botão. O branco do botão vira o único descanso da composição, e o olho não sabe onde pousar.</span>
+      </div>
+      <div>
+        <span class="grupo-tit">Depois — profundo, com o verde no controle</span>
+        <div class="cartao mata" style="text-align:center;padding:var(--e6) var(--e5)">
+          <h3 class="title3" style="color:#fff;margin-bottom:var(--e2)">Sobram R$ 7.140 por projeto.<br>Dá para sobrar mais.</h3>
+          <p class="subhead sec" style="margin-bottom:var(--e5)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+          <button class="btn btn-cheio cap" style="width:auto;padding:var(--e3) var(--e6)">Quero conversar sobre esses números</button>
+        </div>
+        <span class="grupo-nota">O fundo recua, o verde aparece só onde há ação. Mesma força de marca, um terço do cansaço visual.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- COR -->
+  <section class="secao">
+    <span class="grupo-tit">02 · Cor — três funções separadas</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">Fundos em três níveis (o chão é mais escuro que a linha — é isso que faz a lista flutuar sem sombra), rótulos em quatro opacidades, e os campos de cor do 04 agora disponíveis em dois pesos: <b>chapado</b> para blocos de leitura e <b>tinta</b> (12%) para estados e botões.</p>
+    <div class="grade g4">
+      <div><div class="amostra" style="background:var(--fundo)"><span>#F1EEE6</span></div><span class="grupo-tit" style="padding:8px 0 0">Fundo · chão</span></div>
+      <div><div class="amostra" style="background:var(--fundo-2)"><span>#FFFDF8</span></div><span class="grupo-tit" style="padding:8px 0 0">Fundo 2 · linha</span></div>
+      <div><div class="amostra" style="background:var(--mint)"><span>#DFF2E8</span></div><span class="grupo-tit" style="padding:8px 0 0">Mint · informação</span></div>
+      <div><div class="amostra" style="background:var(--mel)"><span>#FBEACB</span></div><span class="grupo-tit" style="padding:8px 0 0">Mel · custo</span></div>
+      <div><div class="amostra" style="background:var(--mata)"><span style="color:#EAF6EF">#12382A</span></div><span class="grupo-tit" style="padding:8px 0 0">Mata · área grande</span></div>
+      <div><div class="amostra" style="background:var(--verde)"><span style="color:#fff">#00A83C</span></div><span class="grupo-tit" style="padding:8px 0 0">Verde · controle</span></div>
+      <div><div class="amostra" style="background:var(--verde-t)"><span style="color:var(--verde)">verde 12%</span></div><span class="grupo-tit" style="padding:8px 0 0">Tinta · botão médio</span></div>
+      <div><div class="amostra" style="background:var(--telha)"><span style="color:#fff">#A8412A</span></div><span class="grupo-tit" style="padding:8px 0 0">Telha · perda</span></div>
+    </div>
+  </section>
+
+  <!-- TIPOGRAFIA -->
+  <section class="secao">
+    <span class="grupo-tit">03 · Rampa tipográfica</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">Onze estilos nomeados, e a regra é fechada: <b>se um tamanho não está na rampa, ele não existe</b>. É o que impede o sistema de virar uma coleção de font-sizes arbitrários seis meses depois.</p>
+    <div class="lista" style="max-width:620px">
+      <div class="linha"><span class="largeTitle">Large Title</span><span class="vazio"></span><span class="val footnote">34 · 700</span></div>
+      <div class="linha"><span class="title1">Title 1</span><span class="vazio"></span><span class="val footnote">28 · 700</span></div>
+      <div class="linha"><span class="title2">Title 2</span><span class="vazio"></span><span class="val footnote">22 · 670</span></div>
+      <div class="linha"><span class="title3">Title 3</span><span class="vazio"></span><span class="val footnote">20 · 650</span></div>
+      <div class="linha"><span class="headline">Headline</span><span class="vazio"></span><span class="val footnote">17 · 640</span></div>
+      <div class="linha"><span class="body">Body</span><span class="vazio"></span><span class="val footnote">17 · 400</span></div>
+      <div class="linha"><span class="callout">Callout</span><span class="vazio"></span><span class="val footnote">16 · 400</span></div>
+      <div class="linha"><span class="subhead">Subheadline</span><span class="vazio"></span><span class="val footnote">15 · 400</span></div>
+      <div class="linha"><span class="footnote" style="color:var(--label)">Footnote</span><span class="vazio"></span><span class="val footnote">13 · 400</span></div>
+      <div class="linha"><span class="caption" style="color:var(--label)">Caption</span><span class="vazio"></span><span class="val footnote">12 · 400</span></div>
+      <div class="linha"><span class="cifra" style="font-size:22px">R$ 18.420</span><span class="vazio"></span><span class="val footnote">mono · 600</span></div>
+    </div>
+    <span class="grupo-nota" style="max-width:620px">Dinheiro é a única exceção à fonte do sistema: sempre mono tabular, para que colunas alinhem e o olho compare.</span>
+  </section>
+
+  <!-- LISTA -->
+  <section class="secao">
+    <span class="grupo-tit">04 · Lista agrupada — o componente central</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">Substitui o formulário de campos soltos. Cada pergunta vira uma <b>linha</b>, e o campo mora à direita, sem caixa, sem borda, sem fundo — a linha já é o campo. O separador começa a 16 px da esquerda: esse recuo é a assinatura da lista da Apple e a razão de ela parecer arrumada. O cabeçalho em caixa alta e a nota de rodapé dão à lista leitura de documento, que é exatamente onde este produto precisa explicar as coisas.</p>
+    <div class="grade g2" style="align-items:start">
+      <div>
+        <span class="grupo-tit">Quanto você faz por mês</span>
+        <div class="lista">
+          <label class="linha"><span class="rot body">Projetos por mês</span><input class="campo-linha" value="6"><span class="un">un</span></label>
+          <label class="linha"><span class="rot body">Despesa fixa mensal</span><span class="un">R$</span><input class="campo-linha" value="42.800,00"></label>
+        </div>
+        <span class="grupo-nota">Despesa fixa é o que você paga todo mês mesmo sem vender: aluguel, equipe, pró-labore, contador, software.</span>
+      </div>
+      <div>
+        <span class="grupo-tit">Linhas de navegação e estado</span>
+        <div class="lista">
+          <div class="linha tocavel"><span class="icone" style="background:var(--ambar)">%</span><span class="rot body">Configuração avançada</span><span class="vazio"></span><span class="chev"></span></div>
+          <div class="linha tocavel"><span class="icone" style="background:var(--teal)">kW</span><span class="rot body">Dados do projeto</span><span class="vazio"></span><span class="val">8,4 kWp</span><span class="chev"></span></div>
+          <div class="linha"><span class="rot body">Incluir sazonalidade</span><span class="vazio"></span><button class="chave on"><i></i></button></div>
+          <div class="linha"><span class="rot body">Salvar no histórico</span><span class="vazio"></span><button class="chave"><i></i></button></div>
+        </div>
+        <span class="grupo-nota">O ícone da linha é um quadrado arredondado colorido, e a cor é semântica — mel é custo, teal é dado do projeto.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROLES -->
+  <section class="secao">
+    <span class="grupo-tit">05 · Controles</span>
+    <div class="grade g2" style="align-items:start">
+      <div class="cartao">
+        <span class="grupo-tit" style="padding-left:0">Segmentado — no lugar do select</span>
+        <p class="footnote" style="margin-bottom:var(--e4)">O <code>&lt;select&gt;</code> nativo é o elemento mais feio de qualquer formulário web. Para 2 a 4 opções, segmentado resolve: mostra todas as alternativas de uma vez e responde em um toque.</p>
+        <div class="seg" style="margin-bottom:var(--e5)">
+          <button class="on">Distribuidora fatura</button>
+          <button>Sai no meu CNPJ</button>
+        </div>
+        <span class="grupo-tit" style="padding-left:0">Três pesos de botão</span>
+        <button class="btn btn-cheio" style="margin-bottom:var(--e2)">Preenchido — ação principal</button>
+        <button class="btn btn-tinta" style="width:100%;margin-bottom:var(--e2)">Tingido — ação secundária</button>
+        <button class="btn btn-simples" style="width:100%">Simples — ação terciária</button>
+      </div>
+      <div>
+        <div class="cartao" style="margin-bottom:var(--parede)">
+          <span class="grupo-tit" style="padding-left:0">Selos</span>
+          <div style="display:flex;gap:var(--e2);flex-wrap:wrap">
+            <span class="selo" style="--st:var(--verde-t);--sc:var(--verde)">Sobra</span>
+            <span class="selo" style="--st:var(--ambar-t);--sc:var(--ambar)">Aperto</span>
+            <span class="selo" style="--st:var(--telha-t);--sc:var(--telha)">Falta</span>
+          </div>
+        </div>
+        <div class="folha" style="border-radius:var(--r-cartao)">
+          <div class="puxador"></div>
+          <h3 class="title3" style="margin-bottom:var(--e2)">Folha, não modal</h3>
+          <p class="subhead sec" style="margin-bottom:var(--e4)">Sobe de baixo, cantos grandes só no topo, puxador visível. No celular é o padrão — e é onde vão as ajudas de campo e o "como chegamos nesses números".</p>
+          <button class="btn btn-tinta" style="width:100%">Entendi</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATERIAL -->
+  <section class="secao">
+    <span class="grupo-tit">06 · Material e movimento</span>
+    <div class="grade g3">
+      <div class="cartao"><span class="grupo-tit" style="padding-left:0">Material</span><p class="footnote">Barras translúcidas com desfoque de 24 px e saturação 180%, com hairline de 0,5 px. É a única profundidade do sistema — <b>nada mais usa blur</b>.</p></div>
+      <div class="cartao"><span class="grupo-tit" style="padding-left:0">Mola</span><p class="footnote"><code>cubic-bezier(.32,.72,0,1)</code>. Sai forte e chega sem voltar. Bounce de verdade só em gesto direto do dedo, nunca em entrada de conteúdo.</p></div>
+      <div class="cartao"><span class="grupo-tit" style="padding-left:0">Canto contínuo</span><p class="footnote">Onde o navegador suporta <code>corner-shape:squircle</code>, o canto vira contínuo — a diferença entre "arredondado" e "arredondado como um ícone da Apple". Progressivo: quem não suporta segue no raio normal.</p></div>
+    </div>
+  </section>
+
+  <!-- APLICADO: FUNIL -->
+  <section class="secao">
+    <span class="grupo-tit">07 · Aplicado · Passo 03 — Custos</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">O funil inteiro vira uma tela de Ajustes: barra de navegação com material, grupos com cabeçalho e nota, e a barra de ação fixa embaixo. Compare com o formulário atual — mesma quantidade de perguntas, uma fração do ruído.</p>
+    <div class="fone">
+      <div class="barra-nav material">
+        <button class="btn btn-simples" style="padding-left:0">‹ Projeto</button>
+        <span class="vazio" style="flex:1"></span>
+        <span class="headline">Custos</span>
+        <span class="vazio" style="flex:1"></span>
+        <span class="footnote ter">3 de 4</span>
+      </div>
+      <div class="fone-corpo">
+        <h2 class="largeTitle" style="margin:var(--e2) 0 var(--e5)">Custos e operação</h2>
+
+        <div class="lista" data-sobe style="--atraso:40ms;margin-bottom:var(--e2)">
+          <div class="linha"><span class="icone" style="background:var(--mata)">SV</span>
+            <div style="flex:1;min-width:0"><div class="body" style="font-weight:600">Solar Vale Engenharia</div><div class="footnote ter">Simples Nacional</div></div>
+            <button class="btn btn-simples" style="min-height:0;padding:4px 0">Trocar</button></div>
+        </div>
+
+        <span class="grupo-tit" style="margin-top:var(--e5)">Quanto você faz por mês</span>
+        <div class="lista" data-sobe style="--atraso:80ms">
+          <label class="linha"><span class="rot body">Projetos por mês</span><input class="campo-linha" value="6"><span class="un">un</span></label>
+          <label class="linha"><span class="rot body">Despesa fixa mensal</span><span class="un">R$</span><input class="campo-linha" value="42.800,00"></label>
+        </div>
+        <span class="grupo-nota">É o que permite dividir o custo fixo entre os projetos. Sem isso, a conta joga o mês inteiro em cima de uma venda só.</span>
+
+        <span class="grupo-tit" style="margin-top:var(--e5)">Quanto custa cada projeto</span>
+        <div class="lista" data-sobe style="--atraso:120ms">
+          <label class="linha"><span class="rot body">Instalação</span><span class="un">R$</span><input class="campo-linha" value="8.200,00"></label>
+          <label class="linha"><span class="rot body">Projeto e documentação</span><span class="un">R$</span><input class="campo-linha" value="2.900,00"></label>
+        </div>
+        <span class="grupo-nota">Além do kit, que você já informou. Pode ser uma média — dá para refinar depois.</span>
+
+        <span class="grupo-tit" style="margin-top:var(--e5)">Quanto sai de cada venda</span>
+        <div class="lista" data-sobe style="--atraso:160ms">
+          <label class="linha"><span class="rot body">Comissão de vendas</span><input class="campo-linha" value="4,0"><span class="un">%</span></label>
+          <label class="linha"><span class="rot body">Impostos sobre a venda</span><input class="campo-linha" value="8,5"><span class="un">%</span></label>
+          <div class="linha" style="flex-direction:column;align-items:stretch;gap:var(--e2)">
+            <span class="rot body">Quem emite a nota do kit</span>
+            <div class="seg"><button class="on">Distribuidora</button><button>Meu CNPJ</button></div>
+          </div>
+        </div>
+        <span class="grupo-nota">Muda bastante a conta: quando a nota do kit sai no seu CNPJ, o imposto incide sobre o valor cheio da venda, e não só sobre o seu serviço.</span>
+
+        <div style="height:var(--e6)"></div>
+      </div>
+      <div class="barra-acao material">
+        <button class="btn btn-cheio">Ver meu diagnóstico</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- APLICADO: DIAGNÓSTICO -->
+  <section class="secao">
+    <span class="grupo-tit">08 · Aplicado · Diagnóstico</span>
+    <div class="fone">
+      <div class="barra-nav material">
+        <button class="btn btn-simples" style="padding-left:0">‹ Custos</button>
+        <span class="vazio" style="flex:1"></span>
+        <span class="headline">Diagnóstico</span>
+        <span class="vazio" style="flex:1"></span>
+        <button class="btn btn-simples" style="padding-right:0">Compartilhar</button>
+      </div>
+      <div class="fone-corpo">
+        <span class="grupo-tit" style="padding-left:0;margin-top:var(--e2)">Solar Vale · Residencial Vila Nova · 8,4 kWp</span>
+        <h2 class="largeTitle" style="margin:0 0 var(--e5)">Seu diagnóstico de preço</h2>
+
+        <div class="cartao mata" style="margin-bottom:var(--parede)">
+          <span class="selo" style="--st:rgba(255,255,255,.14);--sc:#7FE3A8">Seu preço cobre tudo e ainda sobra</span>
+          <div class="cifra cifra-heroi" style="color:#5FE08F;margin:var(--e4) 0 var(--e1)">R$&nbsp;7.140</div>
+          <div class="headline" style="color:#fff;margin-bottom:var(--e3)">sobram por projeto</div>
+          <p class="subhead sec">R$ 42.840 por mês, somando os 6 projetos que você faz. É o que fica com a empresa depois do kit, da instalação, do projeto, da comissão, do imposto e da fatia do mês em estrutura.</p>
+          <div style="background:rgba(255,255,255,.08);border-radius:var(--r-ctrl);padding:var(--e4);margin-top:var(--e5)">
+            <p class="subhead" style="color:rgba(234,246,239,.86);line-height:1.6">
+              Seu <b style="color:#fff">preço mínimo</b> para lucrar 12% é <b class="cifra" style="color:#fff">R$ 48.900</b>. Você cobra <b class="cifra" style="color:#fff">R$ 56.040</b> — <b class="cifra" style="color:#fff">R$ 7.140</b> acima do mínimo.
+              <span style="display:block;margin-top:var(--e2);color:#7FE3A8;font-weight:620">Isso é folga de margem, não convite a dar desconto.</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="grade g2" style="margin-bottom:var(--parede)">
+          <div class="cartao mint" data-sobe style="--atraso:60ms">
+            <span class="grupo-tit" style="padding:0 0 var(--e2)">Ponto de equilíbrio</span>
+            <div class="cifra title2" style="color:var(--mata)">3,4 projetos</div>
+            <p class="footnote" style="margin-top:var(--e1)">é o mínimo por mês. Você vende 6.</p>
+          </div>
+          <div class="cartao mel" data-sobe style="--atraso:100ms">
+            <span class="grupo-tit" style="padding:0 0 var(--e2)">Cada 1% de desconto</span>
+            <div class="cifra title2" style="color:#7A4E00">R$ 3.362</div>
+            <p class="footnote" style="margin-top:var(--e1)">por mês — 7,8× o que foi dado.</p>
+          </div>
+        </div>
+
+        <span class="grupo-tit">Para onde vai cada R$ 56.040 que entram</span>
+        <div class="cartao" data-sobe style="--atraso:140ms;margin-bottom:var(--e2)">
+          <div class="fatia"><div class="topo"><div class="nome">Kit<small>faturado pela distribuidora</small></div><div class="val">R$ 28.400</div></div><div class="trilho"><i style="--c:#CFC3A6;--d:0ms;width:50.7%"></i></div></div>
+          <div class="fatia"><div class="topo"><div class="nome">Instalação</div><div class="val">R$ 8.200</div></div><div class="trilho"><i style="--c:#E3C68F;--d:60ms;width:14.6%"></i></div></div>
+          <div class="fatia"><div class="topo"><div class="nome">Projeto, ART e homologação</div><div class="val">R$ 2.900</div></div><div class="trilho"><i style="--c:#EAB86B;--d:120ms;width:5.2%"></i></div></div>
+          <div class="fatia"><div class="topo"><div class="nome">Comissão do vendedor</div><div class="val">R$ 2.242</div></div><div class="trilho"><i style="--c:#DE9F4F;--d:180ms;width:4%"></i></div></div>
+          <div class="fatia"><div class="topo"><div class="nome">Imposto<small>sobre a parte de serviço</small></div><div class="val">R$ 2.351</div></div><div class="trilho"><i style="--c:#CD8544;--d:240ms;width:4.2%"></i></div></div>
+          <div class="fatia"><div class="topo"><div class="nome">Sua estrutura<small>a fatia do mês deste projeto</small></div><div class="val">R$ 4.807</div></div><div class="trilho"><i style="--c:#BC6B3C;--d:300ms;width:8.6%"></i></div></div>
+          <div class="fatia resto"><div class="topo"><div class="nome">Sobra pra você</div><div class="val">R$ 7.140</div></div><div class="trilho"><i style="--c:var(--verde);--d:400ms;width:12.7%"></i></div></div>
+        </div>
+        <span class="grupo-nota">É o mesmo projeto, fatiado. A última linha é o que fica com a empresa.</span>
+
+        <span class="grupo-tit" style="margin-top:var(--e5)">Quanto custa cada desconto</span>
+        <div class="cartao" data-sobe style="--atraso:180ms">
+          <table>
+            <thead><tr><th>Desconto</th><th>Preço</th><th>Sobra/mês</th><th>Deixa de ganhar</th></tr></thead>
+            <tbody>
+              <tr class="hoje"><td>Hoje</td><td>56.040</td><td>42.840</td><td>—</td></tr>
+              <tr><td>−2%</td><td>54.919</td><td>36.116</td><td style="color:var(--telha);font-weight:600">− 6.724</td></tr>
+              <tr><td>−5%</td><td>53.238</td><td>26.030</td><td style="color:var(--telha);font-weight:600">− 16.810</td></tr>
+              <tr><td>−10%</td><td>50.436</td><td>9.220</td><td style="color:var(--telha);font-weight:600">− 33.620</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="lista tocavel" data-sobe style="--atraso:220ms;margin-top:var(--e5)">
+          <div class="linha tocavel"><span class="rot body">Como chegamos nesses números</span><span class="vazio"></span><span class="chev"></span></div>
+        </div>
+        <span class="grupo-nota">Abre em folha, com o que você informou e o que a gente assumiu.</span>
+
+        <div class="cartao mata" data-sobe style="--atraso:260ms;margin-top:var(--e5);text-align:center">
+          <h3 class="title3" style="color:#fff;margin-bottom:var(--e2)">Dá para sobrar mais.</h3>
+          <p class="subhead sec" style="margin-bottom:var(--e5)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+          <button class="btn btn-cheio">Quero conversar sobre esses números</button>
+        </div>
+        <div style="height:var(--e5)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- macOS -->
+  <section class="secao">
+    <span class="grupo-tit">09 · A mesma coisa no Mac</span>
+    <p class="body sec" style="max-width:640px;margin-bottom:var(--e5)">No desktop nada é redesenhado: a lista agrupada vira o conteúdo, e ganha barra lateral com fundo translúcido e uma toolbar. Mesmos tokens, mesmos componentes, densidade um pouco maior.</p>
+    <div style="border-radius:14px;overflow:hidden;box-shadow:0 24px 50px -26px rgba(16,31,26,.3),0 0 0 1px rgba(16,31,26,.07);display:flex;min-height:340px">
+      <aside style="width:210px;flex:none;background:rgba(241,238,230,.8);backdrop-filter:blur(24px) saturate(180%);padding:var(--e3);border-right:.5px solid var(--separador)">
+        <div style="display:flex;gap:6px;padding:6px 6px var(--e4)">
+          <span style="width:11px;height:11px;border-radius:50%;background:#EC6A5F"></span>
+          <span style="width:11px;height:11px;border-radius:50%;background:#F4BF4F"></span>
+          <span style="width:11px;height:11px;border-radius:50%;background:#61C554"></span>
+        </div>
+        <div style="padding:6px 10px;border-radius:8px;font-size:var(--subhead);color:var(--label-2)">Empresa</div>
+        <div style="padding:6px 10px;border-radius:8px;font-size:var(--subhead);color:var(--label-2)">Projeto</div>
+        <div style="padding:6px 10px;border-radius:8px;background:var(--verde-t);color:var(--verde);font-size:var(--subhead);font-weight:600">Custos</div>
+        <div style="padding:6px 10px;border-radius:8px;font-size:var(--subhead);color:var(--label-3)">Diagnóstico</div>
+        <div style="margin-top:var(--e5);padding:0 10px" class="grupo-tit">Histórico</div>
+        <div style="padding:6px 10px;border-radius:8px;font-size:var(--subhead);color:var(--label-2)">Vila Nova · 8,4 kWp</div>
+        <div style="padding:6px 10px;border-radius:8px;font-size:var(--subhead);color:var(--label-2)">Jardim Sul · 12 kWp</div>
+      </aside>
+      <div style="flex:1;background:var(--fundo);min-width:0">
+        <div class="barra-nav material" style="position:static">
+          <span class="headline">Custos e operação</span><span class="vazio" style="flex:1"></span>
+          <button class="btn btn-tinta" style="min-height:32px;padding:6px 14px;font-size:var(--subhead)">Ver diagnóstico</button>
+        </div>
+        <div style="padding:var(--e5);max-width:520px">
+          <span class="grupo-tit">Quanto você faz por mês</span>
+          <div class="lista">
+            <label class="linha"><span class="rot body">Projetos por mês</span><input class="campo-linha" value="6"><span class="un">un</span></label>
+            <label class="linha"><span class="rot body">Despesa fixa mensal</span><span class="un">R$</span><input class="campo-linha" value="42.800,00"></label>
+          </div>
+          <span class="grupo-nota">É o que permite dividir o custo fixo entre os projetos.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGRAS -->
+  <section class="secao">
+    <span class="grupo-tit">10 · Regras que mantêm o sistema vivo</span>
+    <div class="lista" style="max-width:760px">
+      <div class="linha"><span class="body">01 — Verde saturado só em controle. Área grande usa mata ou tinta de 12%.</span></div>
+      <div class="linha"><span class="body">02 — Se um tamanho não está na rampa tipográfica, ele não existe.</span></div>
+      <div class="linha"><span class="body">03 — O separador da lista sempre recuado 16 px à esquerda. É o detalhe que arruma tudo.</span></div>
+      <div class="linha"><span class="body">04 — Blur só em barra de navegação e barra de ação. Nenhum card usa material.</span></div>
+      <div class="linha"><span class="body">05 — Explicação vive no rodapé do grupo, não em tooltip nem em ícone de interrogação.</span></div>
+      <div class="linha"><span class="body">06 — Nenhuma sombra em cartão. Só a folha e a barra lateral do Mac projetam.</span></div>
+      <div class="linha"><span class="body">07 — Dinheiro sempre em mono tabular, peso 600.</span></div>
+      <div class="linha"><span class="body">08 — Modal centralizado não existe: no celular é folha; no Mac, folha ou popover.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

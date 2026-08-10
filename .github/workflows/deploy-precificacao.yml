@@ -53,12 +53,14 @@ jobs:
       # nome evita que um arquivo solto novo suba por acidente.
       - name: Montar pasta de publicação
         run: |
-          mkdir -p dist/js
+          mkdir -p dist/js dist/img
           cp index.html cadastro.html custos.html projeto.html relatorio.html \
              configuracoes.html historico.html sazonalidade.html login.html \
              app-core.js calculo.js config.js shared.css \
+             favicon.svg favicon-32.png apple-touch-icon.png \
              dist/
           cp js/*.js dist/js/
+          cp img/*.svg dist/img/
 
       - name: Preparar acesso SSH
         env:

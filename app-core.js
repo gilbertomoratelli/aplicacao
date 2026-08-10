@@ -255,5 +255,196 @@
     return !primeiroInvalido;
   };
 
+  // 10. Máscara monetária.
+  //     Regra: o dígito digitado entra SEMPRE na parte inteira, à frente da
+  //     vírgula. É o oposto da máscara "de caixa eletrônico", em que digitar
+  //     1-2-5-0 produz 12,50 — ali o usuário que quer R$ 1.250,00 precisa
+  //     digitar seis teclas e torcer. Aqui ele digita 1250 e lê 1.250; se
+  //     quiser centavos, digita a vírgula (ou navega até depois dela) e
+  //     continua. Como quase todo valor deste app é redondo, isso elimina a
+  //     digitação de dois zeros em cada campo.
+  //
+  //     formatarMoeda opera sobre TEXTO, não sobre número: preservar o que o
+  //     usuário está no meio de digitar (inclusive "1.250," sem centavos
+  //     ainda) é o que evita o campo brigar com o teclado.
+  AppCore.formatarMoeda = function (bruto) {
+    var texto = String(bruto == null ? '' : bruto);
+    var virgula = texto.indexOf(',');
+
+    var inteiro = virgula === -1 ? texto : texto.slice(0, virgula);
+    var decimal = virgula === -1 ? ''    : texto.slice(virgula + 1);
+
+    // Zeros à esquerda somem, mas "0" sozinho fica: digitar 0 é intenção.
+    inteiro = inteiro.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    decimal = decimal.replace(/\D/g, '').slice(0, 2);
+
+    var agrupado = inteiro ? inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+
+    if (virgula === -1) return agrupado;
+    return (agrupado || '0') + ',' + decimal;
+  };
+
+  // Reformata mantendo o cursor onde o usuário o deixou. Sem isto, inserir um
+  // separador de milhar joga o cursor para o fim e digitar vira um sofrimento.
+  // A âncora é a QUANTIDADE DE DÍGITOS antes do cursor, não a posição em
+  // caracteres: pontos aparecem e desaparecem, dígitos não.
+  AppCore.mascaraMoeda = function (el) {
+    if (!el) return;
+    var antes = el.value;
+    var pos = typeof el.selectionStart === 'number' ? el.selectionStart : antes.length;
+    var digitosAntes = (antes.slice(0, pos).match(/\d/g) || []).length;
+
+    var depois = AppCore.formatarMoeda(antes);
+    if (depois === antes) return;
+    el.value = depois;
+
+    var novaPos;
+    if (digitosAntes === 0) {
+      // Só a vírgula foi digitada: o cursor tem de ficar depois dela.
+      novaPos = depois.slice(-1) === ',' ? depois.length : 0;
+    } else {
+      novaPos = depois.length;
+      var contados = 0;
+      for (var i = 0; i < depois.length; i++) {
+        if (depois.charCodeAt(i) >= 48 && depois.charCodeAt(i) <= 57) {
+          contados++;
+          if (contados === digitosAntes) { novaPos = i + 1; break; }
+        }
+      }
+    }
+    if (typeof el.setSelectionRange === 'function') {
+      try { el.setSelectionRange(novaPos, novaPos); } catch (e) {}
+    }
+  };
+
+  // Ao sair do campo, completa os centavos. Durante a digitação isso seria
+  // hostil (o campo mexeria sozinho); ao sair, é só arrumar a casa.
+  AppCore.normalizarMoeda = function (el) {
+    if (!el || !el.value.trim()) return;
+    var n = AppCore.parseNum(el.value);
+    el.value = n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Liga a máscara em todo input[data-moeda] dentro de raiz (padrão: document).
+  // Idempotente: pode ser chamada de novo depois de injetar campos por JS.
+  AppCore.ligarMoeda = function (raiz) {
+    var alvo = raiz || document;
+    var campos = alvo.querySelectorAll('input[data-moeda]');
+    for (var i = 0; i < campos.length; i++) {
+      (function (el) {
+        if (el.dataset.moedaLigada === '1') return;
+        el.dataset.moedaLigada = '1';
+        el.setAttribute('inputmode', 'decimal');
+        el.addEventListener('input', function () { AppCore.mascaraMoeda(el); });
+        el.addEventListener('blur',  function () { AppCore.normalizarMoeda(el); });
+      })(campos[i]);
+    }
+  };
+
+  // 11. Seleção em folha (bottom sheet) no celular.
+  //     O <select> nativo abre um seletor de sistema que ignora o desenho da
+  //     tela inteira e, no Android, costuma ser um diálogo cinza. Numa tela
+  //     que é toda lista agrupada, isso quebra a leitura.
+  //
+  //     O <select> continua no DOM e continua sendo a fonte da verdade — quem
+  //     lê `.value` não sabe que existe folha. No celular ele é escondido por
+  //     CSS e um botão desenhado ocupa o lugar; a folha escreve de volta no
+  //     select e dispara 'change', então qualquer listener existente continua
+  //     funcionando.
+  var folhaAberta = null;
+
+  function fecharFolha() {
+    if (!folhaAberta) return;
+    var ov = folhaAberta.ov, gatilho = folhaAberta.gatilho;
+    ov.classList.remove('open');
+    folhaAberta = null;
+    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 260);
+    if (gatilho) gatilho.focus();
+  }
+
+  function abrirFolha(sel, gatilho, titulo) {
+    var ov = document.createElement('div');
+    ov.className = 'modal-ov';
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-modal', 'true');
+
+    var opcoes = '';
+    for (var i = 0; i < sel.options.length; i++) {
+      var o = sel.options[i];
+      // A opção vazia existe só como estado inicial do campo; dentro da folha
+      // ela não é uma alternativa e não deve aparecer.
+      if (o.disabled || o.hidden || o.value === '') continue;
+      opcoes +=
+        '<button type="button" class="linha tocavel opcao' + (o.selected ? ' escolhida' : '') + '" ' +
+        'data-i="' + i + '" role="option" aria-selected="' + (o.selected ? 'true' : 'false') + '">' +
+          '<span class="rot">' + AppCore.escapeHtml(o.textContent) + '</span>' +
+          '<span class="vazio"></span><span class="tique" aria-hidden="true"></span>' +
+        '</button>';
+    }
+
+    ov.innerHTML =
+      '<div class="modal-card">' +
+        '<div class="modal-head"><h3>' + AppCore.escapeHtml(titulo) + '</h3>' +
+          '<button type="button" class="btn-close" aria-label="Fechar">&times;</button></div>' +
+        '<div class="lista opcoes" role="listbox">' + opcoes + '</div>' +
+      '</div>';
+
+    document.body.appendChild(ov);
+    // Um quadro de atraso para a transição de entrada existir: aplicada no
+    // mesmo quadro da inserção, o navegador pula a animação.
+    requestAnimationFrame(function () { ov.classList.add('open'); });
+    folhaAberta = { ov: ov, gatilho: gatilho };
+
+    ov.addEventListener('click', function (e) {
+      if (e.target === ov || e.target.closest('.btn-close')) { fecharFolha(); return; }
+      var op = e.target.closest('.opcao');
+      if (!op) return;
+      sel.selectedIndex = parseInt(op.dataset.i, 10);
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      AppCore.sincronizarFolhaSelect(sel);
+      fecharFolha();
+    });
+
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { fecharFolha(); document.removeEventListener('keydown', esc); }
+    });
+  }
+
+  // Mantém o texto do botão igual à opção escolhida no select.
+  AppCore.sincronizarFolhaSelect = function (sel) {
+    var botao = sel.parentNode && sel.parentNode.querySelector('.abre-folha');
+    if (!botao) return;
+    var op = sel.options[sel.selectedIndex];
+    botao.querySelector('.val').textContent = op ? op.textContent : '';
+    // Enquanto nada foi escolhido, o texto é marcador de lugar, não valor.
+    botao.classList.toggle('vazio-sel', !sel.value);
+  };
+
+  AppCore.ligarFolhaSelect = function (raiz) {
+    var alvo = raiz || document;
+    var selects = alvo.querySelectorAll('select[data-folha]');
+    for (var i = 0; i < selects.length; i++) {
+      (function (sel) {
+        if (sel.dataset.folhaLigada === '1') return;
+        sel.dataset.folhaLigada = '1';
+
+        var linha = sel.closest('.linha');
+        var rot = linha && linha.querySelector('.rot');
+        var titulo = sel.dataset.folha || (rot ? rot.textContent.replace('*', '').trim() : 'Escolha');
+
+        var botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'abre-folha';
+        botao.innerHTML = '<span class="val"></span><span class="chev" aria-hidden="true"></span>';
+        botao.setAttribute('aria-haspopup', 'listbox');
+        sel.parentNode.insertBefore(botao, sel.nextSibling);
+
+        botao.addEventListener('click', function () { abrirFolha(sel, botao, titulo); });
+        sel.addEventListener('change', function () { AppCore.sincronizarFolhaSelect(sel); });
+        AppCore.sincronizarFolhaSelect(sel);
+      })(selects[i]);
+    }
+  };
+
   window.AppCore = AppCore;
 })();

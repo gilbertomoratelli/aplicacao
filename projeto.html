@@ -5,85 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dados do Projeto · Auditor de Precificação</title>
 <link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   /* Tudo que esta página usa vem do shared.css. */
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="cadastro.html">← Voltar</a>
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
   <nav class="stepper" id="stepper"></nav>
 
-  <div class="empresa-badge" id="empresaBadge">
-    <div>
-      <div class="nome" id="empresaNome">—</div>
-      <div class="regime" id="empresaRegime">—</div>
+  <h1 class="largeTitle" style="margin:0 0 var(--e2)">Dados do projeto</h1>
+  <p class="subhead" style="color:var(--label-2);margin:0 0 var(--e6)">Use um projeto típico da sua empresa. É com ele que vamos calcular o seu preço.</p>
+
+  <form id="form" class="painel" onsubmit="salvar(event)">
+    <section class="secao">
+      <span class="grupo-tit">O projeto</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Módulos <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="number" id="qtd_modulos" placeholder="0" min="1" step="1" aria-required="true"><span class="un">un</span></span>
+          <span class="err" id="errModulos" role="alert" aria-live="assertive">Informe a quantidade</span>
+        </label>
+
+        <label class="linha">
+          <span class="rot">Potência <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01" aria-required="true"><span class="un">kWp</span></span>
+          <span class="err" id="errKwp" role="alert" aria-live="assertive">Informe a potência</span>
+        </label>
+      </div>
+      <span class="grupo-nota">Potência total instalada em quilowatt-pico.</span>
+    </section>
+
+    <section class="secao">
+      <span class="grupo-tit">Custo do kit</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Kit da distribuidora <span class="req">*</span></span>
+          <span class="ctrl"><span class="un">R$</span><input class="campo-linha" type="text" inputmode="decimal" id="custo_kit" data-moeda placeholder="0,00" aria-required="true"></span>
+          <span class="err" id="errKit" role="alert" aria-live="assertive">Informe o custo do KIT</span>
+        </label>
+      </div>
+      <span class="grupo-nota">Valor faturado pela distribuidora para este projeto.</span>
+    </section>
+
+    <!-- O preço praticado hoje é o dado que o diagnóstico inteiro audita.
+         Por isso ganha grupo próprio e cartão mint em vez de virar mais
+         uma linha no meio das outras. -->
+    <section class="secao">
+      <span class="grupo-tit">O preço que você pratica hoje</span>
+      <div class="cartao mint">
+        <label style="display:flex;align-items:center;gap:var(--e2)">
+          <span class="cifra" style="font-size:var(--title2);color:var(--label-3)">R$</span>
+          <input type="text" inputmode="decimal" id="valor_venda" data-moeda placeholder="0,00"
+                 style="flex:1;min-width:0;border:none;outline:none;background:transparent;
+                        font-family:var(--mono);font-size:var(--title1);font-weight:600;
+                        letter-spacing:-.035em;color:var(--label);font-variant-numeric:tabular-nums;
+                        min-height:var(--toque);padding:0">
+        </label>
+      </div>
+      <span class="grupo-nota">Kit + serviço, o valor cheio que o cliente paga. É este número que vamos auditar.</span>
+    </section>
+
+    <div class="barra-acao material">
+      <a class="btn-voltar" href="cadastro.html">Voltar</a>
+      <button class="btn-primary" type="submit" id="btnSalvar">Continuar</button>
     </div>
-    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
-  </div>
-
-  <div class="card">
-    <h2 class="card-title">Dados do Projeto</h2>
-    <p class="card-sub">Use um projeto típico da sua empresa. É com ele que vamos calcular o seu preço.</p>
-
-    <form id="form" onsubmit="salvar(event)">
-      <label class="fld">
-        <span class="lbl">Nome do Projeto <span class="req">*</span></span>
-        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva" aria-required="true">
-        <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
-      </label>
-
-      <label class="fld">
-        <span class="lbl">Quantidade de Módulos <span class="req">*</span></span>
-        <div class="inwrap">
-          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1" aria-required="true">
-          <span class="affix r">un</span>
-        </div>
-        <span class="err" id="errModulos" role="alert" aria-live="assertive">Informe a quantidade</span>
-      </label>
-
-      <label class="fld">
-        <span class="lbl">Potência do Sistema <span class="req">*</span></span>
-        <div class="inwrap">
-          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01" aria-required="true">
-          <span class="affix r">kWp</span>
-        </div>
-        <span class="hint">Potência total instalada em quilowatt-pico</span>
-        <span class="err" id="errKwp" role="alert" aria-live="assertive">Informe a potência</span>
-      </label>
-
-      <label class="fld">
-        <span class="lbl">Custo KIT Distribuidora <span class="req">*</span></span>
-        <div class="inwrap">
-          <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="custo_kit" placeholder="0,00" aria-required="true">
-        </div>
-        <span class="hint">Valor faturado pela distribuidora para este projeto</span>
-        <span class="err" id="errKit" role="alert" aria-live="assertive">Informe o custo do KIT</span>
-      </label>
-
-      <div id="custosFixosContainer"></div>
-
-      <label class="fld">
-        <span class="lbl" style="font-size:14px;font-weight:700;color:var(--ink)">Valor de Venda Atual</span>
-        <div class="inwrap" style="border-width:2px;border-color:var(--teal)">
-          <span class="affix l" style="font-size:16px;font-weight:700">R$</span>
-          <input type="text" inputmode="decimal" id="valor_venda" placeholder="0,00" style="font-size:22px;font-weight:700;padding:14px 12px">
-        </div>
-        <span class="hint">Preço praticado hoje (KIT + serviço). Preenche o campo de análise automaticamente.</span>
-      </label>
-
-      <button class="btn-primary" type="submit" id="btnSalvar">Continuar →</button>
-    </form>
-  </div>
+  </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -95,31 +89,19 @@ const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 const integrador = AppCore.safeParse('integrador', null);
 const projetoAtual = AppCore.safeParse('projeto', null);
 
-const LABEL_CUSTO = {
-  ca:    'Material adicional CA',
-  inst:  'Instalação',
-  proj:  'Projeto elétrico',
-  homol: 'Homologação',
-  art:   'ART do Projeto',
-};
+// Com separador de milhar: a tela é sobre dinheiro, e "28400,00" obriga o
+// usuário a contar casas. AppCore.parseNum lê "28.400,00" corretamente
+// (havendo vírgula, os pontos são milhar).
+const fmt = n => Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-function renderCustosFixos() {
-  const cfgMap = JSON.parse(localStorage.getItem('configCustos') || '{}');
-  const container = document.getElementById('custosFixosContainer');
-  const camposFixos = Object.keys(LABEL_CUSTO).filter(k => cfgMap[k]?.modo === 'fixo');
-  if (!camposFixos.length) { container.innerHTML = ''; return; }
-  const salvos = projetoAtual?.custos_diretos || {};
-  let html = '<div style="border-top:1px solid var(--hair);margin:8px 0 16px;padding-top:16px"><span class="lbl" style="display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Custos do projeto</span>';
-  camposFixos.forEach(k => {
-    const taxa = cfgMap[k]?.taxa ?? 0;
-    const val  = salvos[k] !== undefined ? salvos[k] : taxa;
-    html += `<label class="fld"><span class="lbl">${LABEL_CUSTO[k]}</span>
-      <div class="inwrap"><span class="affix l">R$</span>
-        <input type="text" inputmode="decimal" id="cd_${k}" value="${Number(val).toFixed(2).replace('.',',')}" placeholder="0,00">
-      </div></label>`;
-  });
-  html += '</div>';
-  container.innerHTML = html;
+// O projeto não tem mais nome: perguntar um rótulo que não entra em conta
+// nenhuma é atrito puro no funil. Histórico e relatório continuam precisando
+// identificar a linha, então o rótulo é DERIVADO da potência e dos módulos.
+function rotuloProjeto(kwp, modulos) {
+  const partes = [];
+  if (kwp > 0) partes.push(kwp.toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' kWp');
+  if (modulos > 0) partes.push(modulos + ' módulos');
+  return partes.join(' · ') || 'Projeto sem medidas';
 }
 
 function init() {
@@ -127,31 +109,17 @@ function init() {
     window.location.href='cadastro.html';
     return;
   }
-  document.getElementById('empresaNome').textContent = integrador.nome_empresa;
-  const regimeEl = document.getElementById('empresaRegime');
-  regimeEl.textContent = integrador.regime_tributario || '';
-  regimeEl.style.display = integrador.regime_tributario ? '' : 'none';
-
   if (projetoAtual) {
-    document.getElementById('nome_projeto').value    = projetoAtual.nome_projeto        || '';
     document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
     document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
-    document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? Number(projetoAtual.custo_kit).toFixed(2).replace('.',',') : '';
-    document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? Number(projetoAtual.valor_venda).toFixed(2).replace('.',',') : '';
-    document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
+    document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? fmt(projetoAtual.custo_kit) : '';
+    document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? fmt(projetoAtual.valor_venda) : '';
+    document.getElementById('btnSalvar').textContent = 'Atualizar projeto';
   }
-  renderCustosFixos();
-}
-
-function trocarEmpresa() {
-  localStorage.removeItem('integrador');
-  window.location.href='cadastro.html';
+  AppCore.ligarMoeda();
 }
 
 const CAMPOS_OBRIGATORIOS=[
-  {id:'nome_projeto',err:'errNome',
-   check:v=>v.trim().length>1,
-   msg:()=>'Dê um nome para identificar este projeto'},
   {id:'qtd_modulos',err:'errModulos',
    check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;},
    msg:v=>v.trim()===''?'Informe a quantidade de módulos':'Use um número inteiro maior que zero'},
@@ -176,24 +144,21 @@ async function salvar(e) {
 
   const valorVenda = AppCore.parseNum(document.getElementById('valor_venda').value) || null;
 
+  const modulos = AppCore.parseNum(document.getElementById('qtd_modulos').value);
+  const kwp     = parseFloat(document.getElementById('kwp_sistema').value);
+
   const payload={
     integrador_id: integrador.id||null,
-    nome_projeto: document.getElementById('nome_projeto').value.trim(),
-    quantidade_modulos: AppCore.parseNum(document.getElementById('qtd_modulos').value),
-    kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
+    nome_projeto: rotuloProjeto(kwp, modulos),
+    quantidade_modulos: modulos,
+    kwp_sistema: kwp,
     custo_kit: AppCore.parseNum(document.getElementById('custo_kit').value),
     valor_venda: valorVenda,
   };
 
-  const custos_diretos = {};
-  Object.keys(LABEL_CUSTO).forEach(k => {
-    const el = document.getElementById('cd_' + k);
-    if (el) custos_diretos[k] = AppCore.parseNum(el.value) || 0;
-  });
-
   // Grava no localStorage antes do DB, com um id garantido: nunca bloqueia o avanço do usuário (funciona offline).
   const localId = projetoAtual?.id || AppCore.uuid();
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: localId, valor_venda: valorVenda, custos_diretos}));
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: localId, valor_venda: valorVenda}));
 
   // Sync opcional com o DB: atualiza se já existe um registro salvo, senão cria um novo.
   let data = null, error = null;
@@ -217,11 +182,11 @@ async function salvar(e) {
 
     // Preserva o id real do DB quando vier, sem sobrescrever com o local.
     if (data) {
-      localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda, custos_diretos}));
+      localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
     }
   }
 
-  btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Continuar →';
+  btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto' : 'Continuar';
 
   window.location.href='custos.html';
 }

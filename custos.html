@@ -5,147 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Custos e Operação · Auditor de Precificação</title>
 <link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  .wrap{max-width:520px}
-  .card{padding:24px;margin-bottom:16px}
-  .card-title{font-size:17px}
-  .card-sub{margin:0 0 20px}
-  .dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:460px){ .dupla{grid-template-columns:1fr} }
-  .avancado{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
-  .avancado a{color:var(--teal);font-weight:600}
+  /* Esta tela é só lista agrupada: tudo vem do shared.css.
+     A coluna estreita vale só no celular — no desktop o formulário usa a
+     largura de dois campos que o shared.css define. */
+  @media (max-width:899px){ .wrap{max-width:520px} }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="projeto.html">← Voltar</a>
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
   <nav class="stepper" id="stepper"></nav>
 
-  <div class="empresa-badge">
-    <div>
-      <div class="nome" id="empresaNome">—</div>
-    </div>
-    <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
-  </div>
+  <h1 class="largeTitle" style="margin:0 0 var(--e2)">Custos e operação</h1>
+  <p class="subhead" style="color:var(--label-2);margin:0 0 var(--e6)">O mínimo que a conta precisa para dar um diagnóstico honesto. Dá para refinar depois.</p>
 
-  <form id="form" onsubmit="salvar(event)">
+  <form id="form" class="painel" onsubmit="salvar(event)">
 
-    <div class="card">
-      <h2 class="card-title">Quanto você faz por mês</h2>
-      <p class="card-sub">É o que permite dividir o custo fixo entre os projetos. Sem isso, a conta joga o mês inteiro em cima de uma venda só.</p>
-
-      <div class="dupla">
-        <label class="fld">
-          <span class="lbl">Projetos por mês <span class="req">*</span></span>
-          <div class="inwrap">
-            <input type="text" inputmode="numeric" id="projetosMes" placeholder="0" aria-required="true">
-            <span class="affix r">/mês</span>
-          </div>
+    <section class="secao">
+      <span class="grupo-tit">Quanto você faz por mês</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Projetos por mês <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="numeric" id="projetosMes" placeholder="0" aria-required="true"><span class="un">/mês</span></span>
           <span class="err" id="errProjetos" role="alert" aria-live="assertive"></span>
         </label>
 
-        <label class="fld">
-          <span class="lbl">Despesa fixa mensal <span class="req">*</span></span>
-          <div class="inwrap">
-            <span class="affix l">R$</span>
-            <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00" aria-required="true">
-          </div>
+        <label class="linha">
+          <span class="rot">Despesa fixa mensal <span class="req">*</span></span>
+          <span class="ctrl"><span class="un">R$</span><input class="campo-linha" type="text" inputmode="decimal" id="despFixa" data-moeda placeholder="0,00" aria-required="true"></span>
           <span class="err" id="errDespFixa" role="alert" aria-live="assertive"></span>
         </label>
       </div>
-      <span class="hint">Despesa fixa é o que você paga todo mês mesmo sem vender: aluguel, equipe, pró-labore, contador, software.</span>
-    </div>
+      <span class="grupo-nota">Despesa fixa é o que você paga todo mês mesmo sem vender: aluguel, equipe, pró-labore, contador, software. É ela que permite dividir o custo do mês entre os projetos.</span>
+    </section>
 
-    <div class="card">
-      <h2 class="card-title">Quanto custa cada projeto</h2>
-      <p class="card-sub">Além do kit, que você já informou. Pode ser uma média, dá para refinar depois.</p>
+    <section class="secao">
+      <span class="grupo-tit">Quanto custa cada projeto</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Instalação <span class="req">*</span></span>
+          <span class="ctrl"><span class="un">R$</span><input class="campo-linha" type="text" inputmode="decimal" id="inst" data-moeda placeholder="0,00" aria-required="true"></span>
+          <span class="err" id="errInst" role="alert" aria-live="assertive"></span>
+        </label>
 
-      <label class="fld">
-        <span class="lbl">Instalação (mão de obra) <span class="req">*</span></span>
-        <div class="inwrap">
-          <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="inst" placeholder="0,00" aria-required="true">
-        </div>
-        <span class="err" id="errInst" role="alert" aria-live="assertive"></span>
-      </label>
+        <label class="linha">
+          <span class="rot">Projeto e documentação</span>
+          <span class="ctrl"><span class="un">R$</span><input class="campo-linha" type="text" inputmode="decimal" id="proj" data-moeda placeholder="0,00"></span>
+        </label>
+      </div>
+      <span class="grupo-nota">Além do kit, que você já informou. Projeto elétrico, ART e homologação junto à concessionária entram na segunda linha. Pode ser uma média.</span>
+    </section>
 
-      <label class="fld" style="margin-bottom:0">
-        <span class="lbl">Projeto e documentação</span>
-        <div class="inwrap">
-          <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="proj" placeholder="0,00">
-        </div>
-        <span class="hint">Projeto elétrico, ART e homologação junto com a concessionária.</span>
-      </label>
-    </div>
-
-    <div class="card">
-      <h2 class="card-title">Quanto sai de cada venda</h2>
-      <p class="card-sub">Percentuais sobre o valor vendido.</p>
-
-      <div class="dupla">
-        <label class="fld">
-          <span class="lbl">Comissão de vendas <span class="req">*</span></span>
-          <div class="inwrap">
-            <input type="text" inputmode="decimal" id="comissao" placeholder="0,0">
-            <span class="affix r">%</span>
-          </div>
+    <section class="secao">
+      <span class="grupo-tit">Quanto sai de cada venda</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Comissão de vendas <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="decimal" id="comissao" placeholder="0,0"><span class="un">%</span></span>
           <span class="err" id="errComissao" role="alert" aria-live="assertive"></span>
         </label>
 
-        <label class="fld">
-          <span class="lbl">Impostos sobre a venda <span class="req">*</span></span>
-          <div class="inwrap">
-            <input type="text" inputmode="decimal" id="tributo" placeholder="0,0">
-            <span class="affix r">%</span>
-          </div>
+        <label class="linha">
+          <span class="rot">Impostos sobre a venda <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="decimal" id="tributo" placeholder="0,0"><span class="un">%</span></span>
           <span class="err" id="errTributo" role="alert" aria-live="assertive"></span>
         </label>
-      </div>
 
-      <label class="fld">
-        <span class="lbl">Quem emite a nota do kit? <span class="req">*</span></span>
-        <select class="plain" id="notaKit">
-          <option value="distribuidora">A distribuidora fatura direto para o cliente</option>
-          <option value="integrador">Sai no meu CNPJ (eu faturo o kit)</option>
-        </select>
-        <span class="hint">Muda bastante a conta: quando a nota do kit sai no seu CNPJ, o imposto incide sobre o valor cheio da venda, e não só sobre o seu serviço.</span>
-      </label>
-
-      <label class="fld">
-        <span class="lbl">Margem de lucro que você quer <span class="req">*</span></span>
-        <div class="inwrap">
-          <input type="text" inputmode="decimal" id="lucroAlvo" placeholder="12">
-          <span class="affix r">%</span>
+        <!-- Segmentado no lugar do <select>: são só duas opções e ambas
+             precisam ser lidas para a escolha fazer sentido. O <input hidden>
+             preserva o contrato com o JS, que segue lendo notaKit.value. -->
+        <div class="linha empilha">
+          <span class="rot">Quem emite a nota do kit <span class="req">*</span></span>
+          <div class="seg" id="segNotaKit">
+            <button type="button" class="on" data-v="distribuidora">Distribuidora fatura</button>
+            <button type="button" data-v="integrador">Sai no meu CNPJ</button>
+          </div>
+          <input type="hidden" id="notaKit" value="distribuidora">
         </div>
-        <span class="hint">Quanto você quer que sobre, líquido, depois de pagar tudo.</span>
-        <span class="err" id="errLucro" role="alert" aria-live="assertive"></span>
-      </label>
+      </div>
+      <span class="grupo-nota">Muda bastante a conta: quando a nota do kit sai no seu CNPJ, o imposto incide sobre o valor cheio da venda, e não só sobre o seu serviço.</span>
+    </section>
 
-      <label class="fld" style="margin-bottom:0">
-        <span class="lbl">Regime tributário</span>
-        <select class="plain" id="regime">
-          <option value="">Prefiro não informar</option>
-          <option value="MEI">MEI</option>
-          <option value="Simples Nacional">Simples Nacional</option>
-          <option value="Lucro Presumido">Lucro Presumido</option>
-          <option value="Lucro Real">Lucro Real</option>
-        </select>
-      </label>
+    <section class="secao">
+      <span class="grupo-tit">Sua meta</span>
+      <div class="lista form">
+        <label class="linha">
+          <span class="rot">Margem de lucro que você quer <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="decimal" id="lucroAlvo" placeholder="12"><span class="un">%</span></span>
+          <span class="err" id="errLucro" role="alert" aria-live="assertive"></span>
+        </label>
+
+        <label class="linha">
+          <span class="rot">Regime tributário</span>
+          <select class="plain" id="regime" data-folha="Regime tributário">
+            <!-- Sem opção pré-escolhida: o campo é opcional, e deixar um regime
+                 marcado por padrão faria o usuário confirmar sem ler. A opção
+                 vazia é disabled+hidden — serve de estado inicial e some da
+                 lista assim que ele abre as alternativas. -->
+            <option value="" disabled selected hidden>Selecione</option>
+            <option value="MEI">MEI</option>
+            <option value="Simples Nacional">Simples Nacional</option>
+            <option value="Lucro Presumido">Lucro Presumido</option>
+            <option value="Lucro Real">Lucro Real</option>
+          </select>
+        </label>
+      </div>
+      <span class="grupo-nota">Margem é quanto você quer que sobre, líquido, depois de pagar tudo.</span>
+    </section>
+
+    <div class="barra-acao material">
+      <a class="btn-voltar" href="projeto.html">Voltar</a>
+      <button class="btn-primary" type="submit" id="btnSalvar">Ver meu diagnóstico</button>
     </div>
-
-    <button class="btn-primary" type="submit" id="btnSalvar">Ver meu diagnóstico →</button>
   </form>
-
-  <p class="avancado">Precisa de custo por módulo, por kWp ou por faixa?<br><a href="configuracoes.html">Abrir configuração avançada</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -157,8 +137,10 @@ const integrador = AppCore.safeParse('integrador', null);
 
 // Esta tela é o passo 3 do funil de captação. Ela pergunta o MÍNIMO que o motor
 // de precificação precisa para produzir um diagnóstico honesto, nada além.
-// A configuração completa (custo por módulo, por kWp, por faixa, custos extras)
-// continua existindo em configuracoes.html, fora do funil, para quem já converteu.
+// O funil não oferece mais atalho para a configuração avançada: no meio de uma
+// captação, "custo por módulo / por kWp / por faixa" é uma porta que só tira o
+// usuário do caminho. A página configuracoes.html continua existindo, mas fora
+// do fluxo e sem link a partir daqui.
 //
 // Contrato de gravação (as mesmas chaves que o diagnóstico lê):
 //   configCustos → custos diretos por projeto, todos no modo 'fixo'
@@ -168,7 +150,6 @@ const CAMPOS_CUSTO = ['ca','inst','proj','homol','art'];
 
 function init() {
   if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
-  document.getElementById('empresaNome').textContent = integrador.nome_empresa;
 
   const cfg  = AppCore.safeParse('configCustos', {});
   const desp = AppCore.safeParse('despesas', {});
@@ -182,16 +163,28 @@ function init() {
   v('tributo',     desp.tributo?.valor ?? '');
   v('lucroAlvo',   integrador?.lucro_alvo ?? 12);
   v('regime',      integrador?.regime_tributario || '');
-  v('notaKit',     desp.notaKit || 'distribuidora');
+  selecionarNotaKit(desp.notaKit || 'distribuidora');
 }
 
-const fmt = n => Number(n).toFixed(2).replace('.', ',');
-
-function trocarEmpresa() {
-  ['integrador','projeto','despesas','configCustos','custosExtras','sazonalidade','precSolar']
-    .forEach(k => localStorage.removeItem(k));
-  window.location.href = 'cadastro.html';
+// O segmentado é a interface; o <input hidden id="notaKit"> é o dado. Quem lê
+// (salvar) continua fazendo notaKit.value, sem saber que a origem mudou.
+function selecionarNotaKit(valor) {
+  document.getElementById('notaKit').value = valor;
+  document.querySelectorAll('#segNotaKit button').forEach(b => {
+    const ativo = b.dataset.v === valor;
+    b.classList.toggle('on', ativo);
+    b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+  });
 }
+document.getElementById('segNotaKit').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]');
+  if (b) selecionarNotaKit(b.dataset.v);
+});
+
+// Com separador de milhar: a tela inteira é sobre dinheiro, e "42800,00" exige
+// que o usuário conte casas para saber a ordem de grandeza. AppCore.parseNum
+// lê "42.800,00" corretamente (havendo vírgula, os pontos são milhar).
+const fmt = n => Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
 // Percentual e volume têm faixa de valores com significado: 300% de comissão ou
 // 0 projetos por mês não são erro de digitação inofensivo, quebram o cálculo.
@@ -271,6 +264,8 @@ async function salvar(e) {
 }
 
 AppCore.renderStepper('stepper','custos');
+AppCore.ligarMoeda();
+AppCore.ligarFolhaSelect();
 init();
 </script>
 </body>

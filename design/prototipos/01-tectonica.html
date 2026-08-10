@@ -170,8 +170,8 @@ p{font-size:var(--t-corpo);color:var(--tinta-60);line-height:1.65}
   transition:background var(--medio) var(--assenta),color var(--medio) var(--assenta);
   min-height:56px;
 }
-.cel-passo .n{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--tinta-38);display:block}
-.cel-passo .t{font-size:var(--t-min);font-weight:650;color:var(--tinta-60);letter-spacing:-.01em;display:block;margin-top:2px}
+.cel-passo .n{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--tinta-38);display:block;position:relative;z-index:1}
+.cel-passo .t{font-size:var(--t-min);font-weight:650;color:var(--tinta-60);letter-spacing:-.01em;display:block;margin-top:2px;position:relative;z-index:1}
 .cel-passo.feita{background:var(--tinta)}
 .cel-passo.feita .n{color:rgba(253,252,248,.45)}
 .cel-passo.feita .t{color:var(--cera-00)}
@@ -179,10 +179,14 @@ p{font-size:var(--t-corpo);color:var(--tinta-60);line-height:1.65}
 .cel-passo.agora .n{color:rgba(255,255,255,.6)}
 .cel-passo.agora .t{color:#fff}
 /* O preenchimento acontece de baixo para cima, como cera entrando na célula */
+/* A célula ativa nasce com o verde escuro e o claro sobe por dentro dela.
+   O ::before fica ACIMA do fundo do pai (z-index 0) e ABAIXO do texto
+   (z-index 1) — daí os filhos serem posicionados. */
+.cel-passo.agora{background:var(--verde-esc)}
 .cel-passo.agora::before{
-  content:'';position:absolute;inset:0;background:var(--verde-esc);
+  content:'';position:absolute;inset:0;background:var(--verde);
   transform-origin:bottom;animation:enche var(--lento) var(--assenta) both;
-  clip-path:inherit;z-index:-1;
+  clip-path:inherit;z-index:0;
 }
 @keyframes enche{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @media (max-width:640px){
