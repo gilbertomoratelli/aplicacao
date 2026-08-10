@@ -135,10 +135,10 @@
   //    ("quanto isso dá no seu projeto?") e, com o projeto já preenchido, ela usa
   //    os números reais do usuário em vez de uma referência genérica.
   AppCore.PASSOS = [
-    { id: 'contato',    rotulo: 'Contato',     href: 'cadastro.html' },
-    { id: 'projeto',    rotulo: 'Projeto',     href: 'projeto.html' },
-    { id: 'custos',     rotulo: 'Custos',      href: 'custos.html' },
-    { id: 'diagnostico',rotulo: 'Diagnóstico', href: 'index.html' }
+    { id: 'contato',    rotulo: 'Contato',     href: 'cadastro' },
+    { id: 'projeto',    rotulo: 'Projeto',     href: 'projeto' },
+    { id: 'custos',     rotulo: 'Custos',      href: 'custos' },
+    { id: 'diagnostico',rotulo: 'Diagnóstico', href: './' }
   ];
 
   // 8. renderStepper(container, passoAtualId): desenha o indicador de progresso.

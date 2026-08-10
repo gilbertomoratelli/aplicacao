@@ -122,7 +122,7 @@
     </section>
 
     <div class="barra-acao material">
-      <a class="btn-voltar" href="projeto.html">Voltar</a>
+      <a class="btn-voltar" href="projeto">Voltar</a>
       <button class="btn-primary" type="submit" id="btnSalvar">Ver meu diagnóstico</button>
     </div>
   </form>
@@ -149,7 +149,7 @@ const integrador = AppCore.safeParse('integrador', null);
 const CAMPOS_CUSTO = ['ca','inst','proj','homol','art'];
 
 function init() {
-  if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
+  if (!integrador?.nome_empresa) { window.location.href = 'cadastro'; return; }
 
   const cfg  = AppCore.safeParse('configCustos', {});
   const desp = AppCore.safeParse('despesas', {});
@@ -260,7 +260,7 @@ async function salvar(e) {
     }).eq('id', integrador.id), AppCore.PRAZO_BOOT);
   }
 
-  window.location.href = 'index.html';
+  window.location.href = './';
 }
 
 AppCore.renderStepper('stepper','custos');

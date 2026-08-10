@@ -48,7 +48,7 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="index.html">← Voltar ao diagnóstico</a>
+  <a class="btn-back" href="./">← Voltar ao diagnóstico</a>
   <div class="brand">
     <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
     <div class="brand-name">Auditor de Precificação</div>
@@ -99,7 +99,7 @@
   </div>
 
   <div class="nav-row">
-    <a class="btn-nav" href="index.html">← Voltar</a>
+    <a class="btn-nav" href="./">← Voltar</a>
     <button class="btn-nav primary" id="btnContinuar" onclick="salvar()">Salvar e voltar →</button>
   </div>
 </div>
@@ -129,7 +129,7 @@ const brl = v => isFinite(v) && v > 0
 
 function init() {
   if (!integrador?.nome_empresa) {
-    window.location.href = 'cadastro.html';
+    window.location.href = 'cadastro';
     return;
   }
   document.getElementById('empresaNome').textContent   = integrador.nome_empresa;
@@ -228,7 +228,7 @@ function calcResumo() {
 
 function trocarEmpresa() {
   localStorage.removeItem('integrador');
-  window.location.href = 'cadastro.html';
+  window.location.href = 'cadastro';
 }
 
 async function carregarDados() {
@@ -276,7 +276,7 @@ async function salvar() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Salvar e voltar →';
-    window.location.href = 'index.html';
+    window.location.href = './';
   }
 }
 

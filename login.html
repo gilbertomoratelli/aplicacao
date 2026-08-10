@@ -67,7 +67,7 @@
 const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const params   = new URLSearchParams(location.search);
-const returnTo = params.get('returnTo') || 'index.html';
+const returnTo = params.get('returnTo') || './';
 let modoLogin  = true;
 
 // Redireciona se já autenticado

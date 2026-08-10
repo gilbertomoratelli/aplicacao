@@ -164,7 +164,7 @@
 <body>
 
 <div class="acoes naoImprime">
-  <a href="index.html">← Voltar ao diagnóstico</a>
+  <a href="./">← Voltar ao diagnóstico</a>
   <button class="destaque" onclick="window.print()">↓ Imprimir ou salvar em PDF</button>
 </div>
 
@@ -526,7 +526,7 @@ function rodape() {
 // ── Boot ───────────────────────────────────────────────────────────────
 function init() {
   if (!integrador?.nome_empresa || !projeto?.valor_venda || !despesas?.projetosMes) {
-    window.location.href = 'index.html';
+    window.location.href = './';
     return;
   }
   const r = Calculo.diagnostico(montarEstado());
@@ -536,7 +536,7 @@ function init() {
       <h2>Não foi possível montar o relatório</h2>
       <p class="intro">Com os números informados não existe preço que entregue a margem desejada:
       comissão, impostos e margem somam 100% ou mais.</p>
-      <p><a href="custos.html">← Revisar meus números</a></p></section>`;
+      <p><a href="custos">← Revisar meus números</a></p></section>`;
     return;
   }
 

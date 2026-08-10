@@ -1,0 +1,17 @@
+# URLs sem .html: /precificacao/custos serve o arquivo custos.html.
+# Duas metades que se completam:
+#   1. quem chega com .html na barra é redirecionado para a forma limpa;
+#   2. a forma limpa é reescrita internamente de volta para o arquivo.
+# O guard de REDIRECT_STATUS impede que a reescrita interna (2) dispare o
+# redirecionamento (1) de novo, o que viraria um loop infinito.
+RewriteEngine On
+
+# index.html explícito volta para a raiz da pasta, não para /index
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^index\.html$ ./ [R=301,L]
+
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^(.+)\.html$ $1 [R=301,L]
+
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]

@@ -74,7 +74,7 @@
     </section>
 
     <div class="barra-acao material">
-      <a class="btn-voltar" href="cadastro.html">Voltar</a>
+      <a class="btn-voltar" href="cadastro">Voltar</a>
       <button class="btn-primary" type="submit" id="btnSalvar">Continuar</button>
     </div>
   </form>
@@ -106,7 +106,7 @@ function rotuloProjeto(kwp, modulos) {
 
 function init() {
   if(!integrador?.nome_empresa) {
-    window.location.href='cadastro.html';
+    window.location.href='cadastro';
     return;
   }
   if (projetoAtual) {
@@ -188,7 +188,7 @@ async function salvar(e) {
 
   btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto' : 'Continuar';
 
-  window.location.href='custos.html';
+  window.location.href='custos';
 }
 
 AppCore.renderStepper('stepper','projeto');

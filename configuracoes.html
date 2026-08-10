@@ -135,7 +135,7 @@
       <h1 style="display:flex;align-items:center;gap:10px">Configuração avançada de custos <button class="btn-help" onclick="abrirHelp()" title="O que são custos diretos?" aria-label="Ajuda: o que são custos diretos">?</button></h1>
       <p class="sub">Estrutura de custos da empresa, aplicada automaticamente a todos os projetos.</p>
     </div>
-    <a class="btn primary" id="btnHeaderVoltar" href="index.html">← Voltar ao diagnóstico</a>
+    <a class="btn primary" id="btnHeaderVoltar" href="./">← Voltar ao diagnóstico</a>
   </header>
 
 
@@ -354,7 +354,7 @@ const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const integrador = AppCore.safeParse('integrador', null);
 
-if (!integrador?.id) window.location.href = 'cadastro.html';
+if (!integrador?.id) window.location.href = 'cadastro';
 
 // M-1: prévia de custos usa 2 casas decimais para não parecer erro de cálculo
 // (ex.: R$ 2,50 arredondava para "R$ 3"). Todos os usos são prévias monetárias.

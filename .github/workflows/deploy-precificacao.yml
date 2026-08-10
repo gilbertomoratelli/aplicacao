@@ -57,7 +57,7 @@ jobs:
           cp index.html cadastro.html custos.html projeto.html relatorio.html \
              configuracoes.html historico.html sazonalidade.html login.html \
              app-core.js calculo.js config.js shared.css \
-             favicon.svg favicon-32.png apple-touch-icon.png \
+             favicon.svg favicon-32.png apple-touch-icon.png .htaccess \
              dist/
           cp js/*.js dist/js/
           cp img/*.svg dist/img/

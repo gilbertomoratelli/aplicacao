@@ -176,7 +176,7 @@
   <!-- B1 ─────────────────────────────────────────────────────── -->
   <h1>Seu diagnóstico de preço</h1>
   <p class="sub" id="ctxLinha"></p>
-  <div class="ctx"><a href="custos.html">← corrigir meus números</a></div>
+  <div class="ctx"><a href="custos">← corrigir meus números</a></div>
 
   <div id="avisoDados"></div>
 
@@ -225,7 +225,7 @@
   <!-- B7 ─────────────────────────────────────────────────────── -->
   <div class="cta" id="cta"></div>
 
-  <p class="rodape"><a href="custos.html">Ajustar meus números</a></p>
+  <p class="rodape"><a href="custos">Ajustar meus números</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -305,7 +305,7 @@ function renderVeredito(r) {
       <p>Não foi possível calcular seu preço mínimo com os números informados.
       Isso costuma acontecer quando comissão, impostos e margem desejada somam
       100% ou mais. Nesse caso não sobra espaço no preço para os custos.</p>
-      <div class="piso-linha"><a href="custos.html">Revisar meus números →</a></div>
+      <div class="piso-linha"><a href="custos">Revisar meus números →</a></div>
     </div>`;
     return;
   }
@@ -533,7 +533,7 @@ function abrirRelatorio() {
       meses: null,
     }));
   } catch (e) {}
-  window.location.href = 'relatorio.html';
+  window.location.href = 'relatorio';
 }
 
 // ── Registro do lead ──────────────────────────────────────────────────
@@ -566,9 +566,9 @@ let ESTADO, RESULTADO;
 
 function init() {
   // Sem os dados do funil não há diagnóstico possível, volta para a etapa que falta.
-  if (!integrador?.nome_empresa) { window.location.href = 'cadastro.html'; return; }
-  if (!projeto?.valor_venda)     { window.location.href = 'projeto.html'; return; }
-  if (!despesas?.projetosMes)    { window.location.href = 'custos.html'; return; }
+  if (!integrador?.nome_empresa) { window.location.href = 'cadastro'; return; }
+  if (!projeto?.valor_venda)     { window.location.href = 'projeto'; return; }
+  if (!despesas?.projetosMes)    { window.location.href = 'custos'; return; }
 
   // O projeto não tem mais nome próprio: o rótulo gravado já é derivado da
   // potência e dos módulos, então repeti-lo aqui duplicaria a mesma medida
