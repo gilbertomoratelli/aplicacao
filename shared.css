@@ -358,7 +358,10 @@ a.step-link:hover{background:rgba(255,253,248,.6)}
     color:var(--label-3);
   }
   form.painel .secao:first-child .grupo-tit{border-top:none;padding-top:var(--e6)}
-  form.painel .secao{margin:0}
+  /* Respiro ANTES da régua da próxima seção, espelhando o que ela tem
+     depois: sem isto a linha encosta no último campo da seção anterior. */
+  form.painel .secao{margin:0;padding-bottom:var(--e6)}
+  form.painel .secao:last-of-type{padding-bottom:0}
 
   /* A grade dos campos. Sem fundo e sem raio: o painel já é a superfície. */
   .lista.form{
@@ -464,6 +467,8 @@ a.step-link:hover{background:rgba(255,253,248,.6)}
   form.painel{padding:0 var(--e6)}
   form.painel .grupo-tit{padding:var(--e5) 0 var(--e3)}
   form.painel .secao:first-child .grupo-tit{padding-top:var(--e5)}
+  form.painel .secao{padding-bottom:var(--e5)}
+  form.painel .secao:last-of-type{padding-bottom:0}
   .lista.form{gap:var(--e4) var(--e5)}
   .lista.form .campo-linha{min-height:38px;padding:8px 11px}
   .lista.form select.plain{min-height:40px;padding:8px 11px}
