@@ -235,11 +235,12 @@ async function carregarDados() {
   const local = AppCore.safeParse('sazonalidade', {});
   if (local.meses) aplicarDados(local.meses);
 
-  if (!integrador?.id || !db) return;
-  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single());
-  if (data?.sazonalidade?.meses) {
-    localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
-    aplicarDados(data.sazonalidade.meses);
+  // Pela RPC do funil, não por `select` direto: as tabelas não têm mais
+  // permissão para o papel anônimo.
+  const remoto = await AppCore.Funil.lerAvancado('sazonalidade', integrador?.id);
+  if (remoto?.meses) {
+    localStorage.setItem('sazonalidade', JSON.stringify(remoto));
+    aplicarDados(remoto.meses);
   }
 }
 
@@ -270,9 +271,7 @@ async function salvar() {
   localStorage.setItem('sazonalidade', JSON.stringify(payload));
 
   try {
-    if (integrador?.id && db) {
-      await AppCore.dbTry(db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id));
-    }
+    await AppCore.Funil.salvarAvancado('sazonalidade', payload, integrador?.id);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Salvar e voltar →';

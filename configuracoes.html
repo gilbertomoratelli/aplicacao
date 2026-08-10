@@ -385,13 +385,13 @@ async function carregarConfigs() {
   configs      = AppCore.safeParse('configCustos', {});
   custosExtras = AppCore.safeParse('custosExtras', []);
 
-  if (!db || !integrador?.id) return;
-  const { data, error } = await AppCore.dbTry(
-    db.from('integradores').select('configs').eq('id', integrador.id).single()
-  );
-  if (!error && data?.configs && Object.keys(data.configs).length) {
-    configs      = data.configs.campos || {};
-    custosExtras = data.configs.extras || [];
+  // Acesso pela RPC do funil, não por `select` direto: as tabelas não têm mais
+  // permissão para o papel anônimo, e a mesma função serve às duas telas que
+  // mexem nestes blocos jsonb.
+  const remoto = await AppCore.Funil.lerAvancado('configs', integrador?.id);
+  if (remoto && Object.keys(remoto).length) {
+    configs      = remoto.campos || {};
+    custosExtras = remoto.extras || [];
     localStorage.setItem('configCustos', JSON.stringify(configs));
     localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
   }
@@ -400,12 +400,9 @@ async function carregarConfigs() {
 async function salvarConfigsDB() {
   localStorage.setItem('configCustos', JSON.stringify(configs));
   localStorage.setItem('custosExtras', JSON.stringify(custosExtras));
-  if (!db || !integrador?.id) return { error: null, skipped: true };
-  return await AppCore.dbTry(
-    db.from('integradores')
-      .update({ configs: { campos: configs, extras: custosExtras } })
-      .eq('id', integrador.id)
-  );
+  const ok = await AppCore.Funil.salvarAvancado('configs',
+    { campos: configs, extras: custosExtras }, integrador?.id);
+  return { error: ok ? null : new Error('sincronização indisponível'), skipped: !ok };
 }
 
 // ── Valores de referência para prévia ───────────────────────────────
@@ -865,11 +862,8 @@ async function salvarDespesas() {
   const atual = AppCore.safeParse('integrador', {}) || {};
   localStorage.setItem('integrador', JSON.stringify({ ...atual, regime_tributario: regime, lucro_alvo: lucroAlvo }));
 
-  if (db && integrador?.id) {
-    await AppCore.dbTry(db.from('integradores')
-      .update({ despesas, regime_tributario: regime })
-      .eq('id', integrador.id));
-  }
+  await AppCore.Funil.salvarAvancado('despesas', despesas, integrador?.id);
+  await AppCore.Funil.salvarAvancado('regime_tributario', regime, integrador?.id);
 }
 
 function abrirHelpDespesa(tipo){ document.getElementById('modalHelpDesp' + tipo).classList.add('open'); }
