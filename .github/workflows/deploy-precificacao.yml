@@ -1,0 +1,86 @@
+# Deploy da versão paralela do funil em https://grupofavo.com/precificacao.
+#
+# Disparo SEMPRE manual: aba Actions → este workflow → "Run workflow",
+# escolhendo a branch a publicar. Push nenhum publica sozinho. O fluxo é
+# sempre: migrations primeiro, arquivos depois — assim o código novo nunca
+# chega ao ar antes da coluna que ele precisa.
+#
+# Secrets necessários (Settings → Secrets and variables → Actions):
+#   HOSTINGER_SSH_KEY      chave privada (o .pub correspondente vai no painel da Hostinger)
+#   HOSTINGER_SSH_HOST     ex.: 145.223.xx.xx ou br-xxx.hostinger.com
+#   HOSTINGER_SSH_PORT     na Hostinger compartilhada é 65002
+#   HOSTINGER_SSH_USER     ex.: u123456789
+#   HOSTINGER_DEPLOY_PATH  ex.: /home/u123456789/domains/grupofavo.com/public_html/precificacao
+#   SUPABASE_ACCESS_TOKEN  token pessoal de https://supabase.com/dashboard/account/tokens
+#   SUPABASE_PROJECT_REF   ref do projeto DESTA versão (o xxxx de https://xxxx.supabase.co)
+#   SUPABASE_DB_PASSWORD   senha do banco desse projeto (Dashboard → Settings → Database)
+#
+# Esta versão paralela usa um banco Supabase PRÓPRIO, separado do da main.
+# O ref fica em secret justamente para este arquivo não amarrar qual banco é;
+# quem decide é a configuração do repositório.
+
+name: Deploy precificação (versão paralela)
+
+on:
+  workflow_dispatch:
+
+# Um deploy por vez; um push em cima do outro espera o anterior terminar em vez
+# de interromper rsync/migration no meio.
+concurrency:
+  group: deploy-precificacao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Aplicar migrations no Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase db push
+
+      # Lista explícita do que vai ao ar. O repositório carrega protótipos de
+      # design, docs e backups que não devem virar página pública; incluir por
+      # nome evita que um arquivo solto novo suba por acidente.
+      - name: Montar pasta de publicação
+        run: |
+          mkdir -p dist/js
+          cp index.html cadastro.html custos.html projeto.html relatorio.html \
+             configuracoes.html historico.html sazonalidade.html login.html \
+             app-core.js calculo.js config.js shared.css \
+             dist/
+          cp js/*.js dist/js/
+
+      - name: Preparar acesso SSH
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      # --delete mantém o servidor idêntico ao dist/: página removida do repo
+      # sai do ar em vez de ficar órfã. Só apaga dentro de DEPLOY_PATH.
+      - name: Enviar arquivos para a Hostinger
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
+          rsync -rvz --delete \
+            -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
+            dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"

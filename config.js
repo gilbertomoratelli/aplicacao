@@ -35,7 +35,9 @@
     : {
         ambiente: 'producao',
         ctaWhatsapp: CTA_WHATSAPP,
-        supabaseUrl: 'https://dfsmwzmtainiclcwpigw.supabase.co',
-        supabaseKey: 'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+        // Banco PRÓPRIO desta versão paralela (grupofavo.com/precificacao).
+        // A versão da main usa outro projeto Supabase; não copiar de lá.
+        supabaseUrl: 'https://yrlstcwzclbhfocdvtbp.supabase.co',
+        supabaseKey: 'sb_publishable_dWVNhR8Jl8yzrHPi-sYOig_hxB5dWA-'
       };
 })();
