@@ -46,8 +46,8 @@
 
   <nav class="stepper" id="stepper"></nav>
 
-  <h1 class="largeTitle" style="margin:0 0 var(--e2)">Vamos começar pela sua empresa</h1>
-  <p class="subhead" style="color:var(--label-2);margin:0 0 var(--e6)">São só quatro campos. No fim você recebe um diagnóstico do seu preço atual.</p>
+  <h1 class="largeTitle" style="margin:0 0 var(--e2)">Vamos começar por você e sua empresa</h1>
+  <p class="subhead" style="color:var(--label-2);margin:0 0 var(--e6)">São só cinco campos. No fim você recebe um diagnóstico do seu preço atual.</p>
 
   <div class="returning" id="returning" style="display:none">
     <div>
@@ -63,15 +63,21 @@
       <span class="grupo-tit">Identificação</span>
       <div class="lista form">
         <label class="linha txt">
-          <span class="rot">Empresa <span class="req">*</span></span>
-          <span class="ctrl"><input class="campo-linha" type="text" id="nome_empresa" placeholder="Solar Norte Energia" autocomplete="organization" aria-required="true"></span>
-          <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
+          <span class="rot">Seu nome <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" id="nome_contato" placeholder="Maria Silva" autocomplete="name" aria-required="true"></span>
+          <span class="err" id="errContato" role="alert" aria-live="assertive">Campo obrigatório</span>
         </label>
 
         <label class="linha txt">
           <span class="rot">CNPJ <span class="req">*</span></span>
           <span class="ctrl"><input class="campo-linha" type="text" id="cnpj" placeholder="00.000.000/0000-00" maxlength="18" inputmode="numeric" oninput="mascaraCNPJ(this)" aria-required="true"></span>
           <span class="err" id="errCnpj" role="alert" aria-live="assertive"></span>
+        </label>
+
+        <label class="linha txt">
+          <span class="rot">Empresa <span class="req">*</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" id="nome_empresa" placeholder="Solar Norte Energia" autocomplete="organization" aria-required="true"></span>
+          <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
         </label>
       </div>
 
@@ -141,9 +147,10 @@ function mascaraTel(el) {
 function carregarSalvo() {
   const salvo = AppCore.safeParse('integrador', null);
   if(salvo?.nome_empresa) {
-    document.getElementById('retNome').textContent = salvo.nome_empresa;
+    document.getElementById('retNome').textContent = salvo.nome_contato || salvo.nome_empresa;
     document.getElementById('returning').style.display='flex';
     document.getElementById('dividerRet').style.display='block';
+    document.getElementById('nome_contato').value = salvo.nome_contato||'';
     document.getElementById('nome_empresa').value = salvo.nome_empresa||'';
     document.getElementById('cnpj').value = salvo.cnpj||'';
     document.getElementById('email').value = salvo.email||'';
@@ -159,6 +166,9 @@ function continuar() {
 // do valor para separar "não preencheu" de "preencheu errado", dizer só
 // "inválido" obriga o usuário a adivinhar o que corrigir.
 const CAMPOS_OBRIGATORIOS=[
+  {id:'nome_contato',err:'errContato',
+   check:v=>v.trim().length>1,
+   msg:()=>'Informe o seu nome'},
   {id:'nome_empresa',err:'errNome',
    check:v=>v.trim().length>1,
    msg:()=>'Informe o nome da empresa'},
@@ -191,6 +201,7 @@ async function salvar(e) {
   // só são preservados: quem volta para corrigir o contato não perde o que já
   // respondeu adiante.
   const payload={
+    nome_contato: document.getElementById('nome_contato').value.trim(),
     nome_empresa: document.getElementById('nome_empresa').value.trim(),
     cnpj: document.getElementById('cnpj').value.trim(),
     regime_tributario: salvo?.regime_tributario ?? null,
