@@ -185,10 +185,12 @@ const esc  = AppCore.escapeHtml;
 // quando o formato mudou, a página continuou abrindo sem nenhum erro de
 // JavaScript, mas imprimiu tabelas inteiras vazias e NaN. Ler da mesma fonte
 // que o diagnóstico elimina essa classe de divergência silenciosa.
-const integrador   = AppCore.safeParse('integrador', null);
-const projeto      = AppCore.safeParse('projeto', null);
-const despesas     = AppCore.safeParse('despesas', null);
-const configCustos = AppCore.safeParse('configCustos', {});
+// `let`, não `const`: o link do vendedor (?v=) repõe o localStorage DEPOIS que
+// este script já rodou, e a tela precisa enxergar o estado novo.
+let integrador   = AppCore.safeParse('integrador', null);
+let projeto      = AppCore.safeParse('projeto', null);
+let despesas     = AppCore.safeParse('despesas', null);
+let configCustos = AppCore.safeParse('configCustos', {});
 
 function montarEstado() {
   const custo = k => {
@@ -511,8 +513,7 @@ function premissas(r) {
   </section>`;
 }
 
-function rodape() {
-  const link = (AppConfig.ctaWhatsapp || '').trim();
+function rodape(link) {
   const cta = link
     ? `<p class="naoImprime" style="text-align:center;margin-bottom:22px">
          <a href="${esc(link)}" target="_blank" rel="noopener"
@@ -524,7 +525,7 @@ function rodape() {
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────
-function init() {
+function init(linkCta) {
   if (!integrador?.nome_empresa || !projeto?.valor_venda || !despesas?.projetosMes) {
     window.location.href = './';
     return;
@@ -541,10 +542,27 @@ function init() {
   }
 
   document.getElementById('folha').innerHTML =
-    capa() + resumo(r) + cascata(r) + anual(r) + desconto(r) + acoes(r) + premissas(r) + rodape();
+    capa() + resumo(r) + cascata(r) + anual(r) + desconto(r) + acoes(r) + premissas(r) + rodape(linkCta);
 }
 
-init();
+// Sem link na URL a página segue 100% offline, como sempre foi: o relatório é o
+// entregável do lead e não pode depender de rede para abrir. Só o link do
+// vendedor (?v=) e o de resgate (?s=) puxam o SDK e buscam a jornada no banco.
+(async function () {
+  let linkCta = AppCore.Funil.ctaWhatsappCache();
+
+  if (AppCore.Funil.temLink() && await AppCore.Funil.garantirSdk()) {
+    await AppCore.Funil.retomar();
+    AppCore.Funil.avisarConsulta();
+    integrador   = AppCore.safeParse('integrador', null);
+    projeto      = AppCore.safeParse('projeto', null);
+    despesas     = AppCore.safeParse('despesas', null);
+    configCustos = AppCore.safeParse('configCustos', {});
+    linkCta = await AppCore.Funil.ctaWhatsapp();
+  }
+
+  init(linkCta);
+})();
 </script>
 </body>
 </html>

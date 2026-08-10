@@ -16,10 +16,16 @@
               /^192\.168\./.test(location.hostname) ||   // testando pelo celular na rede local
               /^10\./.test(location.hostname);
 
-  // Canal de conversão exibido no fim do diagnóstico. Preencher com o link do
-  // WhatsApp no formato https://wa.me/55DDDNUMERO (opcionalmente ?text=...).
-  // Enquanto estiver vazio o botão não aparece, melhor não ter chamada do que
-  // ter uma que não leva a lugar nenhum.
+  // Canal de conversão exibido no fim do diagnóstico.
+  //
+  // A fonte da verdade passou a ser o banco (funil_config.cta_whatsapp, editável
+  // em /adm): trocar o número de atendimento não pode exigir deploy. O valor
+  // abaixo é só a REDE DE SEGURANÇA para quando a consulta falha — deixe vazio a
+  // menos que exista um número que valha a pena mostrar mesmo offline.
+  //
+  // Formato: https://wa.me/55DDDNUMERO (opcionalmente ?text=...). Enquanto
+  // estiver vazio nos dois lugares o botão não aparece: melhor não ter chamada
+  // do que ter uma que não leva a lugar nenhum.
   var CTA_WHATSAPP = '';
 
   window.AppConfig = local

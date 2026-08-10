@@ -30,13 +30,13 @@
       <div class="lista form">
         <label class="linha">
           <span class="rot">Módulos <span class="req">*</span></span>
-          <span class="ctrl"><input class="campo-linha" type="number" id="qtd_modulos" placeholder="0" min="1" step="1" aria-required="true"><span class="un">un</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="numeric" id="qtd_modulos" placeholder="0" aria-required="true"><span class="un">un</span></span>
           <span class="err" id="errModulos" role="alert" aria-live="assertive">Informe a quantidade</span>
         </label>
 
         <label class="linha">
           <span class="rot">Potência <span class="req">*</span></span>
-          <span class="ctrl"><input class="campo-linha" type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01" aria-required="true"><span class="un">kWp</span></span>
+          <span class="ctrl"><input class="campo-linha" type="text" inputmode="decimal" id="kwp_sistema" placeholder="0,00" aria-required="true"><span class="un">kWp</span></span>
           <span class="err" id="errKwp" role="alert" aria-live="assertive">Informe a potência</span>
         </label>
       </div>
@@ -84,10 +84,10 @@
 <script src="config.js"></script>
 <script src="app-core.js"></script>
 <script>
-const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
-
-const integrador = AppCore.safeParse('integrador', null);
-const projetoAtual = AppCore.safeParse('projeto', null);
+// `let`, não `const`: a retomada por link (?s= / ?v=) repõe o localStorage
+// DEPOIS que este script já rodou, e a tela precisa enxergar o estado novo.
+let integrador   = AppCore.safeParse('integrador', null);
+let projetoAtual = AppCore.safeParse('projeto', null);
 
 // Com separador de milhar: a tela é sobre dinheiro, e "28400,00" obriga o
 // usuário a contar casas. AppCore.parseNum lê "28.400,00" corretamente
@@ -111,7 +111,7 @@ function init() {
   }
   if (projetoAtual) {
     document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
-    document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
+    document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema != null ? String(projetoAtual.kwp_sistema).replace('.', ',') : '';
     document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? fmt(projetoAtual.custo_kit) : '';
     document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? fmt(projetoAtual.valor_venda) : '';
     document.getElementById('btnSalvar').textContent = 'Atualizar projeto';
@@ -124,7 +124,7 @@ const CAMPOS_OBRIGATORIOS=[
    check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;},
    msg:v=>v.trim()===''?'Informe a quantidade de módulos':'Use um número inteiro maior que zero'},
   {id:'kwp_sistema',err:'errKwp',
-   check:v=>parseFloat(v)>0,
+   check:v=>AppCore.parseNum(v)>0,
    msg:v=>v.trim()===''?'Informe a potência do sistema':'A potência precisa ser maior que zero'},
   {id:'custo_kit',err:'errKit',
    check:v=>v.trim().length>0 && AppCore.parseNum(v)>0,
@@ -145,7 +145,7 @@ async function salvar(e) {
   const valorVenda = AppCore.parseNum(document.getElementById('valor_venda').value) || null;
 
   const modulos = AppCore.parseNum(document.getElementById('qtd_modulos').value);
-  const kwp     = parseFloat(document.getElementById('kwp_sistema').value);
+  const kwp     = AppCore.parseNum(document.getElementById('kwp_sistema').value);
 
   const payload={
     integrador_id: integrador.id||null,
@@ -160,30 +160,22 @@ async function salvar(e) {
   const localId = projetoAtual?.id || AppCore.uuid();
   localStorage.setItem('projeto', JSON.stringify({...payload, id: localId, valor_venda: valorVenda}));
 
-  // Sync opcional com o DB: atualiza se já existe um registro salvo, senão cria um novo.
-  let data = null, error = null;
-  if (db) {
-    if (projetoAtual?.id) {
-      ({data,error} = await AppCore.dbTry(db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single()));
-      // Registro não existe na base atual (ID de outro ambiente): tenta inserir
-      if (!data || error?.code === 'PGRST116') {
-        ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
-      }
-    } else {
-      ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
-    }
+  // Sync com o servidor pela porta única do funil. Além de gravar o projeto, é
+  // esta chamada que desarma o relógio desta etapa e arma o da seguinte.
+  //
+  // Falha de sincronização não é problema do usuário: o dado já está salvo
+  // localmente e o funil segue normalmente. Interromper com um alerta (ainda
+  // por cima com mensagem técnica do Postgres) transforma um não-evento em
+  // erro assustador bem no meio da captação. Fica no console, para quem
+  // desenvolve: que é quem pode agir a respeito.
+  const r = await AppCore.Funil.registrarEtapa('projeto', payload, {
+    integrador_id: integrador?.id || null,
+    projeto_id: projetoAtual?.id || null
+  });
 
-    // Falha de sincronização não é problema do usuário: o dado já está salvo
-    // localmente e o funil segue normalmente. Interromper com um alerta (ainda
-    // por cima com mensagem técnica do Postgres) transforma um não-evento em
-    // erro assustador bem no meio da captação. Fica no console, para quem
-    // desenvolve: que é quem pode agir a respeito.
-    if (error) console.warn('Projeto salvo localmente; sincronização com o servidor falhou:', error.message);
-
-    // Preserva o id real do DB quando vier, sem sobrescrever com o local.
-    if (data) {
-      localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda}));
-    }
+  // Preserva o id real do DB quando vier, sem sobrescrever com o local.
+  if (r?.projeto_id) {
+    localStorage.setItem('projeto', JSON.stringify({...payload, id: r.projeto_id, valor_venda: valorVenda}));
   }
 
   btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto' : 'Continuar';
@@ -192,7 +184,13 @@ async function salvar(e) {
 }
 
 AppCore.renderStepper('stepper','projeto');
-init();
+
+(async function () {
+  if (await AppCore.Funil.retomarEIr('projeto')) return;
+  integrador   = AppCore.safeParse('integrador', null);
+  projetoAtual = AppCore.safeParse('projeto', null);
+  init();
+})();
 </script>
 </body>
 </html>

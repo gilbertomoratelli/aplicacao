@@ -64,7 +64,7 @@
       <div class="lista form">
         <label class="linha txt">
           <span class="rot">Seu nome <span class="req">*</span></span>
-          <span class="ctrl"><input class="campo-linha" type="text" id="nome_contato" placeholder="Maria Silva" autocomplete="name" aria-required="true"></span>
+          <span class="ctrl"><input class="campo-linha" type="text" id="nome_contato" placeholder="Maria Silva" autocomplete="name" oninput="mascaraNome(this)" aria-required="true"></span>
           <span class="err" id="errContato" role="alert" aria-live="assertive">Campo obrigatório</span>
         </label>
 
@@ -110,8 +110,14 @@
 <script src="config.js"></script>
 <script src="app-core.js"></script>
 <script>
-const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
-
+// Title Case enquanto digita: "maria da silva" vira "Maria Da Silva".
+// A transformação preserva o tamanho do texto, então basta devolver o
+// cursor para onde estava; sem isso ele pula para o fim a cada tecla.
+function mascaraNome(el) {
+  const ini = el.selectionStart, fim = el.selectionEnd;
+  el.value = el.value.replace(/\S+/g, p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase());
+  el.setSelectionRange(ini, fim);
+}
 function mascaraCNPJ(el) {
   let v = el.value.replace(/\D/g,'').slice(0,14);
   if(v.length>12) v=v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
@@ -168,13 +174,13 @@ function continuar() {
 const CAMPOS_OBRIGATORIOS=[
   {id:'nome_contato',err:'errContato',
    check:v=>v.trim().length>1,
-   msg:()=>'Informe o seu nome'},
-  {id:'nome_empresa',err:'errNome',
-   check:v=>v.trim().length>1,
-   msg:()=>'Informe o nome da empresa'},
+   msg:v=>v.trim()===''?'Informe o seu nome':'Nome muito curto. Digite ao menos duas letras'},
   {id:'cnpj',err:'errCnpj',
    check:v=>cnpjValido(v),
    msg:v=>v.trim()===''?'Informe o CNPJ da empresa':'CNPJ inválido. Confira os 14 dígitos'},
+  {id:'nome_empresa',err:'errNome',
+   check:v=>v.trim().length>1,
+   msg:v=>v.trim()===''?'Informe o nome da empresa':'Nome muito curto. Digite ao menos duas letras'},
   {id:'email',err:'errEmail',
    check:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
    msg:v=>v.trim()===''?'Informe o e-mail de contato':'E-mail inválido. Exemplo: contato@suaempresa.com.br'},
@@ -215,20 +221,12 @@ async function salvar(e) {
   const id = salvo?.id || AppCore.uuid();
   localStorage.setItem('integrador', JSON.stringify({...payload, id, lucro_alvo: lucroAlvoVal}));
 
-  // Sync opcional com o DB: atualiza se já existe um registro salvo, senão cria um novo.
-  if (db) {
-    let data, error;
-    if (salvo?.id) {
-      ({data,error} = await AppCore.dbTry(db.from('integradores').update(payload).eq('id', salvo.id).select().single()));
-      if (!data || error?.code === 'PGRST116') {
-        ({data,error} = await AppCore.dbTry(db.from('integradores').insert(payload).select().single()));
-      }
-    } else {
-      ({data,error} = await AppCore.dbTry(db.from('integradores').insert(payload).select().single()));
-    }
-    if (!error && data?.id) {
-      localStorage.setItem('integrador', JSON.stringify({...payload, id: data.id, lucro_alvo: lucroAlvoVal}));
-    }
+  // Sync com o servidor por uma porta só. Além de gravar o integrador, é esta
+  // chamada que cria a sessão do lead e arma o relógio da etapa seguinte — é o
+  // que faz o abandono a partir daqui virar um sinal em vez de silêncio.
+  const r = await AppCore.Funil.registrarEtapa('contato', payload, { integrador_id: salvo?.id || null });
+  if (r?.integrador_id) {
+    localStorage.setItem('integrador', JSON.stringify({...payload, id: r.integrador_id, lucro_alvo: lucroAlvoVal}));
   }
 
   btn.disabled=false; btn.textContent='Continuar';
@@ -236,7 +234,14 @@ async function salvar(e) {
 }
 
 AppCore.renderStepper('stepper','contato');
-carregarSalvo();
+
+// Quem chega por um link de recuperação (?s=…) tem o estado devolvido antes de a
+// tela se montar, e é levado direto para onde parou. Sem isso a mensagem de
+// resgate abriria um formulário em branco no celular dele.
+(async function () {
+  if (await AppCore.Funil.retomarEIr('contato')) return;
+  carregarSalvo();
+})();
 </script>
 </body>
 </html>

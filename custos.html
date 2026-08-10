@@ -132,8 +132,9 @@
 <script src="config.js"></script>
 <script src="app-core.js"></script>
 <script>
-const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
-const integrador = AppCore.safeParse('integrador', null);
+// `let`, não `const`: a retomada por link (?s= / ?v=) repõe o localStorage
+// DEPOIS que este script já rodou, e a tela precisa enxergar o estado novo.
+let integrador = AppCore.safeParse('integrador', null);
 
 // Esta tela é o passo 3 do funil de captação. Ela pergunta o MÍNIMO que o motor
 // de precificação precisa para produzir um diagnóstico honesto, nada além.
@@ -252,13 +253,14 @@ async function salvar(e) {
   localStorage.setItem('despesas', JSON.stringify(despesas));
   localStorage.setItem('integrador', JSON.stringify({ ...atual, regime_tributario: regime, lucro_alvo: lucroAlvo }));
 
-  if (db && integrador?.id) {
-    await AppCore.dbTry(db.from('integradores').update({
-      despesas,
-      regime_tributario: regime,
-      configs: { campos: configCustos, extras: [] }
-    }).eq('id', integrador.id), AppCore.PRAZO_BOOT);
-  }
+  // Sync pela porta única do funil. `lucro_alvo` entra no snapshot da sessão
+  // (e não em coluna própria) porque é isso que a retomada precisa repor.
+  await AppCore.Funil.registrarEtapa('custos', {
+    despesas,
+    configs: { campos: configCustos, extras: [] },
+    regime_tributario: regime,
+    lucro_alvo: lucroAlvo
+  }, { integrador_id: integrador?.id || null });
 
   window.location.href = './';
 }
@@ -266,7 +268,12 @@ async function salvar(e) {
 AppCore.renderStepper('stepper','custos');
 AppCore.ligarMoeda();
 AppCore.ligarFolhaSelect();
-init();
+
+(async function () {
+  if (await AppCore.Funil.retomarEIr('custos')) return;
+  integrador = AppCore.safeParse('integrador', null);
+  init();
+})();
 </script>
 </body>
 </html>

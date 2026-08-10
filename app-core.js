@@ -446,5 +446,313 @@
     }
   };
 
+  // 12. Funil: rastreamento da jornada do lead.
+  //
+  //     Antes, cada página do funil escrevia direto nas tabelas do Supabase, e o
+  //     abandono era invisível: quem parava no meio não deixava rastro nenhum.
+  //     Agora existe UMA porta — a função funil_registrar_etapa no banco — e é
+  //     ela que decide o que é progresso, quando armar o relógio de cada etapa e
+  //     quando desarmá-lo. A página só conta o que aconteceu.
+  //
+  //     Duas regras que valem para tudo aqui dentro:
+  //       1. Falha de rede NUNCA bloqueia o avanço. O localStorage continua sendo
+  //          a fonte de verdade da tela; o banco é sincronização.
+  //       2. Nada disto lança. Uma exceção no meio da captação custa um lead.
+  AppCore.Funil = (function () {
+    var F = {};
+
+    var CHAVE_SESSAO = 'funilSessao';
+    var CHAVE_ORIGEM = 'funilOrigem';
+    var CHAVE_CTA    = 'funilCta';   // cache do link, para o relatório funcionar offline
+
+    function cliente() {
+      if (!window.AppConfig) return null;
+      return AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
+    }
+
+    // Id da sessão no banco. Só existe depois que a primeira etapa foi aceita —
+    // não é gerado aqui de propósito: quem cria a sessão é o servidor, e um id
+    // inventado pelo cliente viraria uma sessão fantasma se a chamada falhasse.
+    F.sessaoId = function () {
+      try { return localStorage.getItem(CHAVE_SESSAO) || null; } catch (e) { return null; }
+    };
+
+    F.definirSessao = function (id) {
+      if (!id) return;
+      try { localStorage.setItem(CHAVE_SESSAO, id); } catch (e) {}
+    };
+
+    // De onde o lead veio. Capturado na PRIMEIRA visita e nunca sobrescrito: se
+    // ele voltar por um link de recuperação, a origem que importa continua sendo
+    // a campanha que o trouxe, não o resgate.
+    F.origem = function () {
+      var salva = AppCore.safeParse(CHAVE_ORIGEM, null);
+      if (salva) return salva;
+
+      var q = new URLSearchParams(location.search);
+      var o = {
+        utm_source:   q.get('utm_source')   || null,
+        utm_medium:   q.get('utm_medium')   || null,
+        utm_campaign: q.get('utm_campaign') || null,
+        utm_term:     q.get('utm_term')     || null,
+        utm_content:  q.get('utm_content')  || null,
+        referrer:     document.referrer || null,
+        user_agent:   navigator.userAgent || null,
+        primeiro_acesso: new Date().toISOString()
+      };
+      try { localStorage.setItem(CHAVE_ORIGEM, JSON.stringify(o)); } catch (e) {}
+      return o;
+    };
+
+    // Registra a conclusão de uma etapa. `dados` é o bloco que aquela etapa
+    // preencheu; `ids` carrega integrador_id/projeto_id que já estejam no
+    // localStorage, para que quem começou o funil antes desta mudança seja
+    // adotado em vez de duplicado.
+    //
+    // Devolve { sessao, integrador_id, projeto_id, orcamento_id } ou null.
+    // Aba aberta pelo link de consulta do vendedor: nada é gravado no servidor.
+    F.emConsulta = function () {
+      try { return sessionStorage.getItem('funilConsulta') === '1'; } catch (e) { return false; }
+    };
+
+    F.registrarEtapa = async function (etapa, dados, ids) {
+      if (F.emConsulta()) return null;
+
+      var db = cliente();
+      if (!db) return null;
+
+      var r = await AppCore.dbTry(db.rpc('funil_registrar_etapa', {
+        p_etapa:         etapa,
+        p_dados:         dados || {},
+        p_sessao:        F.sessaoId(),
+        p_origem:        F.origem(),
+        p_integrador_id: (ids && ids.integrador_id) || null,
+        p_projeto_id:    (ids && ids.projeto_id) || null
+      }), AppCore.PRAZO_BOOT);
+
+      if (r.error || !r.data) {
+        console.warn('Etapa salva localmente; sincronização com o servidor falhou:',
+                     r.error && r.error.message);
+        return null;
+      }
+
+      F.definirSessao(r.data.sessao);
+      return r.data;
+    };
+
+    // O clique no CTA é a conversão. Vale a pena esperar por ele — mas pouco: se
+    // o servidor demorar, o lead vai para o WhatsApp do mesmo jeito.
+    F.registrarCta = async function () {
+      if (F.emConsulta()) return;
+      var db = cliente(), s = F.sessaoId();
+      if (!db || !s) return;
+      await AppCore.dbTry(db.rpc('funil_registrar_cta', { p_sessao: s }), 1500);
+    };
+
+    // Link do WhatsApp. Vem do banco (editável no /adm) e cai para o config.js
+    // quando a rede falha. O valor fica em cache na sessão porque o diagnóstico e
+    // o relatório pedem o mesmo link em sequência.
+    F.ctaWhatsapp = async function () {
+      try {
+        var cache = sessionStorage.getItem(CHAVE_CTA);
+        if (cache !== null) return cache;
+      } catch (e) {}
+
+      var db = cliente();
+      var link = '';
+      if (db) {
+        var r = await AppCore.dbTry(db.rpc('funil_config_publica'), 2500);
+        if (!r.error && r.data && typeof r.data.cta_whatsapp === 'string') {
+          link = r.data.cta_whatsapp;
+        }
+      }
+      if (!link) link = (window.AppConfig && AppConfig.ctaWhatsapp) || '';
+
+      link = String(link).trim();
+      try {
+        sessionStorage.setItem(CHAVE_CTA, link);
+        // O relatório é offline por desenho (não carrega o SDK do Supabase).
+        // Deixar o link também no localStorage é como ele o encontra.
+        localStorage.setItem(CHAVE_CTA, link);
+      } catch (e) {}
+      return link;
+    };
+
+    // Versão sem rede, para quem não pode esperar (relatorio.html).
+    F.ctaWhatsappCache = function () {
+      try {
+        return (sessionStorage.getItem(CHAVE_CTA) || localStorage.getItem(CHAVE_CTA) || '').trim();
+      } catch (e) { return ''; }
+    };
+
+    // Carrega o SDK do Supabase sob demanda.
+    //
+    // O relatório é offline por desenho: é a peça que o lead imprime ou salva em
+    // PDF, e pendurá-la em um CDN seria trocar robustez por nada. Só que o link
+    // do vendedor (?v=) precisa buscar os dados do lead no banco. Carregar o SDK
+    // apenas quando existe esse parâmetro mantém as duas coisas.
+    F.garantirSdk = function () {
+      return new Promise(function (resolve) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') return resolve(true);
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.onload  = function () { resolve(true); };
+        s.onerror = function () { resolve(false); };
+        document.head.appendChild(s);
+      });
+    };
+
+    // Há um link na URL pedindo para carregar a jornada de alguém?
+    F.temLink = function () {
+      var q = new URLSearchParams(location.search);
+      return !!(q.get('s') || q.get('v'));
+    };
+
+    // Retomada por link (?s=<uuid> ou ?v=<uuid>).
+    //
+    // ?s= é o link do LEAD. A mensagem de resgate chega pelo WhatsApp e quase
+    //     sempre abre em OUTRO aparelho, onde o localStorage está vazio. Sem
+    //     isto o lead recomeçaria do zero — e a mensagem que deveria salvá-lo o
+    //     faria abandonar de novo.
+    // ?v= é o link do VENDEDOR, gravado no CRM. Carrega os mesmos dados na tela,
+    //     mas em modo consulta: não conta como retomada nem reinicia o relógio
+    //     da cadência. Abrir o card do lead não pode disparar automação.
+    //
+    // Devolve os dados da sessão ou null.
+    F.retomar = async function () {
+      var q = new URLSearchParams(location.search);
+      var s = q.get('s') || q.get('v');
+      if (!s) return null;
+
+      var consulta = !q.get('s') && !!q.get('v');
+
+      var db = cliente();
+      if (!db) return null;
+
+      var r = await AppCore.dbTry(
+        db.rpc('funil_retomar', { p_sessao: s, p_consulta: consulta }), AppCore.PRAZO_BOOT);
+      if (r.error || !r.data || !r.data.ok) return null;
+
+      r.data.consulta = consulta;
+
+      // Trava de escrita. O vendedor abre a tela do lead pelo CRM e cai em um
+      // formulário preenchido; um "Continuar" clicado por engano avançaria o
+      // funil de outra pessoa e cancelaria a cadência dela. Enquanto a aba
+      // estiver em consulta, nada é gravado no servidor.
+      try {
+        if (consulta) sessionStorage.setItem('funilConsulta', '1');
+        else sessionStorage.removeItem('funilConsulta');
+      } catch (e) {}
+
+      F.definirSessao(r.data.sessao);
+      var d = r.data.dados || {};
+
+      // Reconstrói exatamente as chaves que as telas já leem, para que nenhuma
+      // delas precise saber que existe um caminho de retomada.
+      try {
+        if (d.contato) {
+          localStorage.setItem('integrador', JSON.stringify(Object.assign(
+            {}, d.contato, { id: r.data.integrador_id, lucro_alvo: (d.custos && d.custos.lucro_alvo) || 12 })));
+        }
+        if (d.projeto) {
+          localStorage.setItem('projeto', JSON.stringify(Object.assign(
+            {}, d.projeto, { id: r.data.projeto_id, integrador_id: r.data.integrador_id })));
+        }
+        if (d.custos) {
+          if (d.custos.despesas) localStorage.setItem('despesas', JSON.stringify(d.custos.despesas));
+          if (d.custos.configs && d.custos.configs.campos) {
+            localStorage.setItem('configCustos', JSON.stringify(d.custos.configs.campos));
+            localStorage.setItem('custosExtras', JSON.stringify(d.custos.configs.extras || []));
+          }
+          var integ = AppCore.safeParse('integrador', {}) || {};
+          if (d.custos.regime_tributario) integ.regime_tributario = d.custos.regime_tributario;
+          if (d.custos.lucro_alvo != null) integ.lucro_alvo = d.custos.lucro_alvo;
+          localStorage.setItem('integrador', JSON.stringify(integ));
+        }
+      } catch (e) {}
+
+      return r.data;
+    };
+
+    // Aviso fixo no topo quando a aba está em consulta. Sem ele, o vendedor vê
+    // um formulário preenchido com dados que não são dele e não tem como saber
+    // que está olhando o funil de um lead.
+    F.avisarConsulta = function () {
+      if (!F.emConsulta() || document.getElementById('avisoConsulta')) return;
+      var nome = (AppCore.safeParse('integrador', {}) || {}).nome_empresa || 'um lead';
+      var b = document.createElement('div');
+      b.id = 'avisoConsulta';
+      b.setAttribute('role', 'status');
+      b.style.cssText = 'position:sticky;top:0;z-index:99;background:#8a5a00;color:#fff;' +
+        'font:600 13px/1.4 system-ui,sans-serif;padding:8px 14px;text-align:center';
+      b.textContent = 'Visualizando os dados de ' + nome + '. Nada que você fizer aqui altera o funil deste lead.';
+      document.body.insertBefore(b, document.body.firstChild);
+    };
+
+    // Retomada + redirecionamento, para as telas do funil chamarem no boot.
+    // Sai da página atual só quando o lead caiu em um lugar diferente de onde
+    // ele parou; recarregar a mesma tela não vira laço de redirect.
+    F.retomarEIr = async function (etapaDaPagina) {
+      // Aba já em consulta e sem parâmetro novo: só repõe o aviso após navegar.
+      if (F.emConsulta() && !location.search) { F.avisarConsulta(); return false; }
+
+      var dados = await F.retomar();
+      if (!dados) return false;
+
+      F.avisarConsulta();
+
+      // Limpa o ?s= da barra de endereço: o token não precisa ficar exposto no
+      // histórico do navegador nem vazar em referrer para terceiros.
+      try {
+        var limpa = location.pathname + location.hash;
+        history.replaceState(null, '', limpa);
+      } catch (e) {}
+
+      var destino = dados.proxima;
+      if (!destino || destino === etapaDaPagina) return false;
+
+      var passo = null;
+      for (var i = 0; i < AppCore.PASSOS.length; i++) {
+        if (AppCore.PASSOS[i].id === destino) { passo = AppCore.PASSOS[i]; break; }
+      }
+      if (!passo) return false;
+
+      window.location.href = passo.href;
+      return true;
+    };
+
+    // Escrita das telas fora do funil (configuracoes, sazonalidade), que mexem
+    // nos mesmos blocos jsonb de `integradores` mas não são etapas.
+    F.salvarAvancado = async function (bloco, dados, integradorId) {
+      if (F.emConsulta()) return null;
+      var db = cliente();
+      if (!db) return null;
+      var r = await AppCore.dbTry(db.rpc('funil_salvar_avancado', {
+        p_bloco:         bloco,
+        p_dados:         dados,
+        p_sessao:        F.sessaoId(),
+        p_integrador_id: integradorId || null
+      }), AppCore.PRAZO_BOOT);
+      if (r.error) {
+        console.warn('Bloco "' + bloco + '" salvo localmente; sincronização falhou:', r.error.message);
+        return null;
+      }
+      return r.data;
+    };
+
+    F.lerAvancado = async function (bloco, integradorId) {
+      var db = cliente();
+      if (!db) return null;
+      var r = await AppCore.dbTry(db.rpc('funil_ler_avancado', {
+        p_bloco:         bloco,
+        p_sessao:        F.sessaoId(),
+        p_integrador_id: integradorId || null
+      }), AppCore.PRAZO_BOOT);
+      return r.error ? null : r.data;
+    };
+
+    return F;
+  })();
+
   window.AppCore = AppCore;
 })();

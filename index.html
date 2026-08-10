@@ -233,17 +233,18 @@
 <script src="app-core.js"></script>
 <script src="calculo.js"></script>
 <script>
-const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
-
 const brl = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 const brl0 = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
 const pct = v => isFinite(v) ? (v*100).toFixed(1).replace('.',',')+'%' : '—';
 const esc = AppCore.escapeHtml;
 
-const integrador = AppCore.safeParse('integrador', null);
-const projeto    = AppCore.safeParse('projeto', null);
-const despesas   = AppCore.safeParse('despesas', null);
-const configCustos = AppCore.safeParse('configCustos', {});
+// `let`, não `const`: a retomada por link (?s= do lead, ?v= do vendedor) repõe o
+// localStorage DEPOIS que este script já rodou, e a tela precisa enxergar o
+// estado novo — é assim que o vendedor abre o diagnóstico do lead pelo CRM.
+let integrador   = AppCore.safeParse('integrador', null);
+let projeto      = AppCore.safeParse('projeto', null);
+let despesas     = AppCore.safeParse('despesas', null);
+let configCustos = AppCore.safeParse('configCustos', {});
 
 // ── Estado ────────────────────────────────────────────────────────────
 // O diagnóstico é função PURA do que o funil capturou. Não há mais estado
@@ -490,7 +491,7 @@ function renderComo(r) {
 }
 
 // ── B7 CTA ────────────────────────────────────────────────────────────
-function renderCta(r) {
+async function renderCta(r) {
   const a = r.atual;
   const positivo = a.lucroMes > 0;
 
@@ -501,12 +502,13 @@ function renderCta(r) {
     ? 'Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.'
     : 'Em uma conversa a gente identifica o que precisa mudar no seu preço e na sua estrutura.';
 
-  // Sem link de conversa configurado, o relatório deixa de ser ação
+  // O link vem do banco (editável em /adm) e não mais de uma constante que só
+  // muda com deploy. Sem link configurado, o relatório deixa de ser ação
   // secundária e assume o lugar da principal — é a única saída da tela, e
   // uma tela cujo único caminho adiante parece rodapé não converte.
-  const link = (AppConfig.ctaWhatsapp || '').trim();
+  const link = await AppCore.Funil.ctaWhatsapp();
   const conversa = link
-    ? `<a class="cta-btn" href="${esc(link)}" target="_blank" rel="noopener">Quero conversar sobre esses números</a>`
+    ? `<a class="cta-btn" id="ctaWhats" href="${esc(link)}" target="_blank" rel="noopener">Quero conversar sobre esses números</a>`
     : '';
   const relatorio =
     `<button class="cta-btn${link ? ' vidro' : ''}" onclick="abrirRelatorio()">Ver o relatório completo →</button>`;
@@ -515,6 +517,12 @@ function renderCta(r) {
     <h2>${esc(titulo)}</h2>
     <p>${esc(apoio)}</p>
     <div class="cta-acoes">${conversa}${relatorio}</div>`;
+
+  // O clique é a conversão do funil: registra antes de sair. Não segura a
+  // navegação — o <a> abre em nova aba e a chamada segue em paralelo, com prazo
+  // curto. Perder o registro é ruim; perder o lead na porta seria pior.
+  const btnWhats = document.getElementById('ctaWhats');
+  if (btnWhats) btnWhats.addEventListener('click', () => { AppCore.Funil.registrarCta(); });
 }
 
 // ── Relatório ─────────────────────────────────────────────────────────
@@ -537,28 +545,29 @@ function abrirRelatorio() {
 }
 
 // ── Registro do lead ──────────────────────────────────────────────────
-// Grava o diagnóstico automaticamente: é o dado comercial do lead. Silencioso
-// de propósito, falha de rede não é problema do usuário e não pode virar alerta.
-async function registrarOrcamento(r) {
-  if (!db || !integrador?.id) return;
+// Chegar aqui é a quarta etapa do funil: o lead viu os próprios números. Grava
+// o diagnóstico e, no servidor, troca o relógio de "não concluiu o funil" por
+// "viu o resultado e ainda não clicou no WhatsApp" — que é o lead mais quente
+// que este funil produz. Silencioso de propósito: falha de rede não é problema
+// do usuário e não pode virar alerta no meio da entrega do diagnóstico.
+async function registrarDiagnostico(r) {
   const d = r.dados, a = r.atual;
-  const { error } = await AppCore.dbTry(db.from('orcamentos').insert({
-    integrador_id: integrador.id,
-    projeto_id: projeto?.id || null,
-    kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol, art:d.art,
-    ticket:d.ticket, qtd_projetos:d.qtd,
-    comissao_pct:d.comissao, comissao_base:d.comissaoBase,
-    tributo_pct:d.tributo, tributo_base:d.tributoBase,
-    outras_pct:d.outras,
-    despesas_fixas:d.despFixa, lucro_alvo_pct:d.lucroAlvo,
-    custo_direto_total:d.cdt,
-    faturamento_mensal:a.faturamento,
-    margem_contribuicao_pct:parseFloat((a.mcPct*100).toFixed(2)),
-    lucro_mensal:a.lucroMes,
-    ponto_equilibrio_qtd:isFinite(r.pontoEquilibrio)?parseFloat(r.pontoEquilibrio.toFixed(2)):null,
-    preco_sugerido:isFinite(r.piso)?parseFloat(r.piso.toFixed(2)):null
-  }), AppCore.PRAZO_BOOT);
-  if (error) console.warn('Diagnóstico não sincronizado:', error.message);
+  await AppCore.Funil.registrarEtapa('diagnostico', {
+    orcamento: {
+      kit:d.kit, ca:d.ca, instalacao:d.inst, projeto:d.proj, homologacao:d.homol, art:d.art,
+      ticket:d.ticket, qtd_projetos:d.qtd,
+      comissao_pct:d.comissao, comissao_base:d.comissaoBase,
+      tributo_pct:d.tributo, tributo_base:d.tributoBase,
+      outras_pct:d.outras,
+      despesas_fixas:d.despFixa, lucro_alvo_pct:d.lucroAlvo,
+      custo_direto_total:d.cdt,
+      faturamento_mensal:a.faturamento,
+      margem_contribuicao_pct:parseFloat((a.mcPct*100).toFixed(2)),
+      lucro_mensal:a.lucroMes,
+      ponto_equilibrio_qtd:isFinite(r.pontoEquilibrio)?parseFloat(r.pontoEquilibrio.toFixed(2)):null,
+      preco_sugerido:isFinite(r.piso)?parseFloat(r.piso.toFixed(2)):null
+    }
+  }, { integrador_id: integrador?.id || null, projeto_id: projeto?.id || null });
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────
@@ -589,7 +598,7 @@ function init() {
     renderDesconto(RESULTADO);
     renderComo(RESULTADO);
     renderCta(RESULTADO);
-    registrarOrcamento(RESULTADO);
+    registrarDiagnostico(RESULTADO);
   } else {
     ['blocoCascata','blocoEquilibrio','blocoDesconto','cta'].forEach(id => {
       const el = document.getElementById(id); if (el) el.style.display = 'none';
@@ -598,7 +607,17 @@ function init() {
   }
 }
 
-init();
+// A retomada roda antes dos guards: quem chega por link (o lead resgatado pelo
+// WhatsApp ou o vendedor abrindo o card no CRM) tem o estado reposto primeiro,
+// senão os guards o mandariam de volta para o cadastro em branco.
+(async function () {
+  if (await AppCore.Funil.retomarEIr('diagnostico')) return;
+  integrador   = AppCore.safeParse('integrador', null);
+  projeto      = AppCore.safeParse('projeto', null);
+  despesas     = AppCore.safeParse('despesas', null);
+  configCustos = AppCore.safeParse('configCustos', {});
+  init();
+})();
 </script>
 </body>
 </html>
