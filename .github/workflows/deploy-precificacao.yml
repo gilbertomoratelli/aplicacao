@@ -14,6 +14,17 @@
 #   SUPABASE_ACCESS_TOKEN  token pessoal de https://supabase.com/dashboard/account/tokens
 #   SUPABASE_PROJECT_REF   ref do projeto DESTA versão (o xxxx de https://xxxx.supabase.co)
 #   SUPABASE_DB_PASSWORD   senha do banco desse projeto (Dashboard → Settings → Database)
+#   ADM_SENHA              senha do painel /adm, mínimo 12 caracteres (opcional)
+#   SUPABASE_DB_URL        connection string do banco, para aplicar a ADM_SENHA
+#                          (Dashboard → Connect → copie a URI; use a do pooler,
+#                          o runner do GitHub não tem IPv6). Opcional: sem ela a
+#                          senha é definida uma vez pelo SQL Editor.
+#
+# A senha do /adm existe SÓ como secret e como hash bcrypt no banco. Ela não está
+# neste arquivo, não está no repositório e não chega ao navegador em momento
+# nenhum — o painel só consegue perguntar "esta senha confere?" para uma função
+# do Postgres, que devolve um token de sessão. Trocar a senha é trocar o secret e
+# rodar o workflow de novo (isso derruba quem estiver logado, de propósito).
 #
 # Esta versão paralela usa um banco Supabase PRÓPRIO, separado do da main.
 # O ref fica em secret justamente para este arquivo não amarrar qual banco é;
@@ -48,6 +59,29 @@ jobs:
           supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
           supabase db push
 
+      # Roda depois do db push (é lá que a função nasce) e é idempotente: aplicar
+      # a mesma senha de novo só regrava o hash.
+      #
+      # A senha chega ao psql pelo ambiente, via \getenv, e não como argumento —
+      # argumento apareceria na lista de processos do runner. O passo é opcional:
+      # sem os dois secrets ele avisa e segue, e a senha pode ser definida uma
+      # única vez no SQL Editor do Supabase com
+      #   select public.adm_definir_senha('...');
+      - name: Definir a senha do painel /adm
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          ADM_SENHA: ${{ secrets.ADM_SENHA }}
+        run: |
+          if [ -z "$ADM_SENHA" ] || [ -z "$DB_URL" ]; then
+            echo "::warning::ADM_SENHA e/ou SUPABASE_DB_URL ausentes — a senha do /adm não foi aplicada neste deploy."
+            exit 0
+          fi
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -q -o /dev/null <<'SQL'
+          \getenv senha ADM_SENHA
+          select public.adm_definir_senha(:'senha');
+          SQL
+          echo "Senha do painel aplicada."
+
       # Lista explícita do que vai ao ar. O repositório carrega protótipos de
       # design, docs e backups que não devem virar página pública; incluir por
       # nome evita que um arquivo solto novo suba por acidente.
@@ -55,7 +89,7 @@ jobs:
         run: |
           mkdir -p dist/js dist/img
           cp index.html cadastro.html custos.html projeto.html relatorio.html \
-             configuracoes.html historico.html sazonalidade.html login.html \
+             configuracoes.html historico.html sazonalidade.html login.html adm.html \
              app-core.js calculo.js config.js shared.css \
              favicon.svg favicon-32.png apple-touch-icon.png .htaccess \
              dist/

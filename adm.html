@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<style>
+  /* Página interna: mais densa que o funil de propósito. O funil otimiza para
+     uma pessoa decidindo; isto otimiza para alguém conferindo muitas linhas. */
+  .wrap{max-width:1080px}
+
+  .topo{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);margin-bottom:var(--e5)}
+  .topo h1{font-size:var(--title2);font-weight:660;letter-spacing:-.02em;margin:0}
+
+  .abas{display:flex;gap:4px;background:var(--preenche);padding:4px;border-radius:var(--r-ctrl);margin-bottom:var(--e5)}
+  .abas button{flex:1;border:none;background:transparent;font:inherit;font-size:var(--subhead);font-weight:600;
+    color:var(--label-2);padding:9px 12px;border-radius:9px;cursor:pointer;min-height:38px}
+  .abas button.on{background:var(--fundo-2);color:var(--label);box-shadow:0 1px 2px rgba(16,31,26,.08)}
+
+  .painel-adm{background:var(--fundo-2);border-radius:var(--r-cartao);padding:var(--e5);margin-bottom:var(--e3)}
+  .painel-adm h2{font-size:var(--headline);font-weight:650;margin:0 0 var(--e1);letter-spacing:-.012em}
+  .painel-adm .ajuda{font-size:var(--footnote);color:var(--label-2);margin:0 0 var(--e4);line-height:1.5}
+
+  label.campo{display:block;margin-bottom:var(--e4)}
+  label.campo>span{display:block;font-size:var(--footnote);font-weight:620;color:var(--label-2);margin-bottom:6px}
+  input[type=text],input[type=password],input[type=number],select{
+    width:100%;box-sizing:border-box;font:inherit;font-size:var(--subhead);color:var(--label);
+    background:var(--fundo-3);border:1px solid var(--separador);border-radius:var(--r-ctrl);
+    padding:11px 12px;min-height:var(--toque)}
+  input:focus,select:focus{outline:2px solid var(--verde);outline-offset:-1px}
+  .mono{font-family:var(--mono);font-size:var(--footnote)}
+
+  .etapa-linha{border-top:1px solid var(--separador);padding:var(--e4) 0}
+  .etapa-linha:first-of-type{border-top:none;padding-top:0}
+  .etapa-cab{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);margin-bottom:var(--e3)}
+  .etapa-cab b{font-size:var(--callout);font-weight:640}
+  .etapa-grade{display:grid;grid-template-columns:150px 1fr;gap:var(--e3)}
+  @media(max-width:640px){.etapa-grade{grid-template-columns:1fr}}
+  .nota-etapa{font-size:var(--caption);color:var(--label-3);line-height:1.5;margin:var(--e2) 0 0}
+
+  /* Interruptor: o estado precisa ser legível sem ler o rótulo. */
+  .liga{display:inline-flex;align-items:center;gap:8px;font-size:var(--footnote);
+    font-weight:620;color:var(--label-2);cursor:pointer;user-select:none}
+  .liga input{appearance:none;width:40px;height:24px;border-radius:999px;background:var(--label-4);
+    position:relative;transition:background var(--rapido) var(--mola);flex:none;margin:0;min-height:0;padding:0;border:none}
+  .liga input:checked{background:var(--verde)}
+  .liga input::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:transform var(--rapido) var(--mola)}
+  .liga input:checked::after{transform:translateX(16px)}
+
+  .acoes{display:flex;gap:var(--e2);flex-wrap:wrap;align-items:center;margin-top:var(--e4)}
+  .btn{border:none;border-radius:var(--r-ctrl);font:inherit;font-size:var(--subhead);font-weight:620;
+    padding:11px 18px;min-height:var(--toque);cursor:pointer;background:var(--verde);color:#fff}
+  .btn:hover{background:#009435}
+  .btn.sec{background:var(--preenche);color:var(--label)}
+  .btn.sec:hover{background:rgba(16,31,26,.1)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  .aviso{font-size:var(--footnote);font-weight:620;padding:10px 14px;border-radius:var(--r-ctrl);margin-bottom:var(--e4)}
+  .aviso.ok{background:var(--mint);color:var(--mata)}
+  .aviso.erro{background:var(--telha-t);color:var(--telha)}
+
+  /* Números do funil. */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--e3);margin-bottom:var(--e5)}
+  .kpi{background:var(--fundo-3);border-radius:var(--r-lista);padding:var(--e4)}
+  .kpi .n{font-family:var(--mono);font-size:var(--title2);font-weight:600;letter-spacing:-.035em;
+    color:var(--label);font-variant-numeric:tabular-nums;line-height:1.1}
+  .kpi .r{font-size:var(--caption);color:var(--label-3);margin-top:4px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.04em}
+
+  /* Barra de funil: a largura é a leitura, o número é a confirmação. */
+  .funil-linha{margin-bottom:var(--e3)}
+  .funil-topo{display:flex;justify-content:space-between;align-items:baseline;gap:var(--e3);
+    font-size:var(--subhead);margin-bottom:6px}
+  .funil-topo .qtd{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+  .funil-barra{height:26px;border-radius:8px;background:var(--preenche);overflow:hidden}
+  .funil-barra i{display:block;height:100%;background:var(--mata);border-radius:8px}
+  .perdeu{color:var(--telha);font-weight:620;font-size:var(--footnote)}
+
+  /* Tabelas: rolam sozinhas em vez de empurrar a página no celular. */
+  .rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.dados{width:100%;border-collapse:collapse;font-size:var(--footnote);white-space:nowrap}
+  table.dados th{text-align:left;font-size:var(--caption2);text-transform:uppercase;letter-spacing:.05em;
+    color:var(--label-3);font-weight:700;padding:0 var(--e3) var(--e2);border-bottom:1px solid var(--separador)}
+  table.dados td{padding:10px var(--e3);border-bottom:1px solid var(--separador);color:var(--label-2)}
+  table.dados td.forte{color:var(--label);font-weight:620}
+  table.dados a{color:var(--verde);font-weight:620;text-decoration:none}
+  table.dados a:hover{text-decoration:underline}
+
+  .tag{display:inline-block;font-size:var(--caption2);font-weight:700;text-transform:uppercase;
+    letter-spacing:.04em;padding:3px 8px;border-radius:var(--r-cap);background:var(--preenche);color:var(--label-2)}
+  .tag.ok{background:var(--mint);color:var(--mata)}
+  .tag.quente{background:var(--mel);color:var(--ambar)}
+  .tag.frio{background:var(--telha-t);color:var(--telha)}
+
+  .filtros{display:flex;gap:var(--e2);flex-wrap:wrap;margin-bottom:var(--e4);align-items:flex-end}
+  .filtros label.campo{margin-bottom:0;flex:1;min-width:140px}
+
+  /* Entrada: centralizada e curta. Nada além do necessário para entrar. */
+  #entrada{max-width:380px;margin:12vh auto 0}
+  .vazio{text-align:center;color:var(--label-3);font-size:var(--subhead);padding:var(--e7) 0}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="entrada" hidden>
+  <div class="brand" style="justify-content:center;margin-bottom:var(--e5)">
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+  </div>
+  <div class="painel-adm">
+    <h2>Painel do funil</h2>
+    <p class="ajuda">Área interna. Informe a senha para continuar.</p>
+    <div id="avisoEntrada"></div>
+    <form onsubmit="entrar(event)">
+      <label class="campo">
+        <span>Senha</span>
+        <input type="password" id="senha" autocomplete="current-password" autofocus>
+      </label>
+      <button class="btn" style="width:100%" id="btnEntrar" type="submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="topo">
+    <h1>Painel do funil</h1>
+    <button class="btn sec" onclick="sair()">Sair</button>
+  </div>
+
+  <div class="abas" role="tablist">
+    <button role="tab" data-aba="config"  class="on" onclick="trocarAba('config')">Configuração</button>
+    <button role="tab" data-aba="leads"   onclick="trocarAba('leads')">Leads</button>
+    <button role="tab" data-aba="numeros" onclick="trocarAba('numeros')">Números</button>
+  </div>
+
+  <div id="avisoApp"></div>
+
+  <!-- ── Configuração ───────────────────────────────────────────────── -->
+  <section id="abaConfig">
+    <div class="painel-adm">
+      <h2>Destino do lead</h2>
+      <p class="ajuda">Para onde o botão do fim do diagnóstico manda o lead. Vale
+        imediatamente, sem publicar o site de novo.</p>
+      <label class="campo">
+        <span>Link do WhatsApp (CTA final)</span>
+        <input type="text" id="cta_whatsapp" placeholder="https://wa.me/5511999999999">
+      </label>
+      <label class="campo">
+        <span>Endereço público do site</span>
+        <input type="text" id="site_url" placeholder="https://grupofavo.com/precificacao">
+      </label>
+      <p class="ajuda" style="margin:0">É com este endereço que os links enviados no
+        webhook são montados — o de resgate do lead e o do resultado que vai para o CRM.</p>
+    </div>
+
+    <div class="painel-adm">
+      <h2>Tempo e webhook de cada etapa</h2>
+      <p class="ajuda">Se o lead ficar parado mais que o tempo indicado sem concluir a
+        etapa, um webhook é disparado para a URL daquela etapa. Se ele avançar antes,
+        o disparo é cancelado sozinho.</p>
+      <div id="etapas"></div>
+    </div>
+
+    <div class="painel-adm">
+      <h2>Eventos positivos</h2>
+      <p class="ajuda">Avanço de etapa, conclusão do funil e clique no CTA vão todos
+        para este endereço. É por aqui que o CRM fica em dia e que a cadência é
+        interrompida quando o lead volta sozinho.</p>
+      <label class="campo">
+        <span>URL de eventos</span>
+        <input type="text" id="webhook_url_eventos" placeholder="https://n8n.exemplo.com/webhook/funil-eventos">
+      </label>
+      <label class="campo">
+        <span>Tentativas antes de desistir</span>
+        <input type="number" id="webhook_max_tentativas" min="1" max="10">
+      </label>
+      <label class="campo">
+        <span>Chave da assinatura (HMAC SHA-256 do corpo, no cabeçalho <code>X-Funil-Assinatura</code>)</span>
+        <input type="text" id="webhook_segredo" class="mono" readonly>
+      </label>
+      <div class="acoes">
+        <button class="btn sec" onclick="testarWebhook()">Testar disparo</button>
+        <button class="btn sec" onclick="rotacionar()">Gerar nova chave</button>
+      </div>
+    </div>
+
+    <div class="acoes" style="margin-bottom:var(--e7)">
+      <button class="btn" id="btnSalvarCfg" onclick="salvarConfig()">Salvar configuração</button>
+    </div>
+  </section>
+
+  <!-- ── Leads ──────────────────────────────────────────────────────── -->
+  <section id="abaLeads" hidden>
+    <div class="painel-adm">
+      <div class="filtros">
+        <label class="campo">
+          <span>Buscar</span>
+          <input type="text" id="fBusca" placeholder="nome, empresa, e-mail, CNPJ" onkeydown="if(event.key==='Enter')carregarLeads()">
+        </label>
+        <label class="campo" style="max-width:200px">
+          <span>Última etapa concluída</span>
+          <select id="fEtapa" onchange="carregarLeads()"><option value="">Todas</option></select>
+        </label>
+        <label class="campo" style="max-width:150px">
+          <span>Período</span>
+          <select id="fDias" onchange="carregarLeads()">
+            <option value="7">7 dias</option>
+            <option value="30" selected>30 dias</option>
+            <option value="90">90 dias</option>
+            <option value="3650">Tudo</option>
+          </select>
+        </label>
+        <button class="btn sec" onclick="carregarLeads()">Buscar</button>
+        <button class="btn sec" onclick="exportarCsv()">Exportar CSV</button>
+      </div>
+      <div class="rolagem"><table class="dados" id="tabLeads"></table></div>
+      <p class="ajuda" id="resumoLeads" style="margin:var(--e4) 0 0"></p>
+    </div>
+  </section>
+
+  <!-- ── Números ────────────────────────────────────────────────────── -->
+  <section id="abaNumeros" hidden>
+    <div class="painel-adm">
+      <div class="filtros">
+        <label class="campo" style="max-width:150px">
+          <span>Período</span>
+          <select id="mDias" onchange="carregarMetricas()">
+            <option value="7">7 dias</option>
+            <option value="30" selected>30 dias</option>
+            <option value="90">90 dias</option>
+            <option value="3650">Tudo</option>
+          </select>
+        </label>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <h2>Onde o funil vaza</h2>
+      <p class="ajuda">A barra é quem chegou até a etapa. O número em vermelho é quem
+        travou ali e não passou.</p>
+      <div id="funilBarras"></div>
+    </div>
+
+    <div class="painel-adm">
+      <h2>Últimos disparos</h2>
+      <p class="ajuda">Histórico dos webhooks. Um disparo <b>cancelado</b> quase sempre
+        significa que o lead voltou sozinho antes do tempo — ou que a URL daquela
+        etapa ainda não foi configurada.</p>
+      <div class="rolagem"><table class="dados" id="tabFila"></table></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
+<script>
+const db  = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
+const esc = AppCore.escapeHtml;
+
+// O token fica em sessionStorage e não em localStorage: some ao fechar a aba.
+// Painel interno aberto em máquina compartilhada não pode continuar logado
+// amanhã de manhã só porque ninguém clicou em Sair.
+const TOKEN = {
+  get()   { try { return sessionStorage.getItem('admToken'); } catch (e) { return null; } },
+  set(t)  { try { sessionStorage.setItem('admToken', t); } catch (e) {} },
+  limpa() { try { sessionStorage.removeItem('admToken'); } catch (e) {} }
+};
+
+let CONFIG = null, LEADS = [];
+
+// Toda chamada ao painel passa por aqui. Um token expirado devolve exceção do
+// Postgres; em vez de mostrar erro técnico, o painel simplesmente pede a senha
+// de novo — que é o que a pessoa faria de qualquer forma.
+async function rpc(nome, args) {
+  const r = await AppCore.dbTry(db.rpc(nome, Object.assign({ p_token: TOKEN.get() }, args || {})));
+  if (r.error) {
+    if (/inválida ou expirada/i.test(r.error.message || '')) { sair(true); return null; }
+    throw r.error;
+  }
+  return r.data;
+}
+
+function aviso(onde, texto, tipo) {
+  const el = document.getElementById(onde);
+  if (!texto) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="aviso ${tipo || 'ok'}">${esc(texto)}</div>`;
+  if (tipo !== 'erro') setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// ── Entrada ────────────────────────────────────────────────────────────
+async function entrar(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnEntrar');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+
+  const r = await AppCore.dbTry(db.rpc('adm_login', { p_senha: document.getElementById('senha').value }));
+
+  btn.disabled = false; btn.textContent = 'Entrar';
+
+  if (r.error)  { aviso('avisoEntrada', 'Não foi possível falar com o servidor.', 'erro'); return; }
+  if (!r.data?.ok) { aviso('avisoEntrada', r.data?.mensagem || 'Senha incorreta.', 'erro'); return; }
+
+  TOKEN.set(r.data.token);
+  document.getElementById('senha').value = '';
+  abrirPainel();
+}
+
+function sair(expirou) {
+  const t = TOKEN.get();
+  if (t && !expirou) AppCore.dbTry(db.rpc('adm_logout', { p_token: t }));
+  TOKEN.limpa();
+  document.getElementById('app').hidden = true;
+  document.getElementById('entrada').hidden = false;
+  if (expirou) aviso('avisoEntrada', 'Sua sessão expirou. Entre de novo.', 'erro');
+}
+
+async function abrirPainel() {
+  document.getElementById('entrada').hidden = true;
+  document.getElementById('app').hidden = false;
+  await carregarConfig();
+  await carregarLeads();
+}
+
+// ── Abas ───────────────────────────────────────────────────────────────
+function trocarAba(qual) {
+  document.querySelectorAll('.abas button').forEach(b => b.classList.toggle('on', b.dataset.aba === qual));
+  document.getElementById('abaConfig').hidden  = qual !== 'config';
+  document.getElementById('abaLeads').hidden   = qual !== 'leads';
+  document.getElementById('abaNumeros').hidden = qual !== 'numeros';
+  if (qual === 'numeros') carregarMetricas();
+}
+
+// ── Configuração ───────────────────────────────────────────────────────
+// Segundos viram minutos ou horas conforme o valor, e voltam. Ninguém pensa em
+// "3600": pensa em "1 hora".
+function paraUnidade(seg) {
+  if (seg % 3600 === 0 && seg >= 3600) return { valor: seg / 3600, un: 'h' };
+  return { valor: Math.round(seg / 60), un: 'min' };
+}
+function paraSegundos(valor, un) {
+  const n = Math.max(1, Number(valor) || 1);
+  return un === 'h' ? Math.round(n * 3600) : Math.round(n * 60);
+}
+
+async function carregarConfig() {
+  CONFIG = await rpc('adm_config_ler');
+  if (!CONFIG) return;
+
+  document.getElementById('cta_whatsapp').value           = CONFIG.cta_whatsapp || '';
+  document.getElementById('site_url').value               = CONFIG.site_url || '';
+  document.getElementById('webhook_url_eventos').value    = CONFIG.webhook_url_eventos || '';
+  document.getElementById('webhook_max_tentativas').value = CONFIG.webhook_max_tentativas ?? 5;
+  document.getElementById('webhook_segredo').value        = CONFIG.webhook_segredo || '';
+
+  document.getElementById('etapas').innerHTML = (CONFIG.etapas || []).map(e => {
+    const u = paraUnidade(e.timeout_segundos);
+    return `
+    <div class="etapa-linha" data-etapa="${esc(e.etapa)}">
+      <div class="etapa-cab">
+        <b>${e.ordem}. ${esc(e.rotulo)}</b>
+        <label class="liga">
+          <input type="checkbox" class="e-ativo" ${e.ativo ? 'checked' : ''}>
+          <span>${e.ativo ? 'Ativa' : 'Desligada'}</span>
+        </label>
+      </div>
+      <div class="etapa-grade">
+        <div style="display:flex;gap:6px">
+          <input type="number" class="e-tempo" min="1" value="${u.valor}" aria-label="Tempo">
+          <select class="e-un" style="width:96px;flex:none" aria-label="Unidade">
+            <option value="min" ${u.un === 'min' ? 'selected' : ''}>min</option>
+            <option value="h"   ${u.un === 'h'   ? 'selected' : ''}>horas</option>
+          </select>
+        </div>
+        <input type="text" class="e-url" value="${esc(e.webhook_url || '')}" placeholder="https://n8n.exemplo.com/webhook/abandono-${esc(e.etapa)}">
+      </div>
+      ${e.nota ? `<p class="nota-etapa">${esc(e.nota)}</p>` : ''}
+    </div>`;
+  }).join('');
+
+  // O interruptor muda o próprio rótulo: sem isso o estado só é legível pela cor.
+  document.querySelectorAll('.e-ativo').forEach(c => {
+    c.addEventListener('change', () => {
+      c.nextElementSibling.textContent = c.checked ? 'Ativa' : 'Desligada';
+    });
+  });
+
+  const sel = document.getElementById('fEtapa');
+  sel.innerHTML = '<option value="">Todas</option>' +
+    (CONFIG.etapas || []).map(e => `<option value="${esc(e.etapa)}">${esc(e.rotulo)}</option>`).join('');
+}
+
+async function salvarConfig() {
+  const btn = document.getElementById('btnSalvarCfg');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    const etapas = [...document.querySelectorAll('.etapa-linha')].map(l => ({
+      etapa: l.dataset.etapa,
+      timeout_segundos: paraSegundos(l.querySelector('.e-tempo').value, l.querySelector('.e-un').value),
+      webhook_url: l.querySelector('.e-url').value.trim(),
+      ativo: l.querySelector('.e-ativo').checked
+    }));
+
+    CONFIG = await rpc('adm_config_salvar', { p_config: {
+      cta_whatsapp:           document.getElementById('cta_whatsapp').value.trim(),
+      site_url:               document.getElementById('site_url').value.trim(),
+      webhook_url_eventos:    document.getElementById('webhook_url_eventos').value.trim(),
+      webhook_max_tentativas: Number(document.getElementById('webhook_max_tentativas').value) || 5,
+      etapas
+    }});
+    aviso('avisoApp', 'Configuração salva.');
+  } catch (err) {
+    aviso('avisoApp', 'Não foi possível salvar: ' + err.message, 'erro');
+  }
+  btn.disabled = false; btn.textContent = 'Salvar configuração';
+}
+
+async function rotacionar() {
+  if (!confirm('Gerar uma nova chave invalida a assinatura para quem já está usando a atual. Continuar?')) return;
+  try {
+    CONFIG = await rpc('adm_rotacionar_segredo');
+    document.getElementById('webhook_segredo').value = CONFIG.webhook_segredo;
+    aviso('avisoApp', 'Chave nova gerada. Atualize também no n8n.');
+  } catch (err) { aviso('avisoApp', err.message, 'erro'); }
+}
+
+async function testarWebhook() {
+  const url = prompt('URL para receber o disparo de teste:',
+    document.getElementById('webhook_url_eventos').value || '');
+  if (!url) return;
+  try {
+    await rpc('adm_testar_webhook', { p_url: url });
+    aviso('avisoApp', 'Disparo enfileirado. Ele sai no próximo minuto — veja o resultado em Números › Últimos disparos.');
+  } catch (err) { aviso('avisoApp', err.message, 'erro'); }
+}
+
+// ── Leads ──────────────────────────────────────────────────────────────
+const dt = s => s ? new Date(s).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+const brl = v => (v == null || !isFinite(v)) ? '—'
+  : Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
+
+function rotuloEtapa(id) {
+  const e = (CONFIG?.etapas || []).find(x => x.etapa === id);
+  return e ? e.rotulo : (id || '—');
+}
+
+async function carregarLeads() {
+  const dias = Number(document.getElementById('fDias').value);
+  let d;
+  try {
+    d = await rpc('adm_leads', { p_filtro: {
+      busca:  document.getElementById('fBusca').value,
+      etapa:  document.getElementById('fEtapa').value,
+      de:     new Date(Date.now() - dias * 864e5).toISOString(),
+      limite: 300
+    }});
+  } catch (err) { aviso('avisoApp', err.message, 'erro'); return; }
+  if (!d) return;
+
+  LEADS = d.leads || [];
+  const tab = document.getElementById('tabLeads');
+
+  if (!LEADS.length) {
+    tab.innerHTML = '<tr><td class="vazio">Nenhum lead no período.</td></tr>';
+    document.getElementById('resumoLeads').textContent = '';
+    return;
+  }
+
+  tab.innerHTML =
+    `<thead><tr><th>Contato</th><th>Empresa</th><th>WhatsApp</th><th>Parou em</th>
+      <th>Preço praticado</th><th>Origem</th><th>Atualizado</th><th></th></tr></thead><tbody>` +
+    LEADS.map(l => {
+      // Três estados, três leituras: converteu, viu tudo mas não clicou, e
+      // abandonou no meio. É a única coluna que o time olha primeiro.
+      const estado = l.cta_clicado
+        ? '<span class="tag ok">Clicou no CTA</span>'
+        : l.concluiu
+          ? '<span class="tag quente">Viu o resultado</span>'
+          : `<span class="tag frio">${esc(rotuloEtapa(l.parou_em))}</span>`;
+      return `<tr>
+        <td class="forte">${esc(l.nome_contato || '—')}</td>
+        <td>${esc(l.nome_empresa || '—')}</td>
+        <td class="mono">${esc(l.whatsapp || '—')}</td>
+        <td>${estado}</td>
+        <td class="mono">${brl(l.valor_venda)}</td>
+        <td>${esc(l.utm_source || '—')}</td>
+        <td>${dt(l.atualizado_em)}</td>
+        <td><a href="./?v=${esc(l.id)}" target="_blank" rel="noopener">ver</a></td>
+      </tr>`;
+    }).join('') + '</tbody>';
+
+  document.getElementById('resumoLeads').textContent =
+    `Mostrando ${LEADS.length} de ${d.total} leads.`;
+}
+
+function exportarCsv() {
+  if (!LEADS.length) return;
+  const cab = ['contato','empresa','cnpj','email','whatsapp','whatsapp_e164','parou_em',
+               'concluiu','clicou_cta','utm_source','utm_campaign','criado_em','link_resultado'];
+  // Prefixo com ' nos campos que começam por = + - @: sem isso o Excel
+  // interpreta o conteúdo como fórmula ao abrir o arquivo.
+  const cel = v => {
+    let s = v == null ? '' : String(v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  };
+  const linhas = LEADS.map(l => [
+    l.nome_contato, l.nome_empresa, l.cnpj, l.email, l.whatsapp, l.whatsapp_e164,
+    rotuloEtapa(l.parou_em), l.concluiu ? 'sim' : 'nao', l.cta_clicado ? 'sim' : 'nao',
+    l.utm_source, l.utm_campaign, l.criado_em,
+    (CONFIG?.site_url || '').replace(/\/$/, '') + '/?v=' + l.id
+  ].map(cel).join(','));
+
+  // BOM na frente: sem ele o Excel no Windows abre os acentos quebrados.
+  const blob = new Blob(['﻿' + cab.join(',') + '\n' + linhas.join('\n')],
+                        { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'leads-funil.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Números ────────────────────────────────────────────────────────────
+async function carregarMetricas() {
+  const dias = Number(document.getElementById('mDias').value);
+  let m, fila;
+  try {
+    m    = await rpc('adm_metricas', { p_filtro: { de: new Date(Date.now() - dias * 864e5).toISOString() } });
+    fila = await rpc('adm_fila', { p_filtro: { limite: 40 } });
+  } catch (err) { aviso('avisoApp', err.message, 'erro'); return; }
+  if (!m) return;
+
+  const total = m.total_sessoes || 0;
+  const pc = n => total ? Math.round((n / total) * 100) + '%' : '—';
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="n">${total}</div><div class="r">Leads captados</div></div>
+    <div class="kpi"><div class="n">${m.concluiram}</div><div class="r">Viram o diagnóstico · ${pc(m.concluiram)}</div></div>
+    <div class="kpi"><div class="n">${m.clicaram_cta}</div><div class="r">Clicaram no CTA · ${pc(m.clicaram_cta)}</div></div>
+    <div class="kpi"><div class="n">${(m.fila || {}).enviado || 0}</div><div class="r">Webhooks entregues</div></div>
+    <div class="kpi"><div class="n">${(m.fila || {}).falhou || 0}</div><div class="r">Webhooks falhados</div></div>`;
+
+  const topo = Math.max(1, ...(m.etapas || []).map(e => e.concluiram));
+  document.getElementById('funilBarras').innerHTML = (m.etapas || []).map(e => `
+    <div class="funil-linha">
+      <div class="funil-topo">
+        <span>${esc(e.rotulo)}${e.travaram ? ` <span class="perdeu">· ${e.travaram} travaram aqui</span>` : ''}</span>
+        <span class="qtd">${e.concluiram}${e.timeouts_enviados ? ` · ${e.timeouts_enviados} avisos` : ''}</span>
+      </div>
+      <div class="funil-barra"><i style="width:${Math.round((e.concluiram / topo) * 100)}%"></i></div>
+    </div>`).join('');
+
+  const tf = document.getElementById('tabFila');
+  tf.innerHTML = !fila?.length
+    ? '<tr><td class="vazio">Nenhum disparo ainda.</td></tr>'
+    : `<thead><tr><th>Quando</th><th>Evento</th><th>Etapa</th><th>Lead</th>
+        <th>Status</th><th>HTTP</th><th>Tent.</th><th>Erro</th></tr></thead><tbody>` +
+      fila.map(f => `<tr>
+        <td>${dt(f.criado_em)}</td>
+        <td class="forte">${esc(f.tipo)}</td>
+        <td>${esc(rotuloEtapa(f.etapa))}</td>
+        <td>${esc(f.nome_contato || f.nome_empresa || '—')}</td>
+        <td><span class="tag ${f.status === 'enviado' ? 'ok' : f.status === 'falhou' ? 'frio' : ''}">${esc(f.status)}</span></td>
+        <td class="mono">${f.http_status ?? '—'}</td>
+        <td class="mono">${f.tentativas}</td>
+        <td>${esc(f.erro || '')}</td>
+      </tr>`).join('') + '</tbody>';
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────
+if (TOKEN.get()) abrirPainel();
+else document.getElementById('entrada').hidden = false;
+</script>
+</body>
+</html>
