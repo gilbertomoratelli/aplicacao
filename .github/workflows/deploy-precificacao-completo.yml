@@ -1,0 +1,131 @@
+# Deploy da ferramenta COMPLETA em https://grupofavo.com/precificacao-completo.
+#
+# Irmão de deploy-precificacao.yml (que publica a versão simplificada do funil
+# em /precificacao). São dois destinos independentes, cada um com sua pasta no
+# servidor e seu projeto Supabase; nada aqui toca no outro.
+#
+# Disparo SEMPRE manual: aba Actions → este workflow → "Run workflow",
+# escolhendo a branch a publicar. Push nenhum publica sozinho. O fluxo é
+# sempre: migrations primeiro, arquivos depois — assim o código novo nunca
+# chega ao ar antes da coluna que ele precisa.
+#
+# Secrets necessários (Settings → Secrets and variables → Actions):
+#   HOSTINGER_SSH_KEY               chave privada (o .pub correspondente vai no painel da Hostinger)
+#   HOSTINGER_SSH_HOST              ex.: 145.223.xx.xx ou br-xxx.hostinger.com
+#   HOSTINGER_SSH_PORT              na Hostinger compartilhada é 65002
+#   HOSTINGER_SSH_USER              ex.: u123456789
+#   HOSTINGER_DEPLOY_PATH_COMPLETO  ex.: /home/u123456789/domains/grupofavo.com/public_html/precificacao-completo
+#   SUPABASE_ACCESS_TOKEN           token pessoal de https://supabase.com/dashboard/account/tokens
+#   SUPABASE_PROJECT_REF_COMPLETO   ref do projeto DESTA versão (o xxxx de https://xxxx.supabase.co)
+#   SUPABASE_DB_PASSWORD_COMPLETO   senha do banco desse projeto (Dashboard → Settings → Database)
+#
+# Os quatro HOSTINGER_SSH_* e o SUPABASE_ACCESS_TOKEN são os mesmos do outro
+# workflow: mesma máquina, mesma conta. O que muda de verdade — pasta de destino
+# e banco — ganha sufixo _COMPLETO justamente para que rodar este workflow nunca
+# possa escrever por engano no que é da versão simplificada.
+#
+# O ref do banco fica em secret, e não escrito aqui, pelo mesmo motivo de sempre:
+# este arquivo não deve amarrar qual projeto Supabase é; quem decide é a
+# configuração do repositório. Ele precisa apontar para o mesmo banco que o
+# config.js usa em produção.
+
+name: Deploy precificação completa
+
+on:
+  workflow_dispatch:
+
+# Um deploy por vez; um push em cima do outro espera o anterior terminar em vez
+# de interromper rsync/migration no meio. Grupo próprio: um deploy da versão
+# completa não deve ficar na fila atrás de um deploy da simplificada.
+concurrency:
+  group: deploy-precificacao-completo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Antes de qualquer coisa: um secret faltando aqui não pode virar um
+      # rsync --delete apontado para o lugar errado lá embaixo. Falhar agora,
+      # com o nome do secret na tela, é mais barato que descobrir depois.
+      - name: Conferir secrets obrigatórios
+        env:
+          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH_COMPLETO }}
+          PROJECT_REF:  ${{ secrets.SUPABASE_PROJECT_REF_COMPLETO }}
+          SSH_HOST:     ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER:     ${{ secrets.HOSTINGER_SSH_USER }}
+        run: |
+          faltando=""
+          [ -n "$DEPLOY_PATH" ] || faltando="$faltando HOSTINGER_DEPLOY_PATH_COMPLETO"
+          [ -n "$PROJECT_REF" ] || faltando="$faltando SUPABASE_PROJECT_REF_COMPLETO"
+          [ -n "$SSH_HOST" ]    || faltando="$faltando HOSTINGER_SSH_HOST"
+          [ -n "$SSH_USER" ]    || faltando="$faltando HOSTINGER_SSH_USER"
+          if [ -n "$faltando" ]; then
+            echo "::error::Secrets ausentes:$faltando"
+            exit 1
+          fi
+          # Caminho absoluto e com pasta própria: barra o destino "/" e o
+          # relativo, que com --delete varreriam o que não é nosso.
+          case "$DEPLOY_PATH" in
+            /*/*) : ;;
+            *) echo "::error::HOSTINGER_DEPLOY_PATH_COMPLETO precisa ser um caminho absoluto com subpasta."; exit 1 ;;
+          esac
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Aplicar migrations no Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_COMPLETO }}
+        run: |
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF_COMPLETO }}"
+          supabase db push
+
+      # Lista explícita do que vai ao ar. O repositório carrega protótipos de
+      # design, docs e backups (index.html.bak_*) que não devem virar página
+      # pública; incluir por nome evita que um arquivo solto novo suba por
+      # acidente. As páginas são as sete etapas de AppCore.PASSOS mais login,
+      # histórico e relatório.
+      #
+      # O .htaccess vai junto porque é ele que serve /precificacao-completo/projeto
+      # sem o .html na barra.
+      - name: Montar pasta de publicação
+        run: |
+          mkdir -p dist/js dist/img
+          cp index.html cadastro.html configuracoes.html despesas.html \
+             sazonalidade.html indicadores.html projeto.html relatorio.html \
+             historico.html login.html \
+             app-core.js config.js shared.css \
+             favicon.svg favicon-32.png apple-touch-icon.png .htaccess \
+             dist/
+          cp js/*.js dist/js/
+          cp img/*.svg dist/img/
+
+      - name: Preparar acesso SSH
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      # --delete mantém o servidor idêntico ao dist/: página removida do repo
+      # sai do ar em vez de ficar órfã. Só apaga dentro de DEPLOY_PATH.
+      - name: Enviar arquivos para a Hostinger
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH_COMPLETO }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
+          rsync -rvz --delete \
+            -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
+            dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"

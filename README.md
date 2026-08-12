@@ -55,6 +55,23 @@ de todas as páginas vem dela.
 
 ## Publicação
 
-A versão paralela do funil (`grupofavo.com/precificacao`) é publicada pelo
-workflow `.github/workflows/deploy-precificacao.yml`, sempre por disparo manual
-em Actions → *Run workflow*. Ele usa um projeto Supabase próprio, separado deste.
+Dois destinos, um workflow para cada. Ambos são **sempre** de disparo manual, em
+Actions → *Run workflow*, escolhendo ali a branch a publicar — nenhum push
+publica sozinho. Os dois fazem a mesma coisa, na mesma ordem: aplicam as
+migrations no Supabase e só então mandam os arquivos por rsync.
+
+| Endereço | Workflow | O que publica |
+|---|---|---|
+| `grupofavo.com/precificacao` | `deploy-precificacao.yml` | Versão simplificada do funil |
+| `grupofavo.com/precificacao-completo` | `deploy-precificacao-completo.yml` | Esta ferramenta, completa |
+
+Cada um tem sua pasta no servidor e seu projeto Supabase, e por isso seus
+próprios secrets — os da versão completa levam o sufixo `_COMPLETO`
+(`HOSTINGER_DEPLOY_PATH_COMPLETO`, `SUPABASE_PROJECT_REF_COMPLETO`,
+`SUPABASE_DB_PASSWORD_COMPLETO`). Acesso à máquina (`HOSTINGER_SSH_*`) e token
+da conta Supabase são compartilhados. A lista de secrets de cada fluxo está
+comentada no topo do próprio arquivo de workflow.
+
+O rsync roda com `--delete`: o que sai do repositório sai do ar. A lista de
+arquivos publicados é explícita dentro do workflow, então uma página nova só vai
+ao ar depois de ser incluída lá.
