@@ -276,7 +276,10 @@ function renderTabela(meses) {
           `<span class="pfx">R$</span>` +
           `<input class="sg-inp cifra" type="text" inputmode="decimal" placeholder="0,00" aria-label="Faturamento em ${label}"` +
           ` id="val_${key}" data-moeda` +
-          ` oninput="camposTocados.add('${key}-valor');atualizar('${key}')">` +
+          // A máscara TEM de rodar antes de atualizar(): este handler inline
+          // dispara antes do listener do ligarMoeda, e parseNum sobre o texto
+          // ainda sem máscara lê "1.2345" como decimal (1,2345 em vez de 12.345).
+          ` oninput="camposTocados.add('${key}-valor');AppCore.mascaraMoeda(this);atualizar('${key}')">` +
         `</div>` +
       `</div>` +
 
