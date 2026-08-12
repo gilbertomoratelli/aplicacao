@@ -1,0 +1,7 @@
+# Arquivos de credencial ficam fora do versionamento. O repositório é público:
+# o que entra aqui por engano vira segredo vazado, e apagar depois não resolve
+# (o valor continua no histórico e em quem já clonou).
+.env
+.env.*
+.env-banco
+*.env

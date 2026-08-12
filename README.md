@@ -67,10 +67,20 @@ migrations no Supabase e só então mandam os arquivos por rsync.
 
 Cada um tem sua pasta no servidor e seu projeto Supabase, e por isso seus
 próprios secrets — os da versão completa levam o sufixo `_COMPLETO`
-(`HOSTINGER_DEPLOY_PATH_COMPLETO`, `SUPABASE_PROJECT_REF_COMPLETO`,
-`SUPABASE_DB_PASSWORD_COMPLETO`). Acesso à máquina (`HOSTINGER_SSH_*`) e token
-da conta Supabase são compartilhados. A lista de secrets de cada fluxo está
-comentada no topo do próprio arquivo de workflow.
+(`SUPABASE_PROJECT_REF_COMPLETO`, `SUPABASE_DB_PASSWORD_COMPLETO`). Acesso à
+máquina (`HOSTINGER_SSH_*`) e token da conta Supabase são compartilhados. A
+lista de secrets de cada fluxo está comentada no topo do próprio arquivo de
+workflow.
+
+A pasta de destino da versão completa não tem secret próprio: as duas moram lado
+a lado no mesmo `public_html`, então ela é derivada de `HOSTINGER_DEPLOY_PATH`.
+Se um dia deixarem de ser vizinhas, criar `HOSTINGER_DEPLOY_PATH_COMPLETO` passa
+a mandar.
+
+O repositório é público, e log de Actions de repositório público é público
+também. Secret o GitHub mascara sozinho; valor **derivado** de um, não — por isso
+o caminho de destino é mascarado à mão com `::add-mask::`. Vale a regra ao mexer
+nesses workflows: nada de `echo` em valor que saiu de secret.
 
 O rsync roda com `--delete`: o que sai do repositório sai do ar. A lista de
 arquivos publicados é explícita dentro do workflow, então uma página nova só vai

@@ -14,10 +14,15 @@
 #   HOSTINGER_SSH_HOST              ex.: 145.223.xx.xx ou br-xxx.hostinger.com
 #   HOSTINGER_SSH_PORT              na Hostinger compartilhada é 65002
 #   HOSTINGER_SSH_USER              ex.: u123456789
-#   HOSTINGER_DEPLOY_PATH_COMPLETO  ex.: /home/u123456789/domains/grupofavo.com/public_html/precificacao-completo
 #   SUPABASE_ACCESS_TOKEN           token pessoal de https://supabase.com/dashboard/account/tokens
 #   SUPABASE_PROJECT_REF_COMPLETO   ref do projeto DESTA versão (o xxxx de https://xxxx.supabase.co)
 #   SUPABASE_DB_PASSWORD_COMPLETO   senha do banco desse projeto (Dashboard → Settings → Database)
+#
+# A pasta de destino NÃO precisa de secret próprio: as duas versões moram lado a
+# lado no mesmo public_html, então ela é derivada de HOSTINGER_DEPLOY_PATH —
+# mesma pasta-mãe, com "precificacao-completo" no lugar do último nome. Existe
+# HOSTINGER_DEPLOY_PATH_COMPLETO como escape: se um dia os destinos deixarem de
+# ser vizinhos, criar esse secret passa a mandar e o resto continua igual.
 #
 # Os quatro HOSTINGER_SSH_* e o SUPABASE_ACCESS_TOKEN são os mesmos do outro
 # workflow: mesma máquina, mesma conta. O que muda de verdade — pasta de destino
@@ -50,28 +55,61 @@ jobs:
       # Antes de qualquer coisa: um secret faltando aqui não pode virar um
       # rsync --delete apontado para o lugar errado lá embaixo. Falhar agora,
       # com o nome do secret na tela, é mais barato que descobrir depois.
-      - name: Conferir secrets obrigatórios
+      # Antes de qualquer coisa: um secret faltando aqui não pode virar um
+      # rsync --delete apontado para o lugar errado lá embaixo. Falhar agora,
+      # com o nome do secret na tela, é mais barato que descobrir depois.
+      #
+      # O destino sai daqui pelo GITHUB_ENV, e não de um secret direto, porque
+      # ele é derivado. Vem com ::add-mask:: junto: o caminho carrega o usuário
+      # da Hostinger, o repositório é público e log de Actions de repositório
+      # público é público também. Secret o GitHub mascara sozinho; valor
+      # calculado a partir de um, não.
+      - name: Resolver a pasta de destino
         env:
-          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH_COMPLETO }}
-          PROJECT_REF:  ${{ secrets.SUPABASE_PROJECT_REF_COMPLETO }}
-          SSH_HOST:     ${{ secrets.HOSTINGER_SSH_HOST }}
-          SSH_USER:     ${{ secrets.HOSTINGER_SSH_USER }}
+          DEPLOY_PATH_COMPLETO: ${{ secrets.HOSTINGER_DEPLOY_PATH_COMPLETO }}
+          DEPLOY_PATH_BASE:     ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          PROJECT_REF:          ${{ secrets.SUPABASE_PROJECT_REF_COMPLETO }}
+          DB_PASSWORD:          ${{ secrets.SUPABASE_DB_PASSWORD_COMPLETO }}
+          SSH_HOST:             ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER:             ${{ secrets.HOSTINGER_SSH_USER }}
         run: |
           faltando=""
-          [ -n "$DEPLOY_PATH" ] || faltando="$faltando HOSTINGER_DEPLOY_PATH_COMPLETO"
           [ -n "$PROJECT_REF" ] || faltando="$faltando SUPABASE_PROJECT_REF_COMPLETO"
+          [ -n "$DB_PASSWORD" ] || faltando="$faltando SUPABASE_DB_PASSWORD_COMPLETO"
           [ -n "$SSH_HOST" ]    || faltando="$faltando HOSTINGER_SSH_HOST"
           [ -n "$SSH_USER" ]    || faltando="$faltando HOSTINGER_SSH_USER"
           if [ -n "$faltando" ]; then
             echo "::error::Secrets ausentes:$faltando"
             exit 1
           fi
+
+          if [ -n "$DEPLOY_PATH_COMPLETO" ]; then
+            destino="$DEPLOY_PATH_COMPLETO"
+            origem="secret HOSTINGER_DEPLOY_PATH_COMPLETO"
+          elif [ -n "$DEPLOY_PATH_BASE" ]; then
+            destino="$(dirname "${DEPLOY_PATH_BASE%/}")/precificacao-completo"
+            origem="derivado de HOSTINGER_DEPLOY_PATH"
+          else
+            echo "::error::Sem destino: defina HOSTINGER_DEPLOY_PATH_COMPLETO (ou HOSTINGER_DEPLOY_PATH, do qual ele é derivado)."
+            exit 1
+          fi
+
           # Caminho absoluto e com pasta própria: barra o destino "/" e o
-          # relativo, que com --delete varreriam o que não é nosso.
-          case "$DEPLOY_PATH" in
+          # relativo, que com --delete varreriam o que não é nosso. E barra
+          # apontar para a pasta da versão simplificada, que a derivação nunca
+          # produz mas um secret digitado à mão produziria.
+          case "$destino" in
             /*/*) : ;;
-            *) echo "::error::HOSTINGER_DEPLOY_PATH_COMPLETO precisa ser um caminho absoluto com subpasta."; exit 1 ;;
+            *) echo "::error::O caminho de destino precisa ser absoluto e com subpasta."; exit 1 ;;
           esac
+          if [ "$destino" = "${DEPLOY_PATH_BASE%/}" ]; then
+            echo "::error::O destino aponta para a pasta da versão simplificada."
+            exit 1
+          fi
+
+          echo "::add-mask::$destino"
+          echo "DEPLOY_PATH=$destino" >> "$GITHUB_ENV"
+          echo "Destino resolvido ($origem)."
 
       - uses: supabase/setup-cli@v1
         with:
@@ -123,7 +161,6 @@ jobs:
           SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
           SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
           SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH_COMPLETO }}
         run: |
           ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
           rsync -rvz --delete \
