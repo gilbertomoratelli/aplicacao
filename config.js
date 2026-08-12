@@ -26,11 +26,20 @@
         supabaseKey: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
       }
     : {
-        // Banco de PRODUÇÃO desta aplicação (a versão principal).
-        // A versão paralela do funil (grupofavo.com/precificacao) usa outro
-        // projeto Supabase; não copiar de lá.
+        // Banco de PRODUÇÃO da ferramenta completa (grupofavo.com/precificacao-completo).
+        //
+        // Cada versão publicada tem o seu, e as chaves NÃO são intercambiáveis:
+        // a versão simplificada do funil (grupofavo.com/precificacao) usa outro
+        // projeto Supabase, e o ref antigo dfsmwzmtainiclcwpigw é de um terceiro.
+        // Trocar este endereço sem trocar a chave junto (ou vice-versa) derruba
+        // toda a aplicação em produção — as duas linhas andam sempre em par.
+        //
+        // Este é o mesmo projeto que o workflow deploy-precificacao-completo.yml
+        // aplica as migrations (secret SUPABASE_PROJECT_REF_COMPLETO). Se um dia
+        // mudar aqui, mudar lá também: código novo apontando para um banco sem a
+        // migration correspondente é justamente o que a ordem do deploy evita.
         ambiente: 'producao',
-        supabaseUrl: 'https://dfsmwzmtainiclcwpigw.supabase.co',
-        supabaseKey: 'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
+        supabaseUrl: 'https://ohlpbojoffhuvrkbdpig.supabase.co',
+        supabaseKey: 'sb_publishable_ixDEhZ4WW14CCrOWtatb-Q_EqYFVcI1'
       };
 })();
