@@ -4,63 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Despesas Variáveis · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
-  .wrap{width:100%;max-width:520px}
-
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
-  .btn-back:hover{color:var(--ink)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
-  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
-  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
-
-  .stepper{display:flex;align-items:center;margin-bottom:28px}
-  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
-  .sn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--hair);color:var(--muted)}
-  .sl{font-size:10px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .step.active .sn{background:var(--solar);color:#fff}
-  .step.active .sl{color:var(--solar)}
-  .step.done .sn{background:var(--teal);color:#fff}
-  .step.done .sl{color:var(--teal)}
-  .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
-  .sline.done{background:var(--teal)}
-  .step[onclick]{cursor:pointer}
-  .step[onclick]:hover .sn{opacity:.7}
-
-  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .empresa-badge .nome{font-weight:700;font-size:14px}
-  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
-  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
-  .btn-trocar:hover{background:rgba(255,255,255,.25)}
-
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px;margin-bottom:16px}
-  .card-title{font-size:17px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
-  .card-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
-  .sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:22px 0 12px;display:block}
-
-  label.fld{display:block;margin-bottom:8px}
-  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
-  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
-  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
-  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
-  .inwrap .affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--mono)}
-  .inwrap .affix.r{border-left:1px solid var(--hair)}
-  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%}
-
-  .toggle{display:flex;gap:6px;margin:6px 0 18px}
-  .toggle button{flex:1;padding:7px 4px;font-size:11px;border-radius:7px;cursor:pointer;border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s}
-  .toggle button.on{border-color:var(--teal);background:var(--teal);color:#fff}
-
+  /* Exclusivo desta página. Tokens, base, marca, stepper, faixa da empresa,
+     cartão, formulário e botões vêm do shared.css. */
   .divider{border:none;border-top:1px solid var(--hair);margin:20px 0 0}
-
   .extra-item{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--hair)}
   .extra-item:first-child{border-top:1px solid var(--hair)}
   .extra-nome{border:none;outline:none;font-size:13px;font-weight:600;background:transparent;font-family:var(--sans);flex:1;min-width:0;color:var(--ink)}
@@ -71,61 +22,27 @@
   .extra-pct{border:none;outline:none;padding:7px 7px;font-size:14px;font-family:var(--mono);font-weight:700;color:var(--ink);background:transparent;width:50px;text-align:right}
   .extra-unit{padding:0 7px;font-size:10px;font-weight:700;font-family:var(--mono);color:var(--muted);border-left:1px solid var(--hair);white-space:nowrap}
   .btn-extra-base{border:1px solid var(--hair);border-radius:6px;padding:5px 8px;font-size:10px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);white-space:nowrap;background:var(--surface);transition:.15s;flex-shrink:0}
-  .btn-extra-base.on{border-color:var(--teal);color:var(--teal);background:#E9F7EF}
-  .btn-remove-extra{background:none;border:1px solid var(--hair);border-radius:5px;padding:4px 8px;font-size:14px;cursor:pointer;color:var(--muted);line-height:1.4;transition:.15s;font-family:var(--sans);flex-shrink:0}
-  .btn-remove-extra:hover{border-color:var(--negative);color:var(--negative)}
-  .btn-add-extra{width:100%;border:1.5px dashed var(--hair);background:none;border-radius:9px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);font-family:var(--sans);transition:.15s;margin-top:12px}
-  .btn-add-extra:hover{border-color:var(--solar);color:var(--solar);background:rgba(0,177,64,.04)}
+  .btn-extra-base.on{border-color:var(--teal);color:var(--teal);background:var(--mint)}
 
-  .nav-row{display:flex;gap:10px;margin-top:4px}
-  .btn-nav{flex:1;border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
-  .btn-nav:hover{border-color:var(--teal)}
-  .btn-nav.primary{background:var(--solar);color:#fff;border-color:var(--solar)}
-  .btn-nav.primary:hover{opacity:.9}
-  .btn-nav:disabled{opacity:.5;cursor:not-allowed}
+  /* Campo + seletor de base formam UMA unidade: o seletor diz sobre o que
+     aquele percentual incide, então precisa ficar embaixo do próprio campo,
+     não na coluna ao lado (onde parecia pertencer ao campo vizinho). */
+  .campo-base{display:flex;flex-direction:column;gap:var(--e2);min-width:0}
+  .campo-base label.fld{margin-bottom:0}
 
-  .btn-help{width:20px;height:20px;border-radius:50%;border:2px solid var(--solar);background:none;color:var(--solar);font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle;flex-shrink:0;font-family:var(--sans);transition:.15s;margin-left:8px}
-  .btn-help:hover{background:var(--solar);color:#fff}
-  .modal-ov{position:fixed;inset:0;background:rgba(27,26,22,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:.2s;padding:20px}
-  .modal-ov.open{opacity:1;pointer-events:all}
-  .modal-card{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 12px 48px rgba(0,0,0,.2);transform:translateY(10px);transition:.2s}
-  .modal-ov.open .modal-card{transform:translateY(0)}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-  .modal-head h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.2px}
-  .btn-close{background:none;border:1px solid var(--hair);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
-  .btn-close:hover{border-color:var(--ink);color:var(--ink)}
-  .help-body{font-size:14px;color:var(--ink);line-height:1.6;margin:0 0 12px}
-  .help-exemplos{font-size:12px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px 12px;line-height:1.5}
-  .btn-fechar{width:100%;margin-top:16px;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);border:1px solid var(--hair);background:var(--surface);color:var(--muted);transition:.15s}
-  .btn-fechar:hover{color:var(--ink);border-color:var(--ink)}
+  /* Ação de acrescentar linha: centrada e com largura de leitura, em vez de
+     esticada de ponta a ponta ou presa numa das colunas. */
+  .btn-add-extra{max-width:320px;margin-left:auto;margin-right:auto}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="configuracoes.html?onboarding=1">← Voltar</a>
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
-  <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
-    <div class="sline done"></div>
-    <div class="step active"><div class="sn">3</div><div class="sl">Despesas</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='sazonalidade.html'"><div class="sn">4</div><div class="sl">Sazonal.</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
-  </div>
+  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge">
     <div>
@@ -135,14 +52,15 @@
     <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
   </div>
 
-  <div class="card">
-    <h2 class="card-title" style="display:flex;align-items:center">Despesas Variáveis <button class="btn-help" onclick="abrirHelp('var')" title="O que são despesas variáveis?">?</button></h2>
+  <div class="card form">
+    <h2 class="card-title" style="display:flex;align-items:center">Despesas Variáveis <button class="btn-help" onclick="abrirHelp('var')" title="O que são despesas variáveis?" aria-label="Ajuda: o que são despesas variáveis">?</button></h2>
     <p class="card-sub">Configure as despesas que variam proporcionalmente ao volume de vendas.</p>
 
+    <div class="campo-base">
     <label class="fld">
       <span class="lbl">Comissão de vendas</span>
       <div class="inwrap">
-        <input type="number" step="0.1" min="0" id="comissao" placeholder="0,0">
+        <input type="text" inputmode="decimal" id="comissao" placeholder="0,0" oninput="marcarTocado('comissao')" onfocus="marcarTocado('comissao')">
         <span class="affix r">%</span>
       </div>
     </label>
@@ -150,11 +68,13 @@
       <button data-base="total" onclick="setBase('comissao','total')">Sobre venda total</button>
       <button data-base="servico" onclick="setBase('comissao','servico')">Sobre serviços</button>
     </div>
+  </div>
 
+    <div class="campo-base">
     <label class="fld">
       <span class="lbl">Carga tributária média</span>
       <div class="inwrap">
-        <input type="number" step="0.1" min="0" id="tributo" placeholder="0,0">
+        <input type="text" inputmode="decimal" id="tributo" placeholder="0,0" oninput="marcarTocado('tributo')" onfocus="marcarTocado('tributo')">
         <span class="affix r">%</span>
       </div>
       <span class="hint">Ex.: alíquota efetiva do Simples Nacional ou regime de tributação da empresa</span>
@@ -163,6 +83,7 @@
       <button data-base="total" onclick="setBase('tributo','total')">Sobre venda total</button>
       <button data-base="servico" onclick="setBase('tributo','servico')">Sobre serviços</button>
     </div>
+  </div>
 
     <hr class="divider">
     <span class="sec-label">Outras despesas variáveis</span>
@@ -170,15 +91,15 @@
     <button class="btn-add-extra" onclick="adicionarExtra()">+ Adicionar despesa variável</button>
   </div>
 
-  <div class="card">
-    <h2 class="card-title" style="display:flex;align-items:center">Despesas Fixas <button class="btn-help" onclick="abrirHelp('fix')" title="O que são despesas fixas?">?</button></h2>
+  <div class="card form">
+    <h2 class="card-title" style="display:flex;align-items:center">Despesas Fixas <button class="btn-help" onclick="abrirHelp('fix')" title="O que são despesas fixas?" aria-label="Ajuda: o que são despesas fixas">?</button></h2>
     <p class="card-sub">Custos mensais independentes do volume de projetos.</p>
 
     <label class="fld">
       <span class="lbl">Despesa fixa mensal total</span>
       <div class="inwrap">
         <span class="affix l">R$</span>
-        <input type="text" inputmode="decimal" id="despFixa" placeholder="0,00">
+        <input type="text" inputmode="decimal" id="despFixa" data-moeda placeholder="0,00" oninput="marcarTocado('despFixa')" onfocus="marcarTocado('despFixa')">
       </div>
       <span class="hint">Aluguel, equipe, software, pró-labore, etc.</span>
     </label>
@@ -191,18 +112,23 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+AppCore.renderStepper('stepper', 'despesas');
+
+const integrador = AppCore.safeParse('integrador', null);
 
 let comissaoBase = 'total';
 let tributoBase  = 'servico';
 let extras = [];
+
+// Campos que o usuário tocou durante a sessão. Dados remotos (fetch async) não os sobrescrevem.
+const tocados = new Set();
+function marcarTocado(id) { tocados.add(id); }
 
 function init() {
   if (!integrador?.nome_empresa) {
@@ -215,11 +141,11 @@ function init() {
 }
 
 async function carregarDespesas() {
-  const local = JSON.parse(localStorage.getItem('despesas') || '{}');
+  const local = AppCore.safeParse('despesas', {});
   if (Object.keys(local).length) aplicarDespesas(local);
 
-  if (!integrador?.id) { syncBaseButtons(); return; }
-  const { data } = await db.from('integradores').select('despesas').eq('id', integrador.id).single();
+  if (!db || !integrador?.id) { syncBaseButtons(); return; }
+  const { data } = await AppCore.dbTry(db.from('integradores').select('despesas').eq('id', integrador.id).single());
   if (data?.despesas && Object.keys(data.despesas).length) {
     localStorage.setItem('despesas', JSON.stringify(data.despesas));
     aplicarDespesas(data.despesas);
@@ -229,23 +155,26 @@ async function carregarDespesas() {
 }
 
 function aplicarDespesas(d) {
-  if (d.comissao != null) {
+  if (d.comissao != null && !tocados.has('comissao')) {
     document.getElementById('comissao').value = d.comissao.valor ?? '';
     comissaoBase = d.comissao.base || 'total';
   }
-  if (d.tributo != null) {
+  if (d.tributo != null && !tocados.has('tributo')) {
     document.getElementById('tributo').value = d.tributo.valor ?? '';
     tributoBase = d.tributo.base || 'servico';
   }
-  extras = Array.isArray(d.extras) ? d.extras : [];
-  if (d.despFixa != null) {
-    document.getElementById('despFixa').value = Number(d.despFixa).toFixed(2).replace('.', ',');
+  if (!tocados.has('extras')) {
+    extras = Array.isArray(d.extras) ? d.extras : [];
+  }
+  if (d.despFixa != null && !tocados.has('despFixa')) {
+    AppCore.escreverMoeda('despFixa', d.despFixa);
   }
   syncBaseButtons();
   renderExtras();
 }
 
 function setBase(campo, val) {
+  marcarTocado(campo);
   if (campo === 'comissao') comissaoBase = val;
   else tributoBase = val;
   syncBaseButtons();
@@ -257,11 +186,13 @@ function syncBaseButtons() {
 }
 
 function trocarEmpresa() {
-  localStorage.removeItem('integrador');
+  ['integrador', 'despesas', 'configCustos', 'custosExtras', 'sazonalidade', 'projeto', 'precSolar']
+    .forEach(k => localStorage.removeItem(k));
   window.location.href = 'cadastro.html';
 }
 
 function adicionarExtra() {
+  marcarTocado('extras');
   extras.push({ nome: '', valor: 0, base: 'total' });
   renderExtras();
   const inputs = document.querySelectorAll('.extra-nome');
@@ -269,11 +200,13 @@ function adicionarExtra() {
 }
 
 function removerExtra(i) {
+  marcarTocado('extras');
   extras.splice(i, 1);
   renderExtras();
 }
 
 function toggleExtraBase(i) {
+  marcarTocado('extras');
   extras[i].base = extras[i].base === 'total' ? 'servico' : 'total';
   renderExtras();
 }
@@ -285,13 +218,13 @@ function renderExtras() {
     const div = document.createElement('div');
     div.className = 'extra-item';
     div.innerHTML =
-      `<input class="extra-nome" type="text" value="${ex.nome.replace(/"/g,'&quot;')}" placeholder="Nome da despesa" oninput="extras[${i}].nome=this.value">` +
+      `<input class="extra-nome" type="text" value="${AppCore.escapeHtml(ex.nome)}" placeholder="Nome da despesa" aria-label="Nome da despesa variável" oninput="marcarTocado('extras');extras[${i}].nome=this.value">` +
       `<div class="extra-pct-wrap">` +
-        `<input class="extra-pct" type="number" step="0.1" min="0" value="${ex.valor}" oninput="extras[${i}].valor=parseFloat(this.value)||0">` +
+        `<input class="extra-pct" type="text" inputmode="decimal" value="${ex.valor}" aria-label="Percentual da despesa variável" oninput="marcarTocado('extras');extras[${i}].valor=AppCore.parseNum(this.value)">` +
         `<span class="extra-unit">%</span>` +
       `</div>` +
-      `<button class="btn-extra-base${ex.base==='servico'?' on':''}" onclick="toggleExtraBase(${i})" title="Clique para alternar base de cálculo">${ex.base==='servico'?'Serviços':'Total'}</button>` +
-      `<button class="btn-remove-extra" onclick="removerExtra(${i})">×</button>`;
+      `<button class="btn-extra-base${ex.base==='servico'?' on':''}" onclick="toggleExtraBase(${i})" title="Clique para alternar base de cálculo" aria-label="Alternar base de cálculo">${ex.base==='servico'?'Serviços':'Total'}</button>` +
+      `<button class="btn-remove-extra" onclick="removerExtra(${i})" aria-label="Remover despesa">×</button>`;
     container.appendChild(div);
   });
 }
@@ -302,33 +235,39 @@ async function salvar(destino = 'sazonalidade.html') {
   btn.textContent = 'Salvando…';
 
   const payload = {
-    comissao: { valor: parseFloat(document.getElementById('comissao').value) || 0, base: comissaoBase },
-    tributo:  { valor: parseFloat(document.getElementById('tributo').value)  || 0, base: tributoBase  },
+    comissao: { valor: AppCore.parseNum(document.getElementById('comissao').value), base: comissaoBase },
+    tributo:  { valor: AppCore.parseNum(document.getElementById('tributo').value),  base: tributoBase  },
     extras:   extras.filter(e => e.nome.trim()),
-    despFixa: parseFloat(document.getElementById('despFixa').value.replace(',', '.')) || 0,
+    despFixa: AppCore.parseNum(document.getElementById('despFixa').value),
   };
 
+  // Grava no localStorage antes de qualquer I/O de rede: o avanço nunca depende do DB.
   localStorage.setItem('despesas', JSON.stringify(payload));
 
-  if (integrador?.id) {
-    await db.from('integradores').update({ despesas: payload }).eq('id', integrador.id);
+  try {
+    if (db && integrador?.id) {
+      await AppCore.dbTry(db.from('integradores').update({ despesas: payload }).eq('id', integrador.id));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar →';
+    window.location.href = destino;
   }
-
-  window.location.href = destino;
 }
 
 init();
+AppCore.ligarMoeda();
 
 function abrirHelp(tipo) { document.getElementById('modalHelp' + tipo).classList.add('open'); }
 function fecharHelp(tipo) { document.getElementById('modalHelp' + tipo).classList.remove('open'); }
 </script>
 
 <!-- Modal: Despesas Variáveis -->
-<div class="modal-ov" id="modalHelpvar" onclick="if(event.target===this)fecharHelp('var')">
+<div class="modal-ov" id="modalHelpvar" role="dialog" aria-modal="true" aria-label="Ajuda: o que são despesas variáveis" onclick="if(event.target===this)fecharHelp('var')">
   <div class="modal-card">
     <div class="modal-head">
       <h3>O que são Despesas Variáveis?</h3>
-      <button class="btn-close" onclick="fecharHelp('var')">×</button>
+      <button class="btn-close" onclick="fecharHelp('var')" aria-label="Fechar">×</button>
     </div>
     <p class="help-body">Aquelas diretamente relacionadas ao faturamento — a despesa somente existe caso exista venda, caso contrário essa despesa não ocorre.</p>
     <div class="help-exemplos"><strong>Exemplos:</strong> Comissão sobre vendas, comissões de supervisores, impostos.</div>
@@ -337,11 +276,11 @@ function fecharHelp(tipo) { document.getElementById('modalHelp' + tipo).classLis
 </div>
 
 <!-- Modal: Despesas Fixas -->
-<div class="modal-ov" id="modalHelpfix" onclick="if(event.target===this)fecharHelp('fix')">
+<div class="modal-ov" id="modalHelpfix" role="dialog" aria-modal="true" aria-label="Ajuda: o que são despesas fixas" onclick="if(event.target===this)fecharHelp('fix')">
   <div class="modal-card">
     <div class="modal-head">
       <h3>O que são Despesas Fixas?</h3>
-      <button class="btn-close" onclick="fecharHelp('fix')">×</button>
+      <button class="btn-close" onclick="fecharHelp('fix')" aria-label="Fechar">×</button>
     </div>
     <p class="help-body">Aquelas que existem independentemente de existir faturamento. Mesmo que o valor seja flexível de um mês para o outro, informe a média mensal considerando uma janela de pelo menos 6 meses.</p>
     <div class="help-exemplos"><strong>Exemplos:</strong> Folha de pagamento e seus encargos, aluguel, consultorias, combustível, entre outros.</div>

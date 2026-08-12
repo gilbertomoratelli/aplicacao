@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ilha · Design System FAVO · Protótipo 05</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ILHA — Design System FAVO · Protótipo 05 (rodada 2)
+
+   IDEIA: em vez de uma sequência de páginas, o produto é UM objeto que
+   muda de forma. Existe uma única ilha arredondada no centro da tela; ela
+   é o app. A cada etapa ela não é substituída — ela se reorganiza e muda
+   de altura. É a lógica de hardware da Apple: um corpo contínuo, com raio
+   grande e constante, em que o conteúdo entra e sai.
+
+   Consequência: quase não há "cards". A ilha é a superfície, e dentro dela
+   o conteúdo se separa por respiro e por sulco — nunca por mais uma caixa
+   dentro de outra caixa. Isso mata de vez o empilhamento de retângulos que
+   é a assinatura do design genérico.
+
+   A profundidade existe, mas é UMA sombra só, enorme, difusa e esverdeada:
+   a ilha paira sobre o campo. Nada mais no sistema tem sombra.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. TOKENS ─────────────────────────────────────────────────────── */
+:root{
+  --campo:#EAF1EC;         /* o chão em volta da ilha — nunca branco */
+  --campo-2:#DDE9E1;
+  --ilha:#FFFFFF;          /* a ilha É branca, e é a única coisa branca */
+  --sulco:#EEF4F0;         /* separador interno: um degrau de tom */
+  --sulco-2:#E3EDE7;
+
+  --verde:#00B140;
+  --verde-esc:#008C33;
+  --teal:#40C1AC;
+  --mata:#123A2A;
+  --tinta:#14261F;
+  --tinta-70:rgba(20,38,31,.70);
+  --tinta-45:rgba(20,38,31,.45);
+  --tinta-10:rgba(20,38,31,.10);
+  --ambar:#A96C08;
+  --telha:#AC4229;
+
+  /* Raio grande e CONSTANTE na ilha — é o que dá identidade de corpo.
+     A escala interna é derivada: cada nível de aninhamento perde o respiro. */
+  --r-ilha:34px; --r-2:22px; --r-3:14px; --r-pil:999px;
+  --respiro:12px;
+
+  --t-micro:11px; --t-min:12.5px; --t-corpo:14.5px; --t-md:16px;
+  --t-lg:20px; --t-xl:26px; --t-2xl:34px; --t-num:clamp(40px,7.5vw,58px);
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px; --e7:48px; --e8:72px;
+
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',Inter,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,'Roboto Mono',monospace;
+
+  /* A curva do corpo que se reacomoda. Mais longa que o normal porque
+     mudança de forma precisa ser lida, não só percebida. */
+  --forma:cubic-bezier(.34,.8,.28,1);
+  --rapido:220ms; --medio:520ms; --lento:900ms;
+  --toque:44px;
+
+  /* A única sombra do sistema. Verde, imensa, quase sem opacidade —
+     é ar embaixo da ilha, não uma borda escura. */
+  --paira:0 40px 80px -40px rgba(18,58,42,.28), 0 8px 24px -16px rgba(18,58,42,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);background:var(--campo);color:var(--tinta);
+  line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+
+/* ─── 2. O CAMPO ────────────────────────────────────────────────────── */
+/* O chão nunca é chapado: dois campos de luz muito abertos fazem o verde
+   variar de temperatura, e a ilha branca ganha contraste sem precisar de
+   borda. É o que faz "branco sobre cinza" virar "objeto sobre paisagem". */
+.campo-luz{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.campo-luz::before,.campo-luz::after{content:'';position:absolute;border-radius:50%}
+.campo-luz::before{
+  width:100vmax;height:100vmax;left:-30vmax;top:-45vmax;
+  background:radial-gradient(circle,rgba(64,193,172,.28),transparent 60%);
+  animation:maré 28s ease-in-out infinite alternate;
+}
+.campo-luz::after{
+  width:85vmax;height:85vmax;right:-32vmax;bottom:-40vmax;
+  background:radial-gradient(circle,rgba(0,177,64,.16),transparent 62%);
+  animation:maré 34s ease-in-out infinite alternate-reverse;
+}
+@keyframes maré{to{transform:translate3d(7%,4%,0) scale(1.14)}}
+
+/* ─── 3. A ILHA ─────────────────────────────────────────────────────── */
+/* O corpo do produto. Raio 34px constante, uma sombra só, sem borda.
+   Ela cresce e encolhe conforme o conteúdo — nunca é trocada. */
+.ilha{
+  position:relative;border-radius:var(--r-ilha);background:var(--ilha);
+  box-shadow:var(--paira);padding:var(--e6) var(--e5);
+  transition:height var(--lento) var(--forma);
+}
+/* Divisão interna: NÃO é outro card. É um sulco — um degrau de tom com
+   raio derivado. Duas caixas aninhadas é o vício que este sistema proíbe. */
+.sulco{
+  background:var(--sulco);border-radius:var(--r-2);padding:var(--e4) var(--e5);
+  margin:0 calc(-1 * var(--e2));
+}
+.sulco.forte{background:var(--sulco-2)}
+/* Régua: separa sem criar bloco. Sangra até a borda da ilha. */
+.regua{height:1px;background:var(--tinta-10);margin:var(--e5) calc(-1 * var(--e5))}
+
+/* ─── 4. CÁPSULA — a navegação ──────────────────────────────────────── */
+/* A ilha tem uma cápsula presa no topo com o passo atual. Ela é o único
+   elemento que permanece entre etapas — a âncora que prova que é o mesmo
+   objeto. O preenchimento é uma pílula que desliza, não uma barra que cresce. */
+.capsula{
+  display:flex;align-items:center;gap:var(--e3);
+  background:var(--campo-2);border-radius:var(--r-pil);padding:5px 5px 5px var(--e4);
+  margin-bottom:var(--e5);
+}
+.capsula .txt{font-size:var(--t-min);font-weight:620;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.capsula .cont{font-family:var(--mono);font-size:var(--t-micro);color:var(--tinta-45);letter-spacing:.06em;flex:none}
+.capsula .med{
+  flex:none;display:flex;gap:4px;background:var(--ilha);border-radius:var(--r-pil);padding:6px 8px;
+}
+.capsula .med i{width:16px;height:5px;border-radius:var(--r-pil);background:var(--tinta-10);display:block;
+  transition:background var(--medio) var(--forma),width var(--medio) var(--forma)}
+.capsula .med i.on{background:var(--verde)}
+.capsula .med i.agora{background:var(--verde);width:26px;animation:desliza var(--lento) var(--forma) both}
+@keyframes desliza{from{width:0}to{width:26px}}
+
+/* ─── 5. TIPOGRAFIA ─────────────────────────────────────────────────── */
+.rotulo{font-family:var(--mono);font-size:var(--t-micro);font-weight:500;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--tinta-45)}
+h1,.h1{font-size:var(--t-2xl);font-weight:640;letter-spacing:-.03em;line-height:1.1;text-wrap:balance}
+h2,.h2{font-size:var(--t-lg);font-weight:640;letter-spacing:-.02em;line-height:1.28}
+h3{font-size:var(--t-md);font-weight:620;letter-spacing:-.012em}
+p{font-size:var(--t-corpo);color:var(--tinta-70);line-height:1.65}
+.cifra{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.cifra-heroi{font-size:var(--t-num);line-height:.96;letter-spacing:-.05em;font-weight:550}
+
+/* ─── 6. CAMPOS ─────────────────────────────────────────────────────── */
+/* Dentro da ilha branca, o campo é um sulco: mais escuro que a superfície,
+   não mais claro. Inverte a convenção do input branco com borda cinza e é
+   o que faz o formulário parecer escavado no corpo. */
+.campo{display:block;margin-bottom:var(--e4)}
+.campo>.rotulo{display:block;margin-bottom:var(--e2)}
+.caixa{
+  display:flex;align-items:stretch;background:var(--sulco);
+  border-radius:var(--r-3);border:1.5px solid transparent;
+  transition:border-color var(--rapido) var(--forma),box-shadow var(--rapido) var(--forma),
+             background var(--rapido) var(--forma);
+}
+.caixa:focus-within{background:var(--ilha);border-color:var(--verde);box-shadow:0 0 0 4px rgba(0,177,64,.13)}
+.caixa .un{display:flex;align-items:center;padding:0 var(--e3);flex:none;
+  font-family:var(--mono);font-size:var(--t-min);color:var(--tinta-45)}
+.caixa input,.caixa select{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--tinta);
+  padding:var(--e3);min-height:var(--toque);
+  font-family:var(--mono);font-size:var(--t-md);font-weight:550;font-variant-numeric:tabular-nums;
+}
+.caixa.texto input,.caixa select{font-family:var(--sans);font-weight:500}
+.campo .nota{display:block;font-size:var(--t-min);color:var(--tinta-45);margin-top:var(--e2);line-height:1.5}
+
+/* ─── 7. BOTÕES ─────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--e2);
+  font-family:var(--sans);font-size:var(--t-corpo);font-weight:620;
+  padding:var(--e3) var(--e5);min-height:var(--toque);border-radius:var(--r-pil);
+  border:1.5px solid transparent;cursor:pointer;text-decoration:none;
+  transition:transform var(--rapido) var(--forma),background var(--rapido) var(--forma),
+             border-color var(--rapido) var(--forma);
+}
+.btn:active{transform:scale(.985)}
+.btn-1{background:var(--verde);color:#fff;width:100%}
+.btn-1:hover{background:var(--verde-esc)}
+.btn-2{background:var(--sulco);color:var(--tinta)}
+.btn-2:hover{background:var(--sulco-2)}
+.btn-3{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.26)}
+.btn-3:hover{background:rgba(255,255,255,.3)}
+.nav{display:flex;gap:var(--e3)}
+.nav .btn{flex:1}
+
+/* ─── 8. SELO / AVISO ───────────────────────────────────────────────── */
+.selo{display:inline-flex;align-items:center;gap:var(--e2);border-radius:var(--r-pil);
+  font-size:var(--t-min);font-weight:620;padding:6px var(--e3);background:var(--sfundo);color:var(--scor)}
+.selo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--scor);flex:none}
+.aviso{border-radius:var(--r-3);padding:var(--e3) var(--e4);font-size:var(--t-min);
+  line-height:1.6;background:#FBF0DA;color:#7A4F00}
+
+/* ─── 9. CASCATA ────────────────────────────────────────────────────── */
+.fatia{padding:var(--e3) 0;border-bottom:1px solid var(--tinta-10)}
+.fatia:last-child{border-bottom:none}
+.fatia .topo{display:flex;justify-content:space-between;align-items:baseline;gap:var(--e3);margin-bottom:var(--e2)}
+.fatia .nome{font-size:var(--t-corpo);font-weight:520}
+.fatia .nome small{display:block;font-size:var(--t-min);color:var(--tinta-45);font-weight:400}
+.fatia .val{font-family:var(--mono);font-size:var(--t-corpo);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trilho{height:8px;border-radius:var(--r-pil);background:var(--sulco);overflow:hidden}
+.trilho i{display:block;height:100%;border-radius:var(--r-pil);background:var(--c);
+  transform-origin:left;animation:cresce var(--lento) var(--forma) both;animation-delay:var(--d,0ms)}
+@keyframes cresce{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.fatia.resto{margin-top:var(--e2);padding-top:var(--e4);border-top:2px solid var(--tinta-10);border-bottom:none}
+.fatia.resto .nome{font-weight:700;font-size:var(--t-md)}
+.fatia.resto .val{font-size:var(--t-lg);color:var(--verde-esc)}
+
+/* ─── 10. TABELA ────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--t-min)}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+   color:var(--tinta-45);font-weight:500;text-align:right;padding:0 var(--e3) var(--e2)}
+th:first-child{text-align:left}
+td{padding:var(--e2) var(--e3);text-align:right;font-family:var(--mono);
+   font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--tinta-70)}
+td:first-child{text-align:left;font-family:var(--sans)}
+tr.hoje td{background:var(--sulco);color:var(--tinta);font-weight:700}
+tr.hoje td:first-child{border-radius:var(--r-3) 0 0 var(--r-3)}
+tr.hoje td:last-child{border-radius:0 var(--r-3) var(--r-3) 0}
+
+/* ─── 11. MOVIMENTO ─────────────────────────────────────────────────── */
+/* O conteúdo entra POR DENTRO da ilha: sobe 14px com um leve clip, como se
+   emergisse do corpo. Nada entra "de fora da tela" — a ilha não é uma
+   janela, é um objeto fechado. */
+[data-emerge]{animation:emerge var(--medio) var(--forma) both;animation-delay:var(--atraso,0ms)}
+@keyframes emerge{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cifra-heroi{animation:emerge 760ms var(--forma) both;animation-delay:240ms}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+}
+
+/* ─── 12. DOC ───────────────────────────────────────────────────────── */
+.doc{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:var(--e8) var(--e5)}
+.cabeca{max-width:680px;margin-bottom:var(--e8)}
+.cabeca .rotulo{display:block;margin-bottom:var(--e4)}
+.cabeca h1{margin-bottom:var(--e4)}
+.cabeca p{font-size:var(--t-md);line-height:1.7}
+.secao{margin-bottom:var(--e8)}
+.secao>.rotulo{display:block;margin-bottom:var(--e5);padding-bottom:var(--e3);border-bottom:1px solid var(--tinta-10)}
+.grade{display:grid;gap:var(--e4)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}.doc{padding:var(--e6) var(--e4)}}
+.amostra{height:88px;border-radius:var(--r-2);position:relative}
+.amostra span{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:10px}
+.tela{max-width:520px}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:var(--e3)}
+@media(max-width:460px){.par{grid-template-columns:1fr}}
+.marca{display:flex;align-items:center;gap:var(--e3);margin-bottom:var(--e6)}
+.marca .n{font-size:var(--t-min);font-weight:640}
+.marca .s{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);font-weight:500}
+.voltar{position:fixed;left:var(--e4);top:var(--e4);z-index:9;border-radius:var(--r-pil);
+  background:var(--ilha);padding:8px 16px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--tinta);box-shadow:var(--paira)}
+</style>
+</head>
+<body>
+<div class="campo-luz"></div>
+<a class="voltar" href="index.html">← protótipos</a>
+
+<main class="doc">
+
+  <header class="cabeca">
+    <div class="marca">
+      <svg viewBox="0 0 509 534" width="34" height="34"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+      <div><div class="n">Auditor de Precificação</div><div class="s">FAVO Educação</div></div>
+    </div>
+    <span class="rotulo">Protótipo 05 · rodada 2 · claro e arredondado</span>
+    <h1>Ilha</h1>
+    <p>Em vez de uma sequência de páginas, o produto é <b>um objeto que muda de forma</b>. Existe uma única ilha arredondada no centro da tela — ela é o app. A cada etapa ela não é substituída: se reorganiza e muda de altura. É lógica de hardware, um corpo contínuo de raio grande e constante em que o conteúdo entra e sai. Dentro dela quase não há cards: o conteúdo se separa por respiro e por sulco, nunca por mais uma caixa dentro de outra caixa.</p>
+  </header>
+
+  <!-- COR -->
+  <section class="secao">
+    <span class="rotulo">01 · Cor</span>
+    <p style="max-width:640px;margin-bottom:var(--e5)">Só a ilha é branca — e é a única coisa branca no sistema inteiro. O chão é um verde muito lavado com dois campos de luz abertos, o que dá contraste à ilha sem precisar de borda. É o que transforma "branco sobre cinza" em "objeto sobre paisagem".</p>
+    <div class="grade g4">
+      <div><div class="amostra" style="background:var(--campo)"><span>#EAF1EC</span></div><span class="rotulo" style="display:block;margin-top:8px">Campo · chão</span></div>
+      <div><div class="amostra" style="background:var(--ilha);box-shadow:var(--paira)"><span>#FFFFFF</span></div><span class="rotulo" style="display:block;margin-top:8px">Ilha · corpo</span></div>
+      <div><div class="amostra" style="background:var(--sulco)"><span>#EEF4F0</span></div><span class="rotulo" style="display:block;margin-top:8px">Sulco · escavado</span></div>
+      <div><div class="amostra" style="background:var(--mata)"><span style="color:#fff">#123A2A</span></div><span class="rotulo" style="display:block;margin-top:8px">Mata · veredito</span></div>
+      <div><div class="amostra" style="background:var(--verde)"><span style="color:#fff">#00B140</span></div><span class="rotulo" style="display:block;margin-top:8px">Verde · ação</span></div>
+      <div><div class="amostra" style="background:var(--teal)"><span style="color:#0B241C">#40C1AC</span></div><span class="rotulo" style="display:block;margin-top:8px">Teal · marca</span></div>
+      <div><div class="amostra" style="background:var(--ambar)"><span style="color:#fff">#A96C08</span></div><span class="rotulo" style="display:block;margin-top:8px">Âmbar · aperto</span></div>
+      <div><div class="amostra" style="background:var(--telha)"><span style="color:#fff">#AC4229</span></div><span class="rotulo" style="display:block;margin-top:8px">Telha · falta</span></div>
+    </div>
+  </section>
+
+  <!-- A ILHA -->
+  <section class="secao">
+    <span class="rotulo">02 · O corpo e o sulco</span>
+    <div class="grade g2" style="align-items:start">
+      <div class="ilha">
+        <h2 style="margin-bottom:var(--e3)">Raio constante</h2>
+        <p style="margin-bottom:var(--e5)">34 px na ilha, sempre. É o raio que dá identidade de corpo — mudar de tela para tela seria como mudar o formato do aparelho.</p>
+        <div class="sulco">
+          <span class="rotulo" style="display:block;margin-bottom:6px">Sulco</span>
+          <p style="font-size:var(--t-min);margin:0">Separação interna sem criar outro card: um degrau de tom, mais escuro que a ilha, com raio derivado (22 px). Caixa dentro de caixa é o vício que este sistema proíbe.</p>
+        </div>
+        <div class="regua"></div>
+        <p style="font-size:var(--t-min);margin:0">A régua sangra até a borda da ilha e separa sem criar bloco nenhum.</p>
+      </div>
+      <div class="ilha" style="background:var(--mata);color:#EAF6EF">
+        <h2 style="color:#fff;margin-bottom:var(--e3)">Uma sombra só</h2>
+        <p style="color:rgba(234,246,239,.72);margin-bottom:var(--e5)">80 px de difusão, deslocada 40 px, em verde escuro a 28%. É ar embaixo da ilha, não contorno. Nenhum outro elemento do sistema tem sombra — nem botão, nem campo, nem selo.</p>
+        <div style="background:rgba(255,255,255,.08);border-radius:var(--r-2);padding:var(--e4)">
+          <p style="color:rgba(234,246,239,.8);font-size:var(--t-min);margin:0">A ilha escura é a mesma ilha: mesmo raio, mesma sombra, mesmo respiro. Só o preenchimento muda, e só no veredito.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CÁPSULA -->
+  <section class="secao">
+    <span class="rotulo">03 · Cápsula — a âncora entre etapas</span>
+    <p style="max-width:640px;margin-bottom:var(--e5)">É o único elemento que permanece de uma etapa para a outra: a prova de que é o mesmo objeto, e não outra página. O medidor não é barra que cresce — é uma pílula que se alarga na posição atual.</p>
+    <div class="ilha" style="max-width:520px">
+      <div class="capsula" style="margin-bottom:0">
+        <span class="txt">Custos e operação</span>
+        <span class="cont">03/04</span>
+        <span class="med"><i class="on"></i><i class="on"></i><i class="agora"></i><i></i></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ELEMENTOS -->
+  <section class="secao">
+    <span class="rotulo">04 · Elementos</span>
+    <div class="grade g2" style="align-items:start">
+      <div class="ilha">
+        <span class="rotulo" style="display:block;margin-bottom:var(--e4)">Campos escavados</span>
+        <label class="campo"><span class="rotulo">Despesa fixa mensal</span>
+          <div class="caixa"><span class="un">R$</span><input value="42.800,00"></div></label>
+        <label class="campo"><span class="rotulo">Comissão de vendas</span>
+          <div class="caixa"><input value="4,0"><span class="un">%</span></div>
+          <span class="nota">O campo é mais escuro que a superfície, não mais claro. Inverte a convenção do input branco com borda cinza e faz o formulário parecer escavado no corpo.</span></label>
+        <label class="campo" style="margin-bottom:0"><span class="rotulo">Nome do projeto</span>
+          <div class="caixa texto"><input value="Residencial Vila Nova"></div></label>
+      </div>
+      <div class="ilha">
+        <span class="rotulo" style="display:block;margin-bottom:var(--e4)">Botões, selos, avisos</span>
+        <button class="btn btn-1" style="margin-bottom:var(--e3)">Ver meu diagnóstico</button>
+        <div class="nav" style="margin-bottom:var(--e4)">
+          <button class="btn btn-2">Voltar</button><button class="btn btn-2">Salvar</button>
+        </div>
+        <div style="display:flex;gap:var(--e2);flex-wrap:wrap;margin-bottom:var(--e4)">
+          <span class="selo" style="--sfundo:#DEF1E6;--scor:#00713A">Sobra</span>
+          <span class="selo" style="--sfundo:#FBF0DA;--scor:#7A4F00">Aperto</span>
+          <span class="selo" style="--sfundo:#F8E4DE;--scor:#96351E">Falta</span>
+        </div>
+        <div class="aviso">Diagnóstico gerencial, não consultoria contábil. Confirme a alíquota com seu contador.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOVIMENTO -->
+  <section class="secao">
+    <span class="rotulo">05 · Movimento</span>
+    <div class="grade g3">
+      <div class="ilha"><span class="rotulo">A ilha respira</span><p style="margin-top:var(--e3);font-size:var(--t-min)">A altura anima em 900 ms na troca de etapa. O usuário vê o mesmo corpo se reacomodar — não uma página sendo substituída por outra.</p></div>
+      <div class="ilha"><span class="rotulo">Emergir</span><p style="margin-top:var(--e3);font-size:var(--t-min)">O conteúdo entra por dentro: sobe 14 px a partir do corpo. Nada entra de fora da tela — a ilha não é janela, é objeto fechado.</p></div>
+      <div class="ilha"><span class="rotulo">Curva longa</span><p style="margin-top:var(--e3);font-size:var(--t-min)"><code>cubic-bezier(.34,.8,.28,1)</code> em 520–900 ms. Mudança de forma precisa ser lida, não só percebida — por isso é mais lenta que uma transição comum.</p></div>
+    </div>
+  </section>
+
+  <!-- APLICADO: FUNIL -->
+  <section class="secao">
+    <span class="rotulo">06 · Aplicado · Passo 03 — Custos</span>
+    <div class="tela">
+      <div class="ilha">
+        <div class="capsula">
+          <span class="txt">Custos e operação</span>
+          <span class="cont">03/04</span>
+          <span class="med"><i class="on"></i><i class="on"></i><i class="agora"></i><i></i></span>
+        </div>
+
+        <div class="sulco forte" style="display:flex;justify-content:space-between;align-items:center;gap:var(--e3);padding:var(--e3) var(--e4);margin-bottom:var(--e5)">
+          <div><div style="font-weight:620;font-size:var(--t-min)">Solar Vale Engenharia</div><div class="rotulo">Simples Nacional</div></div>
+          <button class="btn btn-2" style="padding:8px 14px;font-size:var(--t-micro);min-height:0;background:var(--ilha)">Trocar</button>
+        </div>
+
+        <div data-emerge style="--atraso:60ms">
+          <h2>Quanto você faz por mês</h2>
+          <p style="margin:var(--e2) 0 var(--e4)">É o que permite dividir o custo fixo entre os projetos.</p>
+          <div class="par">
+            <label class="campo"><span class="rotulo">Projetos / mês</span><div class="caixa"><input value="6"><span class="un">un</span></div></label>
+            <label class="campo"><span class="rotulo">Despesa fixa</span><div class="caixa"><span class="un">R$</span><input value="42.800"></div></label>
+          </div>
+        </div>
+
+        <div class="regua"></div>
+
+        <div data-emerge style="--atraso:120ms">
+          <h2>Quanto sai de cada venda</h2>
+          <p style="margin:var(--e2) 0 var(--e4)">Percentuais sobre o valor vendido.</p>
+          <div class="par">
+            <label class="campo"><span class="rotulo">Comissão</span><div class="caixa"><input value="4,0"><span class="un">%</span></div></label>
+            <label class="campo"><span class="rotulo">Impostos</span><div class="caixa"><input value="8,5"><span class="un">%</span></div></label>
+          </div>
+          <label class="campo"><span class="rotulo">Quem emite a nota do kit</span>
+            <div class="caixa texto"><select><option>A distribuidora fatura direto ao cliente</option><option>Sai no meu CNPJ</option></select></div>
+            <span class="nota">Muda bastante a conta: no seu CNPJ, o imposto incide sobre o valor cheio.</span></label>
+        </div>
+
+        <button class="btn btn-1" data-emerge style="--atraso:180ms;margin-top:var(--e2)">Ver meu diagnóstico →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- APLICADO: DIAGNÓSTICO -->
+  <section class="secao">
+    <span class="rotulo">07 · Aplicado · Diagnóstico</span>
+    <div class="tela">
+      <div class="ilha" style="background:var(--mata);color:#EAF6EF;margin-bottom:var(--e4)">
+        <div class="capsula" style="background:rgba(255,255,255,.10)">
+          <span class="txt" style="color:#fff">Diagnóstico</span>
+          <span class="cont" style="color:rgba(234,246,239,.55)">04/04</span>
+          <span class="med" style="background:rgba(255,255,255,.14)"><i class="on"></i><i class="on"></i><i class="on"></i><i class="agora"></i></span>
+        </div>
+        <span class="rotulo" style="display:block;color:rgba(234,246,239,.5);margin-bottom:var(--e2)">Solar Vale · Residencial Vila Nova · 8,4 kWp</span>
+        <span class="selo" style="--sfundo:rgba(255,255,255,.14);--scor:#7FE3A8">Seu preço cobre tudo e ainda sobra</span>
+        <div class="cifra cifra-heroi" style="color:#5FE08F;margin:var(--e4) 0 var(--e2)">R$&nbsp;7.140</div>
+        <div style="font-size:var(--t-md);font-weight:620;color:#fff;margin-bottom:var(--e3)">sobram por projeto</div>
+        <p style="color:rgba(234,246,239,.72)">R$ 42.840 por mês, somando os 6 projetos que você faz. É o que fica com a empresa depois do kit, da instalação, do projeto, da comissão, do imposto e da fatia do mês em estrutura.</p>
+        <div style="background:rgba(255,255,255,.08);border-radius:var(--r-2);padding:var(--e4);margin-top:var(--e5)">
+          <p style="color:rgba(234,246,239,.85);margin:0;line-height:1.7">
+            Seu <b style="color:#fff">preço mínimo</b> para lucrar 12% é <b class="cifra" style="color:#fff">R$ 48.900</b>. Você cobra <b class="cifra" style="color:#fff">R$ 56.040</b> — <b class="cifra" style="color:#fff">R$ 7.140</b> acima do mínimo.
+            <span style="display:block;margin-top:var(--e2);color:#7FE3A8;font-weight:620">Isso é folga de margem, não convite a dar desconto.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="ilha" data-emerge style="--atraso:80ms;margin-bottom:var(--e4)">
+        <h2>Para onde vai cada R$ 56.040 que entram</h2>
+        <p style="margin:var(--e2) 0 var(--e4)">É o mesmo projeto, fatiado. A última linha é o que fica com a empresa.</p>
+        <div class="fatia"><div class="topo"><div class="nome">Kit<small>faturado pela distribuidora</small></div><div class="val">R$ 28.400</div></div><div class="trilho"><i style="--c:#9FB3A9;--d:0ms;width:50.7%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Instalação</div><div class="val">R$ 8.200</div></div><div class="trilho"><i style="--c:#A8BCA5;--d:60ms;width:14.6%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Projeto, ART e homologação</div><div class="val">R$ 2.900</div></div><div class="trilho"><i style="--c:#C4B78E;--d:120ms;width:5.2%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Comissão do vendedor</div><div class="val">R$ 2.242</div></div><div class="trilho"><i style="--c:#D9A85C;--d:180ms;width:4%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Imposto<small>sobre a parte de serviço</small></div><div class="val">R$ 2.351</div></div><div class="trilho"><i style="--c:#C98A47;--d:240ms;width:4.2%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Sua estrutura<small>a fatia do mês que cabe a este projeto</small></div><div class="val">R$ 4.807</div></div><div class="trilho"><i style="--c:#B96C3E;--d:300ms;width:8.6%"></i></div></div>
+        <div class="fatia resto"><div class="topo"><div class="nome">Sobra pra você</div><div class="val">R$ 7.140</div></div><div class="trilho"><i style="--c:var(--verde);--d:400ms;width:12.7%"></i></div></div>
+      </div>
+
+      <div class="ilha" data-emerge style="--atraso:120ms;margin-bottom:var(--e4)">
+        <h2>Quanto custa cada desconto que você dá</h2>
+        <p style="margin:var(--e2) 0 var(--e4)">Cada 1% de desconto tira cerca de <b class="cifra" style="color:var(--tinta)">R$ 3.362</b> do seu lucro no mês — <b style="color:var(--tinta)">7,8 vezes</b> o que você deu de desconto.</p>
+        <table>
+          <thead><tr><th>Desconto</th><th>Preço</th><th>Sobra no mês</th><th>Deixa de ganhar</th></tr></thead>
+          <tbody>
+            <tr class="hoje"><td>Preço de hoje</td><td>R$ 56.040</td><td>R$ 42.840</td><td>—</td></tr>
+            <tr><td>−2%</td><td>R$ 54.919</td><td>R$ 36.116</td><td style="color:var(--telha);font-weight:600">− R$ 6.724</td></tr>
+            <tr><td>−5%</td><td>R$ 53.238</td><td>R$ 26.030</td><td style="color:var(--telha);font-weight:600">− R$ 16.810</td></tr>
+            <tr><td>−10%</td><td>R$ 50.436</td><td>R$ 9.220</td><td style="color:var(--telha);font-weight:600">− R$ 33.620</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ilha" data-emerge style="--atraso:160ms;background:var(--verde);text-align:center">
+        <h2 style="color:#fff;margin-bottom:var(--e2)">Sobram R$ 7.140 por projeto.<br>Dá para sobrar mais.</h2>
+        <p style="color:rgba(255,255,255,.85);margin-bottom:var(--e5)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+        <button class="btn" style="background:#fff;color:var(--mata);width:auto;padding:var(--e3) var(--e6)">Quero conversar sobre esses números</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao">
+    <span class="rotulo">08 · Regras que mantêm o sistema vivo</span>
+    <div class="grade g2">
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">01 — Uma ilha por tela. Se precisou de duas, o conteúdo devia estar dentro de uma só, separado por régua.</p></div>
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">02 — Nunca caixa dentro de caixa. Divisão interna é sulco ou régua.</p></div>
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">03 — A sombra é exclusiva da ilha. Botão, campo e selo nunca têm sombra.</p></div>
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">04 — Raio 34 px na ilha, sempre. Constância de raio é constância de corpo.</p></div>
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">05 — Branco só na ilha. Nenhum outro elemento é branco puro.</p></div>
+      <div class="ilha" style="padding:var(--e4)"><p style="font-size:var(--t-min);margin:0">06 — A cápsula nunca some. É a âncora que prova continuidade entre etapas.</p></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

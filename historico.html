@@ -4,39 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico de Orçamentos · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5; --surface:#FFFFFF; --ink:#1B1A16; --muted:#736F64; --hair:#DFF0E8;
-    --solar:#00B140; --teal:#183029; --positive:#00B140; --negative:#B23A2E;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px 22px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1180px;margin:0 auto}
+  /* Exclusivo desta página. Tokens, base, cartão, formulário, botões e
+     modal vêm do shared.css. */
 
+  /* Tela de trabalho, não de funil: precisa de mais largura que os 480px
+     padrão e de respiro menor no topo. */
+  body{padding:28px 22px}
+  .wrap{max-width:1180px}
   header{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-  .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#40C1AC;text-transform:uppercase;font-weight:700}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--teal-marca);text-transform:uppercase;font-weight:700}
   h1{margin:6px 0 4px;font-size:30px;font-weight:800;letter-spacing:-.5px}
   .sub{margin:0;color:var(--muted);font-size:14px}
   .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   .btn:hover{border-color:var(--teal)}
   .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
-
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
   .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:16px 18px;border-top:3px solid var(--teal)}
   .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
   .kpi .v{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
-
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;overflow:hidden;margin-bottom:22px}
   .card-head{padding:16px 20px;border-bottom:1px solid var(--hair);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   .card-head h3{margin:0;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-
   .search-wrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:8px;background:var(--bg);overflow:hidden;width:260px}
   .search-wrap input{flex:1;border:none;outline:none;padding:8px 12px;font-size:13px;font-family:var(--sans);color:var(--ink);background:transparent}
   .search-wrap input:focus{outline:2px solid var(--solar);outline-offset:1px}
-
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead th{padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;border-bottom:1px solid var(--hair);white-space:nowrap}
   thead th.r{text-align:right}
@@ -49,15 +44,12 @@
   .emp-cell{font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .date-cell{color:var(--muted);font-size:12px;white-space:nowrap}
   .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono)}
-  .badge.pos{background:#E8F5EE;color:var(--positive)}
-  .badge.neg{background:#FDECEA;color:var(--negative)}
-
+  .badge.pos{background:var(--mint);color:var(--positive)}
+  .badge.neg{background:var(--telha-t);color:var(--negative)}
   .empty{text-align:center;padding:60px 20px;color:var(--muted)}
   .empty .icon{font-size:36px;margin-bottom:12px}
   .empty p{margin:4px 0;font-size:14px}
-
   .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
-
   @media(max-width:700px){
     .hide-sm{display:none}
     .search-wrap{width:100%}
@@ -68,10 +60,7 @@
 <div class="wrap">
   <header>
     <div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="logo"><svg viewBox="0 0 509 534" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-        <span class="eyebrow">FAVO Educação</span>
-      </div>
+      <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação" style="margin-bottom:var(--e2)">
       <h1>Histórico de Orçamentos</h1>
       <p class="sub">Todos os orçamentos salvos, do mais recente ao mais antigo.</p>
     </div>
@@ -91,7 +80,7 @@
     <div class="card-head">
       <h3>Orçamentos</h3>
       <div class="search-wrap">
-        <input type="text" id="busca" placeholder="Buscar cliente…" oninput="filtrar()">
+        <input type="text" id="busca" placeholder="Buscar empresa ou projeto…" aria-label="Buscar por empresa ou projeto" oninput="filtrar()">
       </div>
     </div>
     <div id="tabela"><div class="loading">Carregando…</div></div>
@@ -99,29 +88,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const brl = v => isFinite(v) && v !== null
   ? Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:0,maximumFractionDigits:0})
   : "—";
 const pct = v => v !== null && isFinite(v) ? Number(v).toFixed(1).replace(".",",")+"%" : "—";
-const dataFmt = s => new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const dataFmt = s => s ? new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
 
 const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
 let todos = [];
 
 async function carregar() {
+  if (!db) {
+    document.getElementById("tabela").innerHTML =
+      `<div class="empty"><div class="icon">📡</div><p><strong>Sem conexão — histórico indisponível.</strong></p><p>Não foi possível carregar a biblioteca de dados. Verifique sua conexão e recarregue.</p></div>`;
+    return;
+  }
+
   const { data: { session } } = await db.auth.getSession();
   if (!session?.user) {
     window.location.href = 'login.html?returnTo=historico.html';
     return;
   }
 
+  // A consulta é montada em etapas para o filtro por integrador entrar antes
+  // de executar; por isso o dbTry envolve a query pronta, não a cadeia.
   let query = db
     .from("orcamentos")
     .select("*, projetos(nome_projeto, quantidade_modulos, kwp_sistema), integradores(nome_empresa)")
@@ -129,7 +125,7 @@ async function carregar() {
 
   if (integrador?.id) query = query.eq('integrador_id', integrador.id);
 
-  const { data, error } = await query;
+  const { data, error } = await AppCore.dbTry(query);
 
   if (error) {
     document.getElementById("tabela").innerHTML =
@@ -146,19 +142,21 @@ function atualizarKpis(dados) {
   document.getElementById("kTotal").textContent = dados.length;
   if (!dados.length) return;
 
-  const ticketMedio = dados.reduce((s,r) => s + (r.ticket||0), 0) / dados.length;
-  const margemMedia = dados.reduce((s,r) => s + (r.margem_contribuicao_pct||0), 0) / dados.length;
-  const lucroMedio  = dados.reduce((s,r) => s + (r.lucro_mensal||0), 0) / dados.length;
+  const media = campo => {
+    const vals = dados.map(r => r[campo]).filter(v => v != null && isFinite(v));
+    return vals.length ? vals.reduce((s,v) => s + Number(v), 0) / vals.length : null;
+  };
 
-  document.getElementById("kTicket").textContent = brl(ticketMedio);
-  document.getElementById("kMargem").textContent = pct(margemMedia);
-  document.getElementById("kLucro").textContent  = brl(lucroMedio);
+  document.getElementById("kTicket").textContent = brl(media("ticket"));
+  document.getElementById("kMargem").textContent = pct(media("margem_contribuicao_pct"));
+  document.getElementById("kLucro").textContent  = brl(media("lucro_mensal"));
 }
 
-function renderTabela(dados) {
+function renderTabela(dados, busca) {
   if (!dados.length) {
-    document.getElementById("tabela").innerHTML =
-      `<div class="empty"><div class="icon">📋</div><p><strong>Nenhum orçamento salvo ainda.</strong></p><p>Preencha o dashboard e clique em "Salvar orçamento".</p></div>`;
+    document.getElementById("tabela").innerHTML = busca
+      ? `<div class="empty"><div class="icon">🔍</div><p><strong>Nenhum resultado para a busca.</strong></p><p>Tente outro termo de empresa ou projeto.</p></div>`
+      : `<div class="empty"><div class="icon">📋</div><p><strong>Nenhum orçamento salvo ainda.</strong></p><p>Preencha o dashboard e clique em "Salvar orçamento".</p></div>`;
     return;
   }
 
@@ -177,17 +175,18 @@ function renderTabela(dados) {
 
   dados.forEach(r => {
     const lucrativo = (r.lucro_mensal || 0) >= 0;
+    const margemPos = (r.margem_contribuicao_pct || 0) >= 0;
     const empresa   = r.integradores?.nome_empresa || '—';
     const projeto   = r.projetos?.nome_projeto     || '—';
-    const kwp       = r.projetos?.kwp_sistema      != null ? r.projetos.kwp_sistema+' kWp' : '—';
+    const kwp       = r.projetos?.kwp_sistema      != null ? Number(r.projetos.kwp_sistema).toLocaleString('pt-BR')+' kWp' : '—';
     html += `<tr>
       <td class="date-cell">${dataFmt(r.criado_em)}</td>
-      <td class="emp-cell" title="${empresa}">${empresa}</td>
-      <td class="proj-cell" title="${projeto}">${projeto}</td>
+      <td class="emp-cell" title="${AppCore.escapeHtml(empresa)}">${AppCore.escapeHtml(empresa)}</td>
+      <td class="proj-cell" title="${AppCore.escapeHtml(projeto)}">${AppCore.escapeHtml(projeto)}</td>
       <td class="r hide-sm">${kwp}</td>
       <td class="r hide-sm">${brl(r.ticket)}</td>
       <td class="r hide-sm">${brl(r.custo_direto_total)}</td>
-      <td class="r"><span class="badge ${lucrativo?'pos':'neg'}">${pct(r.margem_contribuicao_pct)}</span></td>
+      <td class="r"><span class="badge ${margemPos?'pos':'neg'}">${pct(r.margem_contribuicao_pct)}</span></td>
       <td class="r" style="color:${lucrativo?'var(--positive)':'var(--negative)'};font-weight:700">${brl(r.lucro_mensal)}</td>
       <td class="r hide-sm">${brl(r.preco_sugerido)}</td>
     </tr>`;
@@ -203,7 +202,7 @@ function filtrar() {
     (r.integradores?.nome_empresa||"").toLowerCase().includes(termo) ||
     (r.projetos?.nome_projeto||"").toLowerCase().includes(termo)
   );
-  renderTabela(filtrado);
+  renderTabela(filtrado, termo.length > 0);
 }
 
 carregar();

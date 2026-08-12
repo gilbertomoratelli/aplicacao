@@ -1,0 +1,927 @@
+/* shared.css — Fonte ÚNICA dos tokens visuais e dos componentes compartilhados.
+
+   SISTEMA: Colmeia · iOS (protótipo 07, em design/prototipos/07-colmeia-ios.html)
+
+   A alma é a colmeia: campos de cor com significado (mel é custo, mint é
+   informação, mata é o que fica com a empresa), parede de cera entre os
+   blocos, nenhum card branco genérico. A gramática é a da Apple: lista
+   agrupada com separador recuado no lugar de formulário solto, rampa
+   tipográfica nomeada, cor semântica de rótulo, material translúcido nas
+   barras, folha no lugar de modal centralizado.
+
+   REGRA Nº 1: verde saturado é cor de CONTROLE, nunca de área grande.
+   Área grande usa --mata (profundo) ou tinta de 12%. Verde chapado num
+   bloco inteiro brilha, cansa a vista e rouba a atenção do botão — que é
+   justamente o que precisa ser clicado.
+
+   Ordem de carga: <link rel="stylesheet" href="shared.css"> ANTES do
+   <style> inline, para a página conseguir sobrescrever um padrão daqui. */
+
+/* ─────────────────────────────────────────────────────────────
+   1. TOKENS
+   ───────────────────────────────────────────────────────────── */
+:root{
+  /* FUNDOS — três níveis. O chão é mais ESCURO que a superfície: é isso
+     que faz a lista flutuar sem precisar de sombra. Invertido, vira o
+     card branco sobre cinza de sempre. */
+  --fundo:#F1EEE6;
+  --fundo-2:#FFFDF8;      /* nata — nunca branco puro */
+  --fundo-3:#F7F4EC;
+
+  /* CAMPOS DE COR — chapado para blocos de leitura, tinta para estados */
+  --mint:#DFF2E8;
+  --mel:#FBEACB;
+  --areia:#EDE5D6;
+  --mata:#12382A;         /* profundo — para toda área grande colorida */
+
+  /* MARCA E AÇÃO */
+  --verde:#00A83C;        /* rebaixado do institucional: #00B140 sobre nata
+                             não alcança contraste suficiente com texto branco */
+  --verde-vivo:#00B140;   /* institucional — marca e preenchimentos pequenos */
+  --verde-t:rgba(0,168,60,.12);
+  --teal-marca:#2FA894;
+  --ambar:#A9700D;  --ambar-t:rgba(169,112,13,.13);
+  --telha:#A8412A;  --telha-t:rgba(168,65,42,.12);
+
+  /* RÓTULOS — quatro degraus, cada um com um papel. A rampa é fechada e
+     os saltos são iguais (~.20 de opacidade entre níveis): degraus
+     irregulares são o que faz um texto parecer apagado ao lado do outro.
+     Nível 2 é texto corrido de verdade e precisa de contraste de leitura,
+     não de "cinza decorativo". */
+  /* Contraste medido sobre nata (#FFFDF8) e sobre creme (#F1EEE6): os três
+     primeiros degraus passam em AA (≥4,5:1) porque todos carregam texto que
+     precisa ser lido. Só o nível 4 fica abaixo, e é o único que nunca
+     carrega conteúdo — marcador de lugar e seta. */
+  --label:#101F1A;                    /* 16,8:1 — título e valor */
+  --label-2:rgba(16,31,26,.76);       /*  7,8:1 — texto corrido, notas */
+  --label-3:rgba(16,31,26,.64);       /*  5,1:1 — cabeçalho de seção, unidade */
+  --label-4:rgba(16,31,26,.42);       /*  2,6:1 — marcador de lugar, seta */
+  --separador:rgba(16,31,26,.11);
+  --preenche:rgba(16,31,26,.06);
+
+  /* RAIO */
+  --r-lista:16px; --r-cartao:20px; --r-ctrl:12px; --r-folha:28px; --r-cap:999px;
+  --recuo:16px;           /* recuo do separador — a assinatura da lista iOS */
+
+  /* RAMPA TIPOGRÁFICA — fechada: o que não está aqui não existe */
+  --largeTitle:34px; --title1:28px; --title2:22px; --title3:20px;
+  --headline:17px; --body:17px; --callout:16px; --subhead:15px;
+  --footnote:13px; --caption:12px; --caption2:11px;
+
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:28px; --e7:40px; --e8:64px;
+
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',Inter,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,'Roboto Mono',monospace;
+
+  /* MOLA — sai forte, chega sem voltar */
+  --mola:cubic-bezier(.32,.72,0,1);
+  --rapido:240ms; --medio:420ms; --lento:680ms;
+
+  --toque:44px;
+
+  /* ── ALIASES DE COMPATIBILIDADE ───────────────────────────────
+     Os <style> inline das 10 páginas referenciam estes nomes. Mantê-los
+     apontando para a paleta nova faz todas as telas herdarem o sistema
+     sem reescrever uma linha delas. Em código NOVO, use os tokens acima. */
+  --bg:var(--fundo);
+  --surface:var(--fundo-2);
+  --ink:var(--label);
+  --muted:var(--label-2);
+  --hair:var(--separador);
+  --solar:var(--verde);
+  --teal:var(--mata);         /* era o verde-escuro institucional; segue escuro */
+  --teal-accent:var(--teal-marca);
+  --positive:var(--verde);
+  --negative:var(--telha);
+  /* Aviso: existe porque --solar é VERDE e estava sendo usado como cor de
+     alerta, pintando de verde justamente a faixa que avisa problema. */
+  --warning:var(--ambar);
+  /* Verde de pressionado/hover, antes cravado como #009435 em vários lugares. */
+  --verde-forte:#009435;
+  /* Tinta sobre --mata: a cor do texto em painel escuro, que cada página
+     vinha escolhendo por conta própria com um alfa diferente. */
+  --sobre-mata:#EAF6EF;
+}
+
+/* Canto contínuo onde houver suporte — a diferença entre "arredondado" e
+   "arredondado como um ícone da Apple". Progressivo: sem suporte, o
+   border-radius normal continua valendo. */
+@supports (corner-shape:squircle){
+  .lista,.card,.cartao,.modal-card,.btn-primary,.btn-nav,.seg,.veredito,.bloco,.cta{corner-shape:squircle}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. BASE
+   ───────────────────────────────────────────────────────────── */
+*{box-sizing:border-box}
+
+body{
+  margin:0;background:var(--fundo);color:var(--label);
+  font-family:var(--sans);font-size:var(--body);line-height:1.45;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased;
+  position:relative;
+}
+
+/* Fundo: dois campos de luz muito abertos fazem o creme variar de
+   temperatura. Não se vê o gradiente; vê-se que o fundo não é chapado.
+   Em ::before/::after do body para não exigir markup em página nenhuma. */
+body::before,body::after{
+  content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:-1;
+}
+body::before{
+  width:88vmax;height:88vmax;left:-26vmax;top:-42vmax;
+  background:radial-gradient(circle,rgba(47,168,148,.14),transparent 62%);
+}
+body::after{
+  width:78vmax;height:78vmax;right:-28vmax;bottom:-34vmax;
+  background:radial-gradient(circle,rgba(251,234,203,.5),transparent 60%);
+}
+
+.wrap{width:100%;max-width:480px;position:relative;z-index:1}
+
+@media (max-width:560px){
+  body{padding:24px 16px}
+}
+
+:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. TIPOGRAFIA
+   ───────────────────────────────────────────────────────────── */
+.largeTitle{font-size:var(--largeTitle);font-weight:700;letter-spacing:-.026em;line-height:1.12;text-wrap:balance}
+.title1{font-size:var(--title1);font-weight:700;letter-spacing:-.022em;line-height:1.18}
+.title2{font-size:var(--title2);font-weight:670;letter-spacing:-.018em;line-height:1.25}
+.title3{font-size:var(--title3);font-weight:650;letter-spacing:-.014em;line-height:1.3}
+.headline{font-size:var(--headline);font-weight:640;letter-spacing:-.012em}
+.callout{font-size:var(--callout);letter-spacing:-.006em;line-height:1.5}
+.subhead{font-size:var(--subhead);letter-spacing:-.004em;line-height:1.5}
+.footnote{font-size:var(--footnote);line-height:1.5;color:var(--label-2)}
+
+/* Dinheiro — mono tabular, sempre. Única exceção à fonte do sistema. */
+.cifra{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+
+/* Cabeçalho e nota de grupo — o par que dá à lista leitura de documento.
+   A explicação mora na NOTA, embaixo do grupo: nunca em tooltip. */
+.grupo-tit{
+  display:block;font-size:var(--footnote);font-weight:650;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--label-3);padding:0 var(--e4) var(--e2);
+}
+.grupo-nota{
+  display:block;font-size:var(--footnote);color:var(--label-2);
+  padding:var(--e2) var(--e4) 0;line-height:1.45;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. MARCA
+   ───────────────────────────────────────────────────────────── */
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e2);margin-bottom:var(--e6)}
+/* logo horizontal: altura fixa, largura acompanha a proporção do arquivo */
+.logo-h{height:30px;width:auto;display:block}
+.brand-name{font-size:var(--headline);font-weight:640;letter-spacing:-.012em;color:var(--label)}
+.brand-sub{
+  font-size:var(--caption2);color:var(--teal-marca);font-family:var(--mono);
+  letter-spacing:.16em;text-transform:uppercase;font-weight:500;margin-top:1px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. STEPPER — cápsula segmentada
+      O markup vem de AppCore.renderStepper() e não muda: aqui ele é
+      reinterpretado como um controle segmentado. A linha ligando os
+      passos deixa de existir; quem comunica progresso é o preenchimento.
+   ───────────────────────────────────────────────────────────── */
+.stepper{margin-bottom:var(--e6)}
+
+/* Duas versões, uma escolha por largura. Este fluxo tem SETE passos: a
+   cápsula segmentada só é legível onde cabem sete rótulos. Abaixo disso
+   ela viraria uma fileira de números sem nome — informação nenhuma. No
+   lugar dela entra a compacta: posição, nome do passo e barra. */
+.stepper-compact{display:none}
+
+.sc-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--e3);margin-bottom:var(--e2)}
+.sc-count{
+  font-size:var(--caption2);font-weight:650;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--label-3);font-family:var(--mono);
+}
+.sc-name{font-size:var(--subhead);font-weight:640;letter-spacing:-.008em;color:var(--label)}
+.sc-bar{height:4px;border-radius:var(--r-cap);background:var(--preenche);overflow:hidden}
+.sc-fill{
+  height:100%;border-radius:var(--r-cap);background:var(--verde);
+  transition:width var(--medio) var(--mola);
+}
+
+.stepper-full{
+  display:flex;list-style:none;margin:0;padding:3px;gap:2px;
+  background:var(--preenche);border-radius:var(--r-cap);
+}
+.sline{display:none}                       /* a linha não existe mais */
+.step{flex:1;min-width:0;display:flex}
+.step-link{
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;
+  text-decoration:none;border:none;background:none;cursor:default;
+  border-radius:var(--r-cap);padding:8px 6px;min-height:36px;
+  font-family:var(--sans);transition:background var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola);
+}
+a.step-link{cursor:pointer}
+a.step-link:hover{background:rgba(255,253,248,.6)}
+.sn{
+  font-size:var(--caption2);font-weight:700;color:var(--label-3);
+  font-family:var(--mono);flex:none;line-height:1;
+}
+.sl{
+  font-size:var(--footnote);font-weight:550;color:var(--label-2);
+  letter-spacing:-.004em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.step.done .sn{color:var(--verde)}
+.step.done .sl{color:var(--label)}
+.step.active .step-link{
+  background:var(--fundo-2);
+  box-shadow:0 1px 3px rgba(16,31,26,.10),0 0 0 .5px rgba(16,31,26,.06);
+}
+.step.active .sn{color:var(--verde)}
+.step.active .sl{color:var(--label);font-weight:650}
+
+/* Entre 620 e 900px os sete rótulos não cabem, mas a cápsula ainda serve:
+   só o passo atual mantém o nome, os demais viram número — o padrão do
+   segmentado no iPhone. */
+@media (max-width:900px){
+  .step{flex:0 0 auto}
+  .step.active{flex:1}
+  .step:not(.active) .sl{display:none}
+  .step-link{padding:8px 10px}
+}
+
+/* Abaixo de 620px nem os sete números cabem lado a lado. Troca de peça. */
+@media (max-width:620px){
+  .stepper-full{display:none}
+  .stepper-compact{display:block}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. LISTA AGRUPADA — o componente central
+      Cada pergunta é uma LINHA; o campo mora à direita, sem caixa e sem
+      borda. O separador começa recuado 16px à esquerda: é esse detalhe
+      que faz a lista parecer arrumada.
+   ───────────────────────────────────────────────────────────── */
+.lista{background:var(--fundo-2);border-radius:var(--r-lista);overflow:hidden}
+/* Espaço entre um grupo e o cabeçalho do próximo. Vale para os dois casos:
+   grupo seguido direto de cabeçalho, e grupo com nota antes do cabeçalho. */
+.lista+.grupo-tit,.grupo-nota+.grupo-tit,.grupo-nota+.lista{margin-top:var(--e5)}
+/* Cada seção do formulário é um <section class="secao">; é entre eles que
+   o respiro precisa existir agora. */
+.secao+.secao,.grupo-injetado+.secao,.secao+.grupo-injetado{margin-top:var(--e5)}
+
+.linha{
+  display:flex;align-items:center;gap:var(--e2);
+  padding:var(--e3) var(--e4);min-height:var(--toque);position:relative;margin:0;
+  transition:background var(--rapido) var(--mola);
+}
+.linha+.linha::before{
+  content:'';position:absolute;left:var(--recuo);right:0;top:0;height:1px;background:var(--separador);
+}
+.linha.tocavel{cursor:pointer}
+.linha.tocavel:active{background:var(--preenche)}
+.linha:focus-within{background:var(--verde-t)}
+.linha>.rot{flex:1;min-width:0;color:var(--label);font-size:var(--body)}
+.linha>.rot .req{color:var(--verde);font-weight:600}
+.linha .vazio{flex:1}
+.linha .val{
+  font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--label-2);
+  text-align:right;letter-spacing:-.02em;flex:none;
+}
+/* Linha empilhada — para quando o controle não cabe ao lado do rótulo
+   (segmentado, campo de texto longo). */
+.linha.empilha{flex-direction:column;align-items:stretch;gap:var(--e2)}
+.linha.empilha>.rot{flex:none}
+
+/* .ctrl envolve unidade + campo. No celular ele é INVISÍVEL (display:contents):
+   os filhos continuam sendo itens diretos da linha e nada muda. No desktop ele
+   vira o corpo do controle — a caixa que a unidade e o campo compartilham. É o
+   que permite os dois layouts sem duplicar markup. */
+.ctrl{display:contents}
+
+/* O input tem a largura do CONTEÚDO, não a largura padrão do navegador
+   (~170px): senão o "R$" fica colado no rótulo, a meia tela de distância
+   da quantia que ele qualifica. */
+.campo-linha{
+  flex:0 1 auto;width:112px;border:none;outline:none;background:transparent;
+  text-align:right;font-family:var(--mono);font-size:var(--body);font-weight:550;
+  color:var(--label);font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+  padding:var(--e2) 0;min-height:var(--toque);
+}
+.campo-linha::placeholder{color:var(--label-4)}
+.campo-linha.texto{font-family:var(--sans);font-weight:400;width:auto;flex:1;letter-spacing:-.008em}
+@supports (field-sizing:content){
+  .campo-linha{field-sizing:content;width:auto;min-width:2ch;max-width:58%}
+  .campo-linha.texto{max-width:100%}
+}
+.un{font-family:var(--mono);font-size:var(--subhead);color:var(--label-3);flex:none}
+
+/* Linha de TEXTO (nome, e-mail, CNPJ): rótulo com largura fixa à esquerda e
+   valor alinhado à esquerda logo depois. Alinhar texto longo à direita,
+   como se faz com número, deixa o campo ilegível enquanto se digita. */
+.linha.txt>.rot{flex:0 0 auto;min-width:96px}
+.linha.txt .campo-linha{
+  flex:1;width:auto;max-width:none;text-align:left;
+  font-family:var(--sans);font-weight:400;letter-spacing:-.008em;
+}
+
+/* O erro mora DENTRO da linha do campo culpado — no celular como faixa
+   sangrada até as bordas da linha, no desktop como texto sob o campo.
+   Empilhar os erros no fim do formulário obrigaria o usuário a descobrir
+   sozinho de qual campo cada um fala. */
+.linha{flex-wrap:wrap}
+.linha>.err{
+  display:none;flex:0 0 100%;order:9;
+  margin:var(--e3) calc(-1 * var(--e4)) calc(-1 * var(--e3));
+  padding:var(--e2) var(--e4) var(--e3);
+  background:var(--telha-t);color:var(--telha);
+  font-size:var(--footnote);font-weight:500;line-height:1.4;
+}
+
+/* Seta de navegação (chevron) desenhada em CSS: sem fonte de ícone. */
+.chev{
+  width:8px;height:8px;border-right:2px solid var(--label-4);border-bottom:2px solid var(--label-4);
+  transform:rotate(-45deg);flex:none;margin-left:2px;
+}
+/* Ícone da linha: quadrado arredondado colorido. A cor é semântica. */
+.icone{
+  width:29px;height:29px;border-radius:7px;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:#fff;letter-spacing:0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6b. DESKTOP — um painel só, seções separadas por régua
+       A lista com recuo é a gramática do TOQUE: uma coluna, linha cheia,
+       rótulo e campo lado a lado. Num monitor ela lê como app de celular
+       esticado — e transformar cada grupo num cartão flutuante só troca um
+       problema por outro: o formulário vira colcha de retalhos.
+
+       No desktop o formulário é UM painel com contorno próprio. As seções
+       não são caixas: são trechos separados por régua, com cabeçalho, e os
+       campos se distribuem em duas colunas. O botão vira rodapé do painel,
+       com fundo próprio — a convenção de diálogo que todo mundo já lê.
+       A MESMA marcação serve aos dois; muda só o papel de cada peça.
+   ───────────────────────────────────────────────────────────── */
+@media (min-width:900px){
+  .wrap{max-width:840px}
+  /* Respiro no fim da página: sem isto o painel encosta na borda inferior
+     da janela e a tela parece cortada. */
+  body{padding-bottom:var(--e8)}
+
+  /* O painel. O contorno de 1px é o que o separa do fundo creme — nata
+     sobre creme, sem borda, some em tela clara. */
+  form.painel{
+    background:var(--fundo-2);border:1px solid var(--separador);
+    border-radius:var(--r-cartao);padding:0 var(--e7);overflow:hidden;
+  }
+
+  /* Cabeçalho de seção: régua acima, respiro em volta. A primeira não leva
+     régua — não há nada acima dela para separar. */
+  form.painel .grupo-tit{
+    padding:var(--e6) 0 var(--e4);margin:0;
+    border-top:1px solid var(--separador);
+    color:var(--label-3);
+  }
+  form.painel .secao:first-child .grupo-tit{border-top:none;padding-top:var(--e6)}
+  /* Respiro ANTES da régua da próxima seção, espelhando o que ela tem
+     depois: sem isto a linha encosta no último campo da seção anterior. */
+  form.painel .secao{margin:0;padding-bottom:var(--e6)}
+  form.painel .secao:last-of-type{padding-bottom:0}
+
+  /* A grade dos campos. Sem fundo e sem raio: o painel já é a superfície. */
+  .lista.form{
+    background:none;border-radius:0;padding:0;overflow:visible;margin:0;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:var(--e5) var(--e5);
+  }
+
+  /* Cada linha vira um bloco de campo: rótulo em cima, controle embaixo. */
+  .lista.form .linha{
+    display:flex;flex-direction:column;align-items:stretch;gap:7px;
+    padding:0;min-height:0;background:none;
+  }
+  .lista.form .linha::before,.lista.form .linha+.linha::before{display:none}
+  .lista.form .linha:focus-within{background:none}
+
+  /* Rótulo de campo é informação de trabalho, não legenda: contraste de
+     leitura, não cinza claro. */
+  .lista.form .linha>.rot{
+    font-size:var(--footnote);font-weight:600;color:var(--label-2);
+    letter-spacing:.005em;line-height:1.3;
+  }
+
+  /* Campos que não fazem sentido pela metade ocupam a linha inteira. */
+  .lista.form .linha.larga,.lista.form .linha.empilha{grid-column:1/-1}
+
+  .lista.form .ctrl{
+    display:flex;align-items:center;width:100%;background:var(--fundo-3);
+    border:1px solid var(--separador);border-radius:10px;
+    transition:border-color var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola),
+               background var(--rapido) var(--mola);
+  }
+  .lista.form .ctrl:focus-within{
+    background:var(--fundo-2);border-color:var(--verde);box-shadow:0 0 0 3px var(--verde-t);
+  }
+
+  /* Com o prefixo dentro da caixa, o valor lê da esquerda para a direita
+     como qualquer campo de texto. Alinhar à direita só faz sentido quando o
+     campo está encostado na borda da linha, que é o caso do celular. */
+  .lista.form .campo-linha{
+    flex:1;width:auto;max-width:none;min-height:42px;padding:10px 12px;
+    font-size:var(--callout);text-align:left;color:var(--label);
+  }
+  .lista.form .un{padding:0 12px;font-size:var(--footnote);color:var(--label-3)}
+  .lista.form .un:first-child{padding-right:0}
+  .lista.form .un:last-child{padding-left:0}
+
+  .lista.form .seg{width:100%}
+  .lista.form select.plain{width:100%;min-height:44px;padding:10px 12px;font-size:var(--callout)}
+
+  /* O erro fica sob o próprio campo, sem faixa colorida — que num
+     formulário de duas colunas viraria mancha. */
+  .lista.form .linha>.err{
+    background:none;padding:0;margin:0;color:var(--telha);font-size:var(--footnote);
+  }
+
+  /* Toda nota dentro do painel alinha com a borda dos campos — inclusive as
+     que seguem uma lista de navegação, senão a coluna de texto desalinha. */
+  form.painel .grupo-nota{padding:var(--e3) 0 0;color:var(--label-2)}
+
+  /* Lista de navegação dentro do painel (ex.: "Configuração avançada"):
+     recuada, não flutuante — cartão dentro de cartão é o vício a evitar. */
+  form.painel .lista:not(.form){background:var(--fundo-3);margin-top:var(--e5)}
+
+  /* Rodapé do painel: fundo próprio e régua em cima, sangrando até as
+     bordas. É a convenção de diálogo — a ação fica separada do conteúdo. */
+  .barra-acao,.barra-acao.material{
+    position:static;backdrop-filter:none;-webkit-backdrop-filter:none;
+    background:var(--fundo-3);
+    margin:var(--e6) calc(-1 * var(--e7)) 0;padding:var(--e5) var(--e7);
+    border-top:1px solid var(--separador);
+    display:flex;justify-content:space-between;align-items:center;gap:var(--e3);
+  }
+  .barra-acao .btn-primary{width:auto;min-width:200px;flex:none}
+  /* Sem Voltar (primeira etapa), Continuar volta para a direita. */
+  .barra-acao:not(:has(.btn-voltar)){justify-content:flex-end}
+
+}
+
+/* Contêiner de grupo injetado por JS. `display:contents` faz ele sumir da
+   caixa de layout, então os grupos que ele cria contam como filhos diretos
+   do painel — e recebem régua e alinhamento como qualquer outro. */
+.grupo-injetado{display:contents}
+
+
+/* ─────────────────────────────────────────────────────────────
+   6c. NOTEBOOK — a mesma tela, distribuída para caber
+       Nada muda de estrutura: o que muda é o quanto cada peça ocupa.
+       Numa tela de notebook sobram ~700px de altura, e o cabeçalho da
+       página (marca, passos, empresa, título) consumia quase metade disso
+       antes do primeiro campo aparecer.
+   ───────────────────────────────────────────────────────────── */
+@media (min-width:900px) and (max-height:900px){
+  body{padding-top:var(--e6);padding-bottom:var(--e6)}
+  .brand{margin-bottom:var(--e4)}
+  .stepper{margin-bottom:var(--e4)}
+  .empresa-badge{padding:var(--e2) var(--e4);margin-bottom:var(--e4)}
+  .largeTitle{font-size:var(--title1)}
+
+  form.painel{padding:0 var(--e6)}
+  form.painel .grupo-tit{padding:var(--e5) 0 var(--e3)}
+  form.painel .secao:first-child .grupo-tit{padding-top:var(--e5)}
+  form.painel .secao{padding-bottom:var(--e5)}
+  form.painel .secao:last-of-type{padding-bottom:0}
+  .lista.form{gap:var(--e4) var(--e5)}
+  .lista.form .campo-linha{min-height:38px;padding:8px 11px}
+  .lista.form select.plain{min-height:40px;padding:8px 11px}
+  .lista.form .linha{gap:5px}
+
+  .barra-acao,.barra-acao.material{margin-top:var(--e5);padding:var(--e4) var(--e6)}
+  .btn-primary,.btn-voltar{min-height:44px}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6d. DESKTOP DO FORMULÁRIO LEGADO (.card + label.fld)
+       A seção 6b acima trata o formulário em LISTA. As telas do funil desta
+       aplicação ainda usam a gramática antiga (.card com label.fld), e num
+       monitor ela mostrava uma coluna de ~480px no meio de 1440px: um campo
+       por linha, a página inteira rolando, e dois terços da tela vazios.
+
+       O tratamento é o mesmo em espírito: o cartão vira PAINEL e os campos se
+       distribuem em duas colunas. Nada de marcação nova por campo — quem
+       decide a faixa é o próprio cartão, via .card.form (um modificador, não
+       um seletor mágico), e os elementos de largura cheia se declaram com
+       .fld-full.
+   ───────────────────────────────────────────────────────────── */
+@media (min-width:900px){
+  /* Espaço para duas colunas caberem sem espremer o rótulo. */
+  .wrap{max-width:760px}
+
+  /* O cartão E o <form> dentro dele: os campos costumam morar no form, que
+     de outro modo seria UM item da grade e empilharia tudo numa coluna só. */
+  .card.form,
+  .card.form>form{
+    display:grid;grid-template-columns:1fr 1fr;
+    column-gap:var(--e5);row-gap:var(--e4);align-items:start;
+  }
+  .card.form>form{grid-column:1/-1}
+
+  /* Cabeçalho, notas, separadores e ações ocupam a linha inteira. */
+  .card.form>.card-title,
+  .card.form>.card-sub,
+  .card.form>.sec-label,
+  .card.form>.divider,
+  .card.form>.returning,
+  .card.form>[id^="divider"],
+  .card.form .fld-full,
+  .card.form form>.sec-label,
+  .card.form form>.divider,
+  .card.form form>.nav-row,
+  .card.form form>.btn-primary,
+  .card.form .btn-add-extra,
+  .card.form form>.toggle{grid-column:1/-1}
+
+  /* Dentro da grade o espaçamento é da própria grade. */
+  .card.form label.fld{margin-bottom:0}
+  .card.form>.card-sub{margin-bottom:var(--e2)}
+  .card.form .sec-label{margin:var(--e2) 0 0}
+}
+
+/* Notebook (altura curta): o mesmo layout, com o miolo mais compacto.
+   O objetivo declarado é caber sem rolar em 1440x900 — o que se ganha aqui
+   é altura, não largura. */
+@media (min-width:900px) and (max-height:940px){
+  body{padding-top:var(--e5);padding-bottom:var(--e5)}
+
+  /* A marca empilhada (logo em cima, nome embaixo) custa ~79px de altura no
+     topo de toda tela. Num notebook essa altura vale mais como conteúdo: as
+     duas peças passam a dividir a MESMA linha. */
+  .brand{
+    flex-direction:row;align-items:center;gap:var(--e3);
+    margin-bottom:var(--e4);
+  }
+  .brand .logo-h{height:26px}
+  .brand .brand-name{
+    font-size:var(--subhead);color:var(--label-2);
+    padding-left:var(--e3);border-left:1px solid var(--separador);
+  }
+  .stepper{margin-bottom:var(--e4)}
+  .card,.cartao{padding:var(--e4) var(--e5)}
+  .card-title{font-size:var(--title3)}
+  .card-sub{margin-bottom:var(--e3)}
+  .card.form{row-gap:var(--e3)}
+  label.fld{margin-bottom:var(--e3)}
+  label.fld .lbl{margin-bottom:4px}
+  .inwrap input,.inwrap select,input.plain,select.plain{min-height:40px;padding:9px var(--e3)}
+  .btn-primary,.btn-nav{min-height:44px}
+  .empresa-badge{margin-bottom:var(--e3)}
+  .foot-note{margin-top:var(--e3)}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   7. CARTÃO
+   ───────────────────────────────────────────────────────────── */
+.cartao{background:var(--fundo-2);border-radius:var(--r-cartao);padding:var(--e5)}
+.cartao.mint{background:var(--mint)}
+.cartao.mel{background:var(--mel)}
+.cartao.areia{background:var(--areia)}
+.cartao.mata{background:var(--mata);color:#EAF6EF}
+.cartao.mata .grupo-tit{color:rgba(234,246,239,.45)}
+.cartao.mata .footnote{color:rgba(234,246,239,.66)}
+
+/* .card — nome legado, usado nas páginas ainda não reestruturadas.
+   Recebe o mesmo tratamento do cartão. */
+.card{background:var(--fundo-2);border:none;border-radius:var(--r-cartao);padding:var(--e5)}
+/* Respiro entre blocos irmãos. Sem isto os cartões encostam e o conjunto lê
+   como um bloco único com um vinco no meio — o efeito de "grudado" que
+   aparecia no fim de toda página empilhada. Vale para cartão e para a barra
+   de ação/navegação que costuma fechar a tela. */
+.card+.card,.cartao+.cartao,.card+.cartao,.cartao+.card{margin-top:var(--e4)}
+.card+.nav-row,.cartao+.nav-row,.card+.btn-primary,.cartao+.btn-primary,
+.card+.barra-acao,.cartao+.barra-acao{margin-top:var(--e4)}
+.card-title{font-size:var(--title3);font-weight:650;letter-spacing:-.014em;margin:0 0 var(--e1);line-height:1.3}
+.card-sub{font-size:var(--subhead);color:var(--label-2);margin:0 0 var(--e5);line-height:1.5}
+.sec-label{
+  display:block;font-size:var(--footnote);font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--label-3);margin:var(--e6) 0 var(--e3);
+}
+
+@media (max-width:560px){
+  .card,.cartao{padding:var(--e4)}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   8. FORMULÁRIO LEGADO (.fld / .plain / .inwrap)
+      Usado pelas telas ainda não convertidas para lista agrupada.
+      O campo vira uma superfície preenchida — nunca caixa vazada com
+      borda cinza, que é o visual que o sistema existe para negar.
+   ───────────────────────────────────────────────────────────── */
+label.fld{display:block;margin-bottom:var(--e4)}
+label.fld .lbl{display:block;font-size:var(--subhead);color:var(--label-2);margin-bottom:6px;font-weight:500}
+label.fld .req{color:var(--verde);font-weight:600}
+label.fld .hint{display:block;font-size:var(--footnote);color:var(--label-3);margin-top:6px;line-height:1.45}
+
+.inwrap{
+  display:flex;align-items:stretch;background:var(--fundo-3);
+  border:1.5px solid transparent;border-radius:var(--r-ctrl);overflow:hidden;
+  transition:border-color var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola),
+             background var(--rapido) var(--mola);
+}
+.inwrap:focus-within{background:var(--fundo-2);border-color:var(--verde);box-shadow:0 0 0 4px var(--verde-t)}
+.inwrap .affix{
+  display:flex;align-items:center;padding:0 var(--e3);flex:none;
+  color:var(--label-3);font-size:var(--subhead);font-family:var(--mono);
+}
+.inwrap .affix.l,.inwrap .affix.r{border:none}
+.inwrap input,.inwrap select{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;
+  padding:var(--e3);font-size:var(--body);font-family:var(--mono);font-weight:550;
+  color:var(--label);font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+  width:100%;min-height:var(--toque);
+}
+.inwrap.txt input,.inwrap.txt select{font-family:var(--sans);font-weight:400;letter-spacing:-.008em}
+.inwrap select{cursor:pointer}
+
+input.plain,select.plain,textarea.plain{
+  width:100%;border:1.5px solid transparent;border-radius:var(--r-ctrl);
+  padding:var(--e3);font-size:var(--body);font-family:var(--sans);color:var(--label);
+  outline:none;background:var(--fundo-3);min-height:var(--toque);letter-spacing:-.008em;
+  transition:border-color var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola),
+             background var(--rapido) var(--mola);
+}
+input.plain:focus,select.plain:focus,textarea.plain:focus{
+  background:var(--fundo-2);border-color:var(--verde);box-shadow:0 0 0 4px var(--verde-t);
+}
+select.plain{cursor:pointer}
+
+.err{display:none;font-size:var(--footnote);color:var(--telha);margin-top:6px;font-weight:500}
+
+/* O iOS dá zoom automático ao focar campo com menos de 16px. Como a rampa
+   já usa 17px, não há regra especial de celular — e é de propósito. */
+
+/* ─────────────────────────────────────────────────────────────
+   8b. SELEÇÃO EM FOLHA — o <select> com muitas opções no celular
+       O select continua no DOM e continua sendo a fonte da verdade; no
+       celular ele fica escondido e este botão ocupa o lugar, abrindo a
+       folha com as opções. No desktop o inverso: o select nativo aparece
+       e o botão some — é lá que o select nativo é o controle certo.
+   ───────────────────────────────────────────────────────────── */
+.abre-folha{
+  display:flex;align-items:center;gap:var(--e2);flex:1;min-width:0;justify-content:flex-end;
+  background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);
+  font-size:var(--body);color:var(--label-2);min-height:var(--toque);
+}
+.abre-folha .val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.abre-folha.vazio-sel .val{color:var(--label-4)}   /* ainda é marcador, não valor */
+select[data-folha]{display:none}
+/* No desktop o select nativo também precisa parecer vazio enquanto nada
+   foi escolhido. :has resolve sem JS; sem suporte, fica só o texto. */
+select.plain:has(option[value=""]:checked){color:var(--label-3)}
+
+/* Opções dentro da folha: linha comum, com tique na escolhida. */
+.opcoes{background:none}
+.opcoes .opcao{
+  width:100%;background:none;border:none;font-family:var(--sans);font-size:var(--body);
+  color:var(--label);text-align:left;cursor:pointer;
+}
+.opcoes .opcao .rot{flex:0 1 auto}
+.tique{width:16px;height:16px;flex:none;position:relative}
+.opcao.escolhida .tique::before{
+  content:'';position:absolute;left:2px;top:1px;width:6px;height:11px;
+  border-right:2px solid var(--verde);border-bottom:2px solid var(--verde);
+  transform:rotate(45deg);
+}
+.opcao.escolhida .rot{color:var(--verde);font-weight:600}
+
+@media (min-width:900px){
+  .abre-folha{display:none}
+  select[data-folha]{display:block}
+}
+
+/* Campo numérico sem as setinhas do spinner.
+   O alvo é pequeno, mora colado ao valor e altera número financeiro num
+   clique acidental — e não acrescenta nada: quem quer mudar o valor digita.
+   O par disto (a roda do mouse não altera mais o campo focado) mora em
+   AppCore.protegerNumericos, porque é comportamento, não aparência. */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+
+/* ─────────────────────────────────────────────────────────────
+   9. CONTROLE SEGMENTADO — substitui o <select> de 2 a 4 opções
+   ───────────────────────────────────────────────────────────── */
+/* .toggle é o mesmo controle com o nome que as telas legadas usam: entra
+   aqui como sinônimo em vez de virar uma segunda cópia das regras. */
+.seg,.toggle{display:flex;background:var(--preenche);border-radius:10px;padding:2px;gap:2px}
+.seg button,.toggle button{
+  flex:1;border:none;background:transparent;border-radius:8px;cursor:pointer;
+  font-family:var(--sans);font-size:var(--subhead);font-weight:550;color:var(--label);
+  padding:8px 10px;min-height:38px;letter-spacing:-.004em;
+  transition:background var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola);
+}
+.seg button.on,.toggle button.on{
+  background:var(--fundo-2);color:var(--verde);font-weight:650;
+  box-shadow:0 1px 3px rgba(16,31,26,.10),0 0 0 .5px rgba(16,31,26,.06);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   10. BOTÕES — três pesos: preenchido, tingido, simples
+   ───────────────────────────────────────────────────────────── */
+.btn-primary,.btn-nav,.btn-fechar,.btn-cont{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--e2);
+  font-family:var(--sans);font-size:var(--headline);font-weight:620;letter-spacing:-.01em;
+  padding:var(--e3) var(--e5);min-height:50px;border-radius:14px;border:none;cursor:pointer;
+  text-decoration:none;text-align:center;
+  transition:transform var(--rapido) var(--mola),background var(--rapido) var(--mola),
+             opacity var(--rapido) var(--mola);
+}
+.btn-primary:active,.btn-nav:active,.btn-fechar:active{transform:scale(.97)}
+
+.btn-primary{width:100%;background:var(--verde);color:#fff;margin-top:var(--e1)}
+.btn-primary:hover{background:var(--verde-forte)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* Tingido: o peso do meio. Verde a 12% com texto verde — presença sem
+   ocupar área saturada. */
+.btn-nav{flex:1;background:var(--preenche);color:var(--label)}
+.btn-nav:hover{background:rgba(16,31,26,.10)}
+.btn-nav.primary{background:var(--verde);color:#fff}
+.btn-nav.primary:hover{background:var(--verde-forte)}
+.btn-nav:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.nav-row{display:flex;gap:var(--e3);margin-top:var(--e1)}
+
+/* Simples: sem fundo, só a cor de ação. Ação terciária e navegação.
+   Usado apenas dentro de barras de ação (ex.: relatório); a navegação de
+   etapa é responsabilidade do stepper e da barra Voltar/Continuar do rodapé,
+   então não há espaçamento vertical embutido aqui. */
+.btn-back{
+  display:inline-flex;align-items:center;gap:2px;font-size:var(--headline);font-weight:500;
+  color:var(--verde);text-decoration:none;padding:6px 0;
+  background:none;border:none;cursor:pointer;font-family:var(--sans);min-height:var(--toque);
+  letter-spacing:-.012em;
+}
+.btn-back:hover{opacity:.65}
+
+.btn-help{
+  width:22px;height:22px;border-radius:50%;border:none;background:var(--preenche);
+  color:var(--label-2);font-size:var(--caption2);font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  vertical-align:middle;flex-shrink:0;font-family:var(--sans);margin-left:6px;
+  transition:background var(--rapido) var(--mola),color var(--rapido) var(--mola);
+}
+.btn-help:hover{background:var(--verde-t);color:var(--verde)}
+
+.btn-add-extra{
+  width:100%;border:none;background:var(--verde-t);border-radius:var(--r-ctrl);
+  padding:var(--e3);font-size:var(--subhead);font-weight:600;cursor:pointer;
+  color:var(--verde);font-family:var(--sans);margin-top:var(--e3);min-height:var(--toque);
+  transition:background var(--rapido) var(--mola);
+}
+.btn-add-extra:hover{background:rgba(0,168,60,.18)}
+
+.btn-remove-extra{
+  background:none;border:none;border-radius:8px;padding:6px 10px;font-size:var(--subhead);
+  cursor:pointer;color:var(--telha);font-family:var(--sans);flex-shrink:0;min-height:36px;
+  transition:background var(--rapido) var(--mola);
+}
+.btn-remove-extra:hover{background:var(--telha-t)}
+
+.help-body{font-size:var(--callout);color:var(--label);line-height:1.55;margin:0 0 var(--e3)}
+.help-exemplos{
+  font-size:var(--footnote);color:var(--label-2);background:var(--fundo-3);
+  border-radius:var(--r-ctrl);padding:var(--e3) var(--e4);line-height:1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   11. FAIXA DA EMPRESA — vira linha de lista
+   ───────────────────────────────────────────────────────────── */
+.empresa-badge{
+  background:var(--fundo-2);color:var(--label);border-radius:var(--r-lista);
+  padding:var(--e3) var(--e4);margin-bottom:var(--e5);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--e3);
+}
+.empresa-badge .nome{font-weight:640;font-size:var(--body);letter-spacing:-.012em}
+.empresa-badge .regime{
+  font-size:var(--footnote);color:var(--label-3);margin-top:1px;
+  font-family:var(--mono);letter-spacing:.02em;
+}
+.btn-trocar{
+  background:none;color:var(--verde);border:none;border-radius:8px;
+  padding:8px 4px;font-size:var(--subhead);font-weight:600;cursor:pointer;
+  white-space:nowrap;font-family:var(--sans);min-height:var(--toque);
+  transition:opacity var(--rapido) var(--mola);
+}
+.btn-trocar:hover{opacity:.65}
+
+/* ─────────────────────────────────────────────────────────────
+   12. FOLHA (antes: modal)
+       No celular sobe de baixo com puxador; no desktop fica centrada.
+       Modal centralizado com sombra dura não existe mais no sistema.
+   ───────────────────────────────────────────────────────────── */
+.modal-ov{
+  position:fixed;inset:0;background:rgba(16,31,26,.32);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;z-index:900;
+  opacity:0;pointer-events:none;transition:opacity var(--rapido) var(--mola);padding:20px;
+}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal-card{
+  background:var(--fundo-2);border-radius:var(--r-folha);padding:var(--e5);
+  width:100%;max-width:420px;box-shadow:0 24px 60px -20px rgba(16,31,26,.28);
+  transform:translateY(12px) scale(.98);transition:transform var(--medio) var(--mola);
+  max-height:calc(100vh - 40px);overflow-y:auto;
+}
+.modal-ov.open .modal-card{transform:none}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);margin-bottom:var(--e4)}
+.modal-head h3{margin:0;font-size:var(--title3);font-weight:650;letter-spacing:-.014em}
+.btn-close{
+  background:var(--preenche);border:none;border-radius:50%;width:30px;height:30px;
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--label-2);line-height:1;flex:none;transition:background var(--rapido) var(--mola);
+}
+.btn-close:hover{background:rgba(16,31,26,.12)}
+.btn-fechar{width:100%;margin-top:var(--e4);background:var(--preenche);color:var(--label)}
+.btn-fechar:hover{background:rgba(16,31,26,.10)}
+
+/* No celular a folha encosta embaixo e ganha puxador. */
+@media (max-width:560px){
+  .modal-ov{align-items:flex-end;padding:0}
+  .modal-card{
+    max-width:none;border-radius:var(--r-folha) var(--r-folha) 0 0;
+    padding:var(--e5) var(--e4) var(--e6);max-height:88vh;
+    transform:translateY(100%);
+  }
+  .modal-card::before{
+    content:'';display:block;width:36px;height:5px;border-radius:var(--r-cap);
+    background:var(--label-4);margin:0 auto var(--e4);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   13. AVISOS E SELOS
+   ───────────────────────────────────────────────────────────── */
+.alert-banner{
+  border:none;border-radius:var(--r-ctrl);padding:var(--e3) var(--e4);
+  font-size:var(--footnote);margin-bottom:var(--e4);line-height:1.5;
+  background:var(--ambar-t);color:#7A4F00;
+}
+.selo{
+  display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-cap);
+  font-size:var(--footnote);font-weight:600;padding:5px 11px;
+  background:var(--st,var(--verde-t));color:var(--sc,var(--verde));
+}
+.selo::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+
+/* ─────────────────────────────────────────────────────────────
+   14. MATERIAL — barra de ação fixa
+       Blur só aqui e na barra de navegação. Nenhum cartão usa material.
+   ───────────────────────────────────────────────────────────── */
+.material{
+  background:rgba(255,253,248,.72);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+}
+.barra-acao{
+  position:sticky;bottom:0;z-index:10;margin:var(--e5) -20px -40px;
+  padding:var(--e3) 20px calc(var(--e4) + env(safe-area-inset-bottom));
+  border-top:.5px solid var(--separador);
+  display:flex;align-items:center;gap:var(--e3);
+}
+/* Só no celular o botão principal ocupa a largura restante. No desktop ele
+   volta a ter largura própria — a regra do bloco 6b é declarada antes desta,
+   então precisa da media query para não ser sobrescrita aqui. */
+@media (max-width:899px){ .barra-acao .btn-primary{flex:1} }
+
+/* Voltar é ação secundária e vive ao lado de Continuar: o par voltar/avançar
+   junto é o que o usuário procura ao terminar de preencher. No topo da tela
+   ele obriga a subir a página inteira para recuar uma etapa. */
+.btn-voltar{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  font-family:var(--sans);font-size:var(--headline);font-weight:600;
+  padding:var(--e3) var(--e5);min-height:50px;border-radius:14px;border:none;
+  background:var(--preenche);color:var(--label-2);text-decoration:none;cursor:pointer;
+  transition:background var(--rapido) var(--mola),color var(--rapido) var(--mola),
+             transform var(--rapido) var(--mola);
+}
+.btn-voltar:hover{background:rgba(16,31,26,.10);color:var(--label)}
+.btn-voltar:active{transform:scale(.97)}
+@media (max-width:560px){
+  .barra-acao{margin:var(--e5) -16px -24px;padding-left:16px;padding-right:16px}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   15. MOVIMENTO
+   ───────────────────────────────────────────────────────────── */
+[data-sobe]{opacity:0;animation:sobe var(--medio) var(--mola) both;animation-delay:var(--atraso,0ms)}
+@keyframes sobe{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+
+/* ─────────────────────────────────────────────────────────────
+   16. UTILITÁRIOS
+   ───────────────────────────────────────────────────────────── */
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laudo · Design System FAVO · Protótipo 03</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   LAUDO — Design System FAVO · Protótipo 03
+
+   IDEIA: uma auditoria de preço é um DOCUMENTO. Os objetos financeiros
+   mais confiáveis do mundo são impressos: um extrato, um livro-razão, um
+   horário de trem suíço. Nenhum deles tem sombra, canto arredondado ou
+   gradiente. Este sistema tira tudo isso — de propósito. O que sobra é
+   fio, entrelinha e tipografia. É a direção mais corajosa das três porque
+   o silêncio é o recurso: quando não há decoração competindo, um número
+   grande em verde carrega peso de sentença.
+   A assinatura é a COLUNA DE MARGEM: uma faixa lateral permanente onde
+   moram as notas, as fontes e as ressalvas — como a margem de um laudo
+   técnico anotado à mão. Nenhuma interface de SaaS faz isso.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. TOKENS ─────────────────────────────────────────────────────── */
+:root{
+  --papel:#FAF7F0;          /* papel offset, levemente creme */
+  --papel-2:#F2EEE4;        /* papel de segundo plano, tabelas zebradas */
+  --grafite:#16211C;        /* tinta preta de impressão, com verde dentro */
+  --grafite-70:rgba(22,33,28,.70);
+  --grafite-45:rgba(22,33,28,.45);
+  --fio:rgba(22,33,28,.16);  /* fio fino — a unidade estrutural do sistema */
+  --fio-forte:rgba(22,33,28,.42);
+
+  --verde:#00802F;          /* verde de tinta, mais escuro que o de tela:
+                               #00B140 sobre papel creme não passa em contraste */
+  --verde-vivo:#00B140;
+  --teal:#2E8E80;
+  --ambar:#9A6300;
+  --rubro:#9B2C1A;
+
+  /* Tipografia — DUAS famílias reais + mono. A serifada é a voz do laudo. */
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,'Courier New',monospace;
+
+  --t-micro:10px; --t-min:12px; --t-corpo:15px; --t-md:17px;
+  --t-lg:22px; --t-xl:30px; --t-2xl:42px; --t-num:clamp(52px,10vw,84px);
+
+  /* Ritmo de 6px — o "chumbo" da linha de base tipográfica */
+  --e1:6px; --e2:12px; --e3:18px; --e4:24px; --e5:36px; --e6:54px; --e7:78px; --e8:108px;
+  --toque:44px;
+  --tinta:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ─── 2. FUNDO: papel pautado ───────────────────────────────────────── */
+/* Não é textura de papel em bitmap (aquilo envelhece mal e pesa). É a
+   pauta: uma linha horizontal a cada 30px em 3,5% de opacidade, exatamente
+   como o papel-razão. Ela alinha com o ritmo vertical de 6px, então o
+   texto POUSA na pauta em vez de flutuar sobre ela. */
+body{
+  background:var(--papel);
+  background-image:repeating-linear-gradient(to bottom,
+    rgba(22,33,28,.035) 0 1px, transparent 1px 30px);
+  color:var(--grafite);
+  font-family:var(--sans);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+/* Uma única marca d'água: o símbolo, imenso, em 2,5%, ancorado à direita.
+   É o carimbo do laudo. Fixa, nunca rola — o documento passa por cima dela. */
+.carimbo{
+  position:fixed;right:-14vw;bottom:-10vh;width:46vh;opacity:.016;z-index:0;pointer-events:none;
+}
+
+/* ─── 3. ESTRUTURA: a coluna de margem ─────────────────────────────── */
+/* A assinatura do sistema. Grade de duas colunas: margem (notas) + corpo.
+   No celular a margem vira nota indentada abaixo do bloco, com o mesmo fio
+   à esquerda — a metáfora sobrevive à quebra. */
+.folha{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:var(--e7) var(--e4)}
+.linha-mestra{
+  display:grid;grid-template-columns:180px minmax(0,1fr);gap:var(--e5);
+  align-items:start;margin-bottom:var(--e6);
+}
+.margem{
+  font-family:var(--mono);font-size:var(--t-micro);line-height:1.7;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--grafite-45);
+  text-align:right;padding-top:6px;
+}
+.margem .nota{
+  display:block;text-transform:none;letter-spacing:0;font-size:11px;
+  margin-top:var(--e2);color:var(--grafite-45);line-height:1.65;
+}
+@media (max-width:860px){
+  .linha-mestra{grid-template-columns:1fr;gap:var(--e2)}
+  .margem{text-align:left;border-left:2px solid var(--fio);padding:0 0 0 var(--e2);order:2;margin-top:var(--e2)}
+  .corpo{order:1}
+}
+
+/* ─── 4. FIOS — o vocabulário estrutural ───────────────────────────── */
+/* Não existe "card" neste sistema. Existe FIO. Um bloco é delimitado por um
+   fio acima e ar embaixo. É assim que jornal e balanço patrimonial fazem —
+   e é por isso que a página respira sem precisar de sombra nenhuma. */
+.fio-1{border-top:1px solid var(--fio);padding-top:var(--e2)}
+.fio-2{border-top:2px solid var(--grafite);padding-top:var(--e2)}
+.fio-3{border-top:5px solid var(--grafite);padding-top:var(--e2)}
+/* Fio que se desenha: reveals por máscara de escala, como régua sendo puxada */
+.fio-1,.fio-2,.fio-3{position:relative}
+.desenha::before{
+  content:'';position:absolute;left:0;right:0;top:calc(-1*var(--esp,2px));height:var(--esp,2px);
+  background:var(--papel);transform-origin:right;
+  animation:puxa 720ms var(--tinta) both;animation-delay:var(--atraso,0ms);
+}
+@keyframes puxa{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* ─── 5. TIPOGRAFIA ─────────────────────────────────────────────────── */
+/* SERIF para prosa: é a voz que argumenta, e serifa carrega autoridade em
+   texto financeiro. SANS para rótulos e interface. MONO para cifras.
+   Três famílias é o máximo — a quarta destrói qualquer sistema. */
+h1,.h1{font-family:var(--serif);font-size:var(--t-xl);font-weight:400;line-height:1.15;letter-spacing:-.012em;text-wrap:balance}
+h2,.h2{font-family:var(--serif);font-size:var(--t-lg);font-weight:400;line-height:1.25;letter-spacing:-.008em}
+h3{font-family:var(--sans);font-size:var(--t-min);font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+p,.prosa{font-family:var(--serif);font-size:var(--t-corpo);line-height:1.72;color:var(--grafite-70);max-width:62ch}
+.rotulo{font-family:var(--sans);font-size:var(--t-micro);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--grafite-45)}
+.cifra{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+/* A cifra herói é o único elemento em escala de manchete. Peso 300: em
+   corpo enorme, peso alto vira mancha; peso leve vira arquitetura. */
+.cifra-heroi{
+  font-family:var(--mono);font-weight:300;font-size:var(--t-num);
+  line-height:.92;letter-spacing:-.055em;font-variant-numeric:tabular-nums;
+}
+/* Capitular: a primeira letra do parágrafo de abertura do veredito.
+   Detalhe de tipografia editorial que nenhum dashboard usa. */
+.capitular::first-letter{
+  font-family:var(--serif);float:left;font-size:56px;line-height:.82;
+  padding:4px 10px 0 0;color:var(--verde);font-weight:400;
+}
+
+/* ─── 6. VEREDITO ───────────────────────────────────────────────────── */
+.veredito{border-top:5px solid var(--acento,var(--verde));padding-top:var(--e3);margin-bottom:var(--e5)}
+.veredito .chamada{
+  font-family:var(--sans);font-size:var(--t-min);font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--acento,var(--verde));
+  margin-bottom:var(--e3);display:block;
+}
+
+/* ─── 7. CAMPOS ─────────────────────────────────────────────────────── */
+/* O campo não é caixa: é uma LINHA PARA PREENCHER, como em formulário
+   impresso. Só o fio de baixo existe. No foco o fio engrossa e escurece.
+   Isso reduz 80% do peso visual de um formulário longo. */
+.campo{display:block;margin-bottom:var(--e4)}
+.campo>.rotulo{display:block;margin-bottom:var(--e1)}
+.linha-campo{
+  display:flex;align-items:baseline;gap:var(--e1);
+  border-bottom:1px solid var(--fio-forte);
+  transition:border-color 160ms var(--tinta),box-shadow 160ms var(--tinta);
+}
+.linha-campo:focus-within{border-bottom-color:var(--verde);box-shadow:0 1px 0 0 var(--verde)}
+.linha-campo .un{font-family:var(--mono);font-size:var(--t-min);color:var(--grafite-45);flex:none}
+.linha-campo input,.linha-campo select{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--grafite);
+  padding:var(--e2) 0;min-height:var(--toque);
+  font-family:var(--mono);font-size:var(--t-md);font-weight:500;font-variant-numeric:tabular-nums;
+}
+.linha-campo.texto input,.linha-campo select{font-family:var(--sans);font-size:var(--t-corpo)}
+.campo .nota{display:block;font-size:var(--t-min);color:var(--grafite-45);margin-top:var(--e1);font-family:var(--sans);line-height:1.55}
+
+/* ─── 8. BOTÕES ─────────────────────────────────────────────────────── */
+/* Retângulo reto. Sem raio, sem sombra, sem gradiente. O primário é um
+   bloco de tinta verde; o secundário é só texto sublinhado por fio.
+   No hover o primário não muda de cor: ele ganha 2px de deslocamento e
+   um "carimbo" atrás — como bloco de impressão encostando no papel. */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--e1);
+  font-family:var(--sans);font-size:var(--t-min);font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:var(--e2) var(--e4);min-height:var(--toque);cursor:pointer;
+  border:1px solid var(--grafite);background:none;color:var(--grafite);
+  text-decoration:none;position:relative;
+  transition:transform 160ms var(--tinta),box-shadow 160ms var(--tinta),
+             background 160ms var(--tinta),color 160ms var(--tinta);
+}
+.btn-principal{background:var(--verde);border-color:var(--verde);color:var(--papel);width:100%}
+.btn-principal:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 0 var(--grafite)}
+.btn-principal:active{transform:translate(0,0);box-shadow:0 0 0 0 var(--grafite)}
+.btn-secundario:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 0 var(--fio-forte)}
+.btn-texto{
+  border:none;padding:0;min-height:auto;background:none;color:var(--grafite);
+  border-bottom:1px solid var(--fio-forte);text-transform:none;letter-spacing:0;
+  font-size:var(--t-min);font-weight:600;
+}
+.btn-texto:hover{border-bottom-color:var(--verde);color:var(--verde);transform:none;box-shadow:none}
+.linha-nav{display:flex;gap:var(--e2)}
+.linha-nav .btn{flex:1}
+
+/* ─── 9. SUMÁRIO DE ETAPAS ──────────────────────────────────────────── */
+/* Não é stepper: é o sumário de um documento. Numeração romana à esquerda,
+   fio conectando o número ao título, estado marcado por peso — não por cor
+   de bolinha. A etapa atual ganha o fio grosso. */
+.sumario{list-style:none;margin-bottom:var(--e5)}
+.sumario li{
+  display:flex;align-items:baseline;gap:var(--e2);padding:var(--e1) 0;
+  border-bottom:1px solid var(--fio);
+}
+.sumario .num{font-family:var(--mono);font-size:var(--t-min);color:var(--grafite-45);width:26px;flex:none}
+.sumario .tit{font-family:var(--sans);font-size:var(--t-min);font-weight:500;color:var(--grafite-45);letter-spacing:.02em}
+.sumario .pont{flex:1;border-bottom:1px dotted var(--fio);transform:translateY(-3px)}
+.sumario .est{font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--grafite-45)}
+.sumario li.feito .tit{color:var(--grafite-70)}
+.sumario li.feito .est{color:var(--teal)}
+.sumario li.agora{border-bottom:2px solid var(--grafite)}
+.sumario li.agora .tit{color:var(--grafite);font-weight:700}
+.sumario li.agora .num{color:var(--verde);font-weight:700}
+.sumario li.agora .est{color:var(--verde);font-weight:700}
+
+/* ─── 10. RAZÃO — a cascata como livro-razão ───────────────────────── */
+/* Sem barras coloridas. É uma coluna de débitos, com linha pontilhada
+   ligando descrição a valor — a convenção de sumário/fatura que todo
+   empresário já sabe ler. A barra existe, mas em 2px e em grafite: ela
+   informa proporção sem virar gráfico. */
+.razao{width:100%}
+.razao .item{padding:var(--e2) 0;border-bottom:1px solid var(--fio)}
+.razao .lin{display:flex;align-items:baseline;gap:var(--e1)}
+.razao .desc{font-family:var(--sans);font-size:var(--t-corpo);flex:none;max-width:60%}
+.razao .desc small{display:block;font-size:var(--t-min);color:var(--grafite-45)}
+.razao .pont{flex:1;border-bottom:1px dotted var(--fio-forte);transform:translateY(-4px)}
+.razao .val{font-family:var(--mono);font-size:var(--t-corpo);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.razao .prop{height:2px;background:var(--fio);margin-top:6px}
+.razao .prop i{display:block;height:100%;background:var(--grafite-45);transform-origin:left;
+  animation:estende 800ms var(--tinta) both;animation-delay:var(--d,0ms)}
+@keyframes estende{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.razao .item.total{border-top:2px solid var(--grafite);border-bottom:none;margin-top:var(--e2);padding-top:var(--e3)}
+.razao .item.total .desc{font-weight:700;font-size:var(--t-md)}
+.razao .item.total .val{font-size:var(--t-lg);font-weight:500;color:var(--verde)}
+.razao .item.total .prop i{background:var(--verde)}
+
+/* ─── 11. TABELA ────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;font-size:var(--t-min)}
+th{font-family:var(--sans);font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;
+   color:var(--grafite-45);font-weight:700;text-align:right;padding:0 0 var(--e1) var(--e2);
+   border-bottom:1px solid var(--grafite)}
+th:first-child{text-align:left;padding-left:0}
+td{padding:var(--e1) 0 var(--e1) var(--e2);border-bottom:1px solid var(--fio);text-align:right;
+   font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--grafite-70)}
+td:first-child{text-align:left;padding-left:0;font-family:var(--sans)}
+tr.hoje td{background:var(--papel-2);color:var(--grafite);font-weight:700}
+
+/* ─── 12. RESSALVA E AVISO ──────────────────────────────────────────── */
+.ressalva{
+  font-family:var(--serif);font-size:var(--t-min);line-height:1.7;color:var(--grafite-45);
+  border-left:2px solid var(--fio);padding-left:var(--e2);max-width:62ch;
+}
+.aviso{
+  border-top:2px solid var(--ambar);padding-top:var(--e2);
+  font-family:var(--sans);font-size:var(--t-min);line-height:1.6;color:var(--ambar);
+}
+
+/* ─── 13. MOVIMENTO ─────────────────────────────────────────────────── */
+/* Regra dura: NADA faz fade. Um documento não aparece por transparência —
+   ele é impresso. Todo reveal é máscara: o conteúdo já está lá e o papel
+   sai de cima dele, da direita para a esquerda. */
+.imprime{position:relative;overflow:hidden}
+.imprime::after{
+  content:'';position:absolute;inset:0;background:var(--papel);transform-origin:right;
+  animation:puxa 640ms var(--tinta) both;animation-delay:var(--atraso,0ms);pointer-events:none;
+}
+/* A cifra herói tem seu próprio gesto: os dígitos assentam de baixo, com o
+   papel saindo de cima. É "o número foi carimbado", não "o número apareceu". */
+.cifra-heroi{position:relative;display:inline-block;overflow:hidden}
+.cifra-heroi>span{display:inline-block;animation:carimba 760ms var(--tinta) both;animation-delay:180ms}
+@keyframes carimba{from{transform:translateY(105%)}to{transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important}
+}
+
+/* ─── 14. DOC ───────────────────────────────────────────────────────── */
+.cabecalho-doc{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:var(--e4);
+  border-bottom:2px solid var(--grafite);padding-bottom:var(--e2);margin-bottom:var(--e5);flex-wrap:wrap;
+}
+.marca{display:flex;align-items:center;gap:var(--e2)}
+.marca .n{font-family:var(--sans);font-size:var(--t-min);font-weight:700;letter-spacing:.02em}
+.marca .s{font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+.grade{display:grid;gap:var(--e4)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:820px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}.folha{padding:var(--e5) var(--e3)}}
+.amostra{height:80px;position:relative}
+.amostra span{position:absolute;left:8px;bottom:6px;font-family:var(--mono);font-size:10px}
+.tela{max-width:560px}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:var(--e4)}
+@media (max-width:460px){.par{grid-template-columns:1fr}}
+.voltar{position:fixed;left:var(--e2);top:var(--e2);z-index:9;background:var(--papel);
+  border:1px solid var(--grafite);padding:6px 12px;font-family:var(--sans);font-size:10px;
+  font-weight:700;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--grafite)}
+</style>
+</head>
+<body>
+<svg class="carimbo" viewBox="0 0 509 534"><path fill="#16211C" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#16211C" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+<a class="voltar" href="index.html">← protótipos</a>
+
+<main class="folha">
+
+  <div class="cabecalho-doc">
+    <div class="marca">
+      <svg viewBox="0 0 509 534" width="30" height="30"><path fill="#2E8E80" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00802F" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+      <div><div class="n">Auditor de Precificação</div><div class="s">FAVO Educação</div></div>
+    </div>
+    <div class="rotulo">Protótipo 03 · Sistema de design</div>
+  </div>
+
+  <div class="linha-mestra">
+    <div class="margem">Conceito<span class="nota">A direção mais silenciosa e a mais arriscada. Não há sombra, raio de canto ou gradiente em lugar nenhum do sistema.</span></div>
+    <div class="corpo">
+      <h1 style="font-size:var(--t-2xl);margin-bottom:var(--e3)">Laudo</h1>
+      <p class="capitular">Uma auditoria de preço é um documento. Os objetos financeiros mais confiáveis do mundo são impressos — um extrato, um livro-razão, um horário de trem suíço — e nenhum deles tem sombra, canto arredondado ou gradiente. Este sistema remove tudo isso de propósito. O que sobra é fio, entrelinha e tipografia. O silêncio é o recurso: quando nada decora, um número grande em verde carrega peso de sentença.</p>
+      <p style="margin-top:var(--e3)">A assinatura é a <b>coluna de margem</b> — uma faixa lateral permanente onde moram notas, fontes e ressalvas, como a margem de um laudo técnico anotado à mão. Nenhum SaaS faz isso, e é exatamente por isso que funciona.</p>
+    </div>
+  </div>
+
+  <!-- COR -->
+  <div class="linha-mestra">
+    <div class="margem">01 · Cor<span class="nota">Cinco tintas. O verde de tela (#00B140) não passa em contraste sobre creme, então a tinta é #00802F — o vivo fica só para preenchimentos.</span></div>
+    <div class="corpo">
+      <h2 class="fio-2" style="margin-bottom:var(--e4)">Cinco tintas e nada mais</h2>
+      <div class="grade g4" style="margin-bottom:var(--e3)">
+        <div><div class="amostra" style="background:var(--papel);border:1px solid var(--fio)"><span>#FAF7F0</span></div><div class="rotulo" style="margin-top:6px">Papel</div></div>
+        <div><div class="amostra" style="background:var(--grafite)"><span style="color:var(--papel)">#16211C</span></div><div class="rotulo" style="margin-top:6px">Grafite</div></div>
+        <div><div class="amostra" style="background:var(--verde)"><span style="color:var(--papel)">#00802F</span></div><div class="rotulo" style="margin-top:6px">Verde tinta</div></div>
+        <div><div class="amostra" style="background:var(--ambar)"><span style="color:var(--papel)">#9A6300</span></div><div class="rotulo" style="margin-top:6px">Âmbar</div></div>
+        <div><div class="amostra" style="background:var(--rubro)"><span style="color:var(--papel)">#9B2C1A</span></div><div class="rotulo" style="margin-top:6px">Rubro</div></div>
+        <div><div class="amostra" style="background:var(--teal)"><span style="color:var(--papel)">#2E8E80</span></div><div class="rotulo" style="margin-top:6px">Teal</div></div>
+        <div><div class="amostra" style="background:var(--papel-2)"><span>#F2EEE4</span></div><div class="rotulo" style="margin-top:6px">Papel 2</div></div>
+        <div><div class="amostra" style="background:transparent;border:1px dashed var(--fio-forte)"><span>—</span></div><div class="rotulo" style="margin-top:6px">Sem sexta cor</div></div>
+      </div>
+      <p class="ressalva">Regra: cor só onde há dinheiro em jogo. Um título não é verde. Um botão secundário não é verde. Se tudo for destaque, nada é.</p>
+    </div>
+  </div>
+
+  <!-- TIPOGRAFIA -->
+  <div class="linha-mestra">
+    <div class="margem">02 · Tipografia<span class="nota">Serifada para prosa, sans para interface, mono para cifra. Três famílias é o teto — a quarta destrói qualquer sistema.</span></div>
+    <div class="corpo">
+      <h2 class="fio-2" style="margin-bottom:var(--e4)">Três famílias, papéis inegociáveis</h2>
+      <div class="grade g3">
+        <div class="fio-1">
+          <h3 style="margin-bottom:var(--e2)">Serifada</h3>
+          <p style="font-size:var(--t-corpo)">A voz que argumenta. Serifa carrega autoridade em texto financeiro — é a diferença entre "um app disse" e "um parecer disse".</p>
+        </div>
+        <div class="fio-1">
+          <h3 style="margin-bottom:var(--e2)">Sans</h3>
+          <p style="font-family:var(--sans);font-size:var(--t-min)">A voz do formulário: rótulos, botões, estados. Sempre em caixa alta com tracking largo quando é rótulo. Nunca em prosa.</p>
+        </div>
+        <div class="fio-1">
+          <h3 style="margin-bottom:var(--e2)">Mono</h3>
+          <div class="cifra" style="font-size:var(--t-lg)">R$ 56.040</div>
+          <p style="font-family:var(--sans);font-size:var(--t-min);margin-top:6px">A voz do dinheiro. Tabular, sempre. Colunas alinham no ponto decimal.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ELEMENTOS -->
+  <div class="linha-mestra">
+    <div class="margem">03 · Elementos<span class="nota">O campo não é caixa: é linha para preencher, como em formulário impresso. Corta ~80% do peso visual de um formulário longo.</span></div>
+    <div class="corpo">
+      <h2 class="fio-2" style="margin-bottom:var(--e4)">Campos, botões, sumário</h2>
+      <div class="grade g2">
+        <div>
+          <label class="campo"><span class="rotulo">Despesa fixa mensal</span>
+            <div class="linha-campo"><span class="un">R$</span><input value="42.800,00"></div></label>
+          <label class="campo"><span class="rotulo">Comissão de vendas</span>
+            <div class="linha-campo"><input value="4,0"><span class="un">%</span></div>
+            <span class="nota">No foco o fio engrossa e vira verde. Nada mais acontece.</span></label>
+          <label class="campo"><span class="rotulo">Nome do projeto</span>
+            <div class="linha-campo texto"><input value="Residencial Vila Nova"></div></label>
+          <button class="btn btn-principal">Ver meu diagnóstico</button>
+          <div class="linha-nav" style="margin-top:var(--e2)">
+            <button class="btn btn-secundario">Voltar</button>
+            <button class="btn btn-secundario">Salvar</button>
+          </div>
+        </div>
+        <div>
+          <ol class="sumario">
+            <li class="feito"><span class="num">I</span><span class="tit">Empresa</span><span class="pont"></span><span class="est">Concluído</span></li>
+            <li class="feito"><span class="num">II</span><span class="tit">Projeto</span><span class="pont"></span><span class="est">Concluído</span></li>
+            <li class="agora"><span class="num">III</span><span class="tit">Custos e operação</span><span class="pont"></span><span class="est">Agora</span></li>
+            <li><span class="num">IV</span><span class="tit">Diagnóstico</span><span class="pont"></span><span class="est">—</span></li>
+          </ol>
+          <div class="aviso" style="margin-bottom:var(--e3)">Diagnóstico gerencial, não consultoria contábil. Confirme a alíquota com seu contador.</div>
+          <p class="ressalva">O sumário substitui o stepper de bolinhas. Estado se comunica por peso tipográfico e espessura de fio — não por cor de círculo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVIMENTO -->
+  <div class="linha-mestra">
+    <div class="margem">04 · Movimento<span class="nota">Nada faz fade. Um documento não aparece por transparência — ele é impresso.</span></div>
+    <div class="corpo">
+      <h2 class="fio-2" style="margin-bottom:var(--e4)">O papel sai de cima do conteúdo</h2>
+      <div class="grade g3">
+        <div class="fio-1 imprime"><h3 style="margin-bottom:var(--e2)">Impressão</h3><p style="font-size:var(--t-min)">Uma máscara cor de papel cobre o bloco e recua para a esquerda em 640 ms. O conteúdo já estava lá.</p></div>
+        <div class="fio-1 imprime" style="--atraso:120ms"><h3 style="margin-bottom:var(--e2)">Régua</h3><p style="font-size:var(--t-min)">Fios se desenham da esquerda para a direita. É o gesto de puxar uma régua — o mesmo tempo, sempre.</p></div>
+        <div class="fio-1 imprime" style="--atraso:240ms"><h3 style="margin-bottom:var(--e2)">Carimbo</h3><p style="font-size:var(--t-min)">A cifra herói sobe de dentro da própria linha, com overflow oculto. Não aparece: é impressa.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLICADO: FUNIL -->
+  <div class="linha-mestra">
+    <div class="margem">05 · Aplicado<span class="nota">Passo III do funil. Note a ausência total de caixas: o formulário inteiro é ar, fio e tipografia.</span></div>
+    <div class="corpo">
+      <div class="tela">
+        <ol class="sumario">
+          <li class="feito"><span class="num">I</span><span class="tit">Empresa</span><span class="pont"></span><span class="est">Concluído</span></li>
+          <li class="feito"><span class="num">II</span><span class="tit">Projeto</span><span class="pont"></span><span class="est">Concluído</span></li>
+          <li class="agora"><span class="num">III</span><span class="tit">Custos e operação</span><span class="pont"></span><span class="est">Agora</span></li>
+          <li><span class="num">IV</span><span class="tit">Diagnóstico</span><span class="pont"></span><span class="est">—</span></li>
+        </ol>
+
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--e2);border-top:1px solid var(--fio);border-bottom:1px solid var(--fio);padding:var(--e2) 0;margin-bottom:var(--e4)">
+          <div><div style="font-family:var(--sans);font-weight:700;font-size:var(--t-min)">Solar Vale Engenharia</div><div class="rotulo" style="margin-top:2px">Simples Nacional</div></div>
+          <button class="btn btn-texto">Trocar empresa</button>
+        </div>
+
+        <section class="imprime" style="margin-bottom:var(--e5)">
+          <h2 class="fio-2" style="padding-top:var(--e2);margin-bottom:var(--e2)">Quanto você faz por mês</h2>
+          <p style="margin-bottom:var(--e4)">É o que permite dividir o custo fixo entre os projetos.</p>
+          <div class="par">
+            <label class="campo"><span class="rotulo">Projetos / mês</span><div class="linha-campo"><input value="6"><span class="un">un</span></div></label>
+            <label class="campo"><span class="rotulo">Despesa fixa</span><div class="linha-campo"><span class="un">R$</span><input value="42.800"></div></label>
+          </div>
+        </section>
+
+        <section class="imprime" style="--atraso:140ms;margin-bottom:var(--e5)">
+          <h2 class="fio-2" style="padding-top:var(--e2);margin-bottom:var(--e2)">Quanto sai de cada venda</h2>
+          <p style="margin-bottom:var(--e4)">Percentuais sobre o valor vendido.</p>
+          <div class="par">
+            <label class="campo"><span class="rotulo">Comissão</span><div class="linha-campo"><input value="4,0"><span class="un">%</span></div></label>
+            <label class="campo"><span class="rotulo">Impostos</span><div class="linha-campo"><input value="8,5"><span class="un">%</span></div></label>
+          </div>
+          <label class="campo"><span class="rotulo">Quem emite a nota do kit</span>
+            <div class="linha-campo"><select><option>A distribuidora fatura direto ao cliente</option><option>Sai no meu CNPJ</option></select></div>
+            <span class="nota">Muda bastante a conta: no seu CNPJ, o imposto incide sobre o valor cheio da venda.</span></label>
+        </section>
+
+        <button class="btn btn-principal">Ver meu diagnóstico</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLICADO: DIAGNÓSTICO -->
+  <div class="linha-mestra">
+    <div class="margem">06 · Aplicado<span class="nota">O veredito. A capitular verde e a cifra em peso 300 fazem a página inteira parecer um parecer técnico — que é o que ela é.</span></div>
+    <div class="corpo">
+      <div class="tela">
+        <div class="rotulo" style="margin-bottom:var(--e1)">Solar Vale · Residencial Vila Nova · 8,4 kWp</div>
+        <h1 style="margin-bottom:var(--e5)">Seu diagnóstico de preço</h1>
+
+        <div class="veredito" style="--acento:var(--verde)">
+          <span class="chamada">Seu preço cobre tudo e ainda sobra</span>
+          <div class="cifra-heroi" style="color:var(--verde)"><span>R$&nbsp;7.140</span></div>
+          <div style="font-family:var(--sans);font-size:var(--t-md);font-weight:600;margin:var(--e2) 0 var(--e3)">sobram por projeto</div>
+          <p>R$ 42.840 por mês, somando os 6 projetos que você faz. É o que fica com a empresa depois do kit, da instalação, do projeto, da comissão, do imposto e da fatia do mês em estrutura.</p>
+          <div style="border-top:1px solid var(--fio);margin-top:var(--e3);padding-top:var(--e3)">
+            <p>Seu <b>preço mínimo</b> para lucrar 12% é <b class="cifra">R$ 48.900</b>. Você cobra <b class="cifra">R$ 56.040</b> — <b class="cifra">R$ 7.140</b> acima do mínimo.</p>
+            <p style="color:var(--teal);font-weight:600;margin-top:var(--e1)">Isso é folga de margem, não convite a dar desconto.</p>
+          </div>
+        </div>
+
+        <section class="imprime" style="--atraso:120ms;margin-bottom:var(--e5)">
+          <h2 class="fio-2" style="padding-top:var(--e2);margin-bottom:var(--e2)">Para onde vai cada R$ 56.040 que entram</h2>
+          <p style="margin-bottom:var(--e3)">É o mesmo projeto, fatiado. A última linha é o que fica com a empresa.</p>
+          <div class="razao">
+            <div class="item"><div class="lin"><div class="desc">Kit<small>faturado pela distribuidora</small></div><div class="pont"></div><div class="val">28.400,00</div></div><div class="prop"><i style="--d:0ms;width:50.7%"></i></div></div>
+            <div class="item"><div class="lin"><div class="desc">Instalação</div><div class="pont"></div><div class="val">8.200,00</div></div><div class="prop"><i style="--d:60ms;width:14.6%"></i></div></div>
+            <div class="item"><div class="lin"><div class="desc">Projeto, ART e homologação</div><div class="pont"></div><div class="val">2.900,00</div></div><div class="prop"><i style="--d:120ms;width:5.2%"></i></div></div>
+            <div class="item"><div class="lin"><div class="desc">Comissão do vendedor</div><div class="pont"></div><div class="val">2.242,00</div></div><div class="prop"><i style="--d:180ms;width:4%"></i></div></div>
+            <div class="item"><div class="lin"><div class="desc">Imposto<small>sobre a parte de serviço</small></div><div class="pont"></div><div class="val">2.351,00</div></div><div class="prop"><i style="--d:240ms;width:4.2%"></i></div></div>
+            <div class="item"><div class="lin"><div class="desc">Sua estrutura<small>a fatia do mês que cabe a este projeto</small></div><div class="pont"></div><div class="val">4.807,00</div></div><div class="prop"><i style="--d:300ms;width:8.6%"></i></div></div>
+            <div class="item total"><div class="lin"><div class="desc">Sobra pra você</div><div class="pont"></div><div class="val">7.140,00</div></div><div class="prop"><i style="--d:400ms;width:12.7%"></i></div></div>
+          </div>
+        </section>
+
+        <section class="imprime" style="--atraso:200ms;margin-bottom:var(--e5)">
+          <h2 class="fio-2" style="padding-top:var(--e2);margin-bottom:var(--e2)">Quanto custa cada desconto que você dá</h2>
+          <p style="margin-bottom:var(--e3)">Cada 1% de desconto tira cerca de <b class="cifra">R$ 3.362</b> do seu lucro no mês — <b>7,8 vezes</b> o que você deu de desconto.</p>
+          <table>
+            <thead><tr><th>Desconto</th><th>Preço</th><th>Sobra no mês</th><th>Deixa de ganhar</th></tr></thead>
+            <tbody>
+              <tr class="hoje"><td>Preço de hoje</td><td>56.040</td><td>42.840</td><td>—</td></tr>
+              <tr><td>−2%</td><td>54.919</td><td>36.116</td><td style="color:var(--rubro)">− 6.724</td></tr>
+              <tr><td>−5%</td><td>53.238</td><td>26.030</td><td style="color:var(--rubro)">− 16.810</td></tr>
+              <tr><td>−10%</td><td>50.436</td><td>9.220</td><td style="color:var(--rubro)">− 33.620</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section style="border-top:5px solid var(--grafite);padding-top:var(--e3)">
+          <h2 style="margin-bottom:var(--e2)">Sobram R$ 7.140 por projeto. Dá para sobrar mais.</h2>
+          <p style="margin-bottom:var(--e3)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+          <button class="btn btn-principal" style="width:auto">Quero conversar sobre esses números</button>
+          <div style="margin-top:var(--e3)"><button class="btn btn-texto">Ver o relatório completo</button></div>
+        </section>
+
+        <p class="ressalva" style="margin-top:var(--e5)">Este é um diagnóstico gerencial, não uma consultoria contábil ou tributária. Usamos o percentual de imposto informado — sua alíquota real varia conforme o regime, o faturamento dos últimos 12 meses e o ISS do município.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGRAS -->
+  <div class="linha-mestra">
+    <div class="margem">07 · Regras</div>
+    <div class="corpo">
+      <h2 class="fio-2" style="margin-bottom:var(--e4)">O que mantém o sistema vivo</h2>
+      <div class="grade g2">
+        <p class="ressalva">01 — Zero sombra, zero raio de canto, zero gradiente. Qualquer um dos três reintroduz o "app genérico" que o sistema existe para negar.</p>
+        <p class="ressalva">02 — A coluna de margem nunca some no desktop. É onde vive a honestidade do produto: fontes, premissas, ressalvas.</p>
+        <p class="ressalva">03 — Cor só onde há dinheiro em risco. Título não é verde.</p>
+        <p class="ressalva">04 — Nada faz fade. Todo reveal é máscara cor de papel recuando.</p>
+        <p class="ressalva">05 — Prosa em serifada, interface em sans, cifra em mono. Trocar os papéis derruba o sistema.</p>
+        <p class="ressalva">06 — Ritmo vertical de 6px, alinhado à pauta de 30px do fundo. O texto pousa na pauta.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>

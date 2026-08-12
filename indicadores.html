@@ -4,104 +4,100 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Indicadores do Negócio · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Exclusivo desta página. Tokens, base, marca, stepper, faixa da empresa,
+     cartão, selo e botões vêm do shared.css.
+
+     Esta é a única etapa do funil com QUATRO cartões empilhados. É só de
+     leitura: nada aqui é campo. Por isso a gramática é a de LISTA — rótulo
+     à esquerda, número à direita — e não a de formulário da etapa 3. O
+     invólucro (.card + .card-title + .card-sub) é o mesmo das etapas 3 a 6,
+     para a página não parecer de outro app. */
+
+  /* Cabeçalho da etapa. As outras etapas têm um cartão só e o título mora
+     dentro dele; com quatro cartões o título precisa ficar acima de todos,
+     um degrau ACIMA do .card-title (title3) na rampa — daí title1. */
+  .page-title{margin:0}
+  .page-sub{font-size:var(--subhead);color:var(--label-2);margin:var(--e1) 0 var(--e5);line-height:1.5}
+
+  /* O subtítulo antecede uma lista, não um formulário: --e5 abriria um vão
+     grande demais entre a explicação e a primeira linha. */
+  .card>.card-sub{margin-bottom:var(--e2)}
+  .nav-row{margin-top:var(--e5)}
+
+  /* ── LINHA DE INDICADOR ──────────────────────────────────────────────
+     min-width:0 nos DOIS lados é o que impede o transbordo: item de flex
+     nasce com min-width:auto e se recusa a encolher abaixo do próprio
+     conteúdo, então um valor longo empurra a linha para fora do cartão.
+     flex-wrap é a segunda rede: se ainda assim não couber lado a lado, o
+     valor desce para a linha de baixo em vez de vazar. */
+  .ind-row{
+    display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;
+    gap:var(--e1) var(--e3);padding:var(--e3) 0;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
-  .wrap{width:100%;max-width:520px}
+  /* Régua no topo do irmão em vez de embaixo de cada um: dispensa a exceção
+     do :last-child e nunca sobra um traço solto no fim do cartão. */
+  .ind-row+.ind-row{border-top:1px solid var(--separador)}
+  /* flex-basis 0 para a coluna do rótulo nunca ser ela a provocar a quebra:
+     quem decide se cabe é a largura do valor. */
+  .ind-left{flex:1 1 0;min-width:0}
+  .ind-right{flex:0 1 auto;min-width:0;margin-left:auto;text-align:right}
 
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
-  .btn-back:hover{color:var(--ink)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
-  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+  .ind-label{font-size:var(--subhead);font-weight:600;color:var(--label);letter-spacing:-.004em;line-height:1.35}
+  /* Nome de custo/despesa é digitado pelo usuário: sem isto, uma palavra
+     única muito longa fura a coluna. */
+  .ind-label{overflow-wrap:anywhere}
+  .ind-sub{font-size:var(--caption);color:var(--label-3);margin-top:2px;line-height:1.4}
 
-  .stepper{display:flex;align-items:center;margin-bottom:24px}
-  .step{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .sn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--hair);color:var(--muted)}
-  .sl{font-size:8px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
-  .step.active .sn{background:var(--solar);color:#fff}
-  .step.active .sl{color:var(--solar);font-weight:700}
-  .step.done .sn{background:var(--teal);color:#fff}
-  .step.done .sl{color:var(--teal)}
-  .sline{flex:1;height:2px;background:var(--hair);margin:0 4px;margin-bottom:14px}
-  .sline.done{background:var(--teal)}
-  .step[onclick]{cursor:pointer}
-  .step[onclick]:hover .sn{opacity:.7}
+  /* .cifra (mono tabular) vem do shared.css; aqui só o tamanho e a cor.
+     nowrap mantém a coluna de números alinhada — a quebra é resolvida pelo
+     flex-wrap da linha, nunca no meio de um valor. */
+  .ind-val{font-size:var(--callout);color:var(--label);white-space:nowrap}
+  /* Valor que não é número ("Por faixa") não usa mono: fingir de algarismo
+     desalinha a coluna toda. */
+  .ind-val.txt{font-family:var(--sans);font-weight:400;font-size:var(--footnote);
+    color:var(--label-2);letter-spacing:normal;white-space:normal}
+  .ind-val.vazio{font-family:var(--sans);font-weight:400;font-size:var(--footnote);
+    color:var(--label-4);letter-spacing:normal;white-space:normal}
 
-  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .empresa-badge .nome{font-weight:700;font-size:14px}
-  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
-  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
-  .btn-trocar:hover{background:rgba(255,255,255,.25)}
+  /* ── META DE RESULTADO ───────────────────────────────────────────────
+     O número da meta é o maior da página, mas dentro da rampa: 56px não
+     existe no sistema e era o que criava o degrau de densidade contra o
+     resto das linhas. largeTitle (34px) destaca sem virar outro objeto. */
+  .ind-row.meta{align-items:baseline;padding-top:var(--e1)}
+  .meta-val{font-size:var(--largeTitle);line-height:1.05;color:var(--mata)}
 
-  .page-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
-  .page-sub{font-size:13px;color:var(--muted);margin:0 0 18px}
+  /* ── MEDIDOR DE DESPESA FIXA ─────────────────────────────────────────
+     Trilho em cápsula e recuado do fim do cartão, com selo nomeando a
+     leitura. Barra fina, retangular e colada na borda inferior se lê como
+     barra de rolagem — era exatamente essa a confusão. */
+  .medidor{padding:var(--e3) 0 var(--e1)}
+  .medidor-trilho{position:relative;height:8px;border-radius:var(--r-cap);background:var(--preenche);overflow:hidden}
+  .medidor-preenche{height:100%;border-radius:var(--r-cap);transition:width var(--lento) var(--mola)}
+  /* Entalhe na referência de 20%: dá escala ao trilho. Sem uma marca, uma
+     barra chapada de ponta a ponta continua parecendo barra de rolagem. */
+  .medidor-marca{position:absolute;top:0;bottom:0;width:2px;background:var(--fundo-2)}
+  .medidor-legenda{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e2);
+    margin-top:var(--e3);font-size:var(--caption);color:var(--label-3)}
 
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;overflow:hidden;margin-bottom:14px}
-  .card-head{padding:14px 18px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:10px}
-  .card-icon{width:30px;height:30px;border-radius:8px;background:#E9F7EF;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-  .card-head h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--ink)}
-  .card-body{padding:4px 18px 10px}
-
-  .ind-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair)}
-  .ind-row:last-child{border-bottom:none}
-  .ind-left{flex:1;min-width:0}
-  .ind-label{font-size:13px;color:var(--ink);font-weight:600}
-  .ind-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
-  .ind-right{text-align:right;flex-shrink:0}
-  .ind-val{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
-  .ind-val.pct{color:var(--teal)}
-  .ind-val.empty{color:var(--muted);font-style:italic;font-family:var(--sans);font-size:12px;font-weight:400}
-  .ind-tag{font-size:10px;font-weight:600;font-family:var(--mono);background:var(--bg);border:1px solid var(--hair);border-radius:5px;padding:2px 7px;color:var(--muted);margin-top:4px;display:inline-block}
-
-  .lucro-destaque{text-align:center;padding:20px 18px 18px}
-  .lucro-pct{font-size:56px;font-weight:800;font-family:var(--mono);color:var(--teal);line-height:1;letter-spacing:-2px}
-  .lucro-hint{font-size:12px;color:var(--muted);margin-top:8px}
-
-  .bar-wrap{padding:0 0 10px}
-  .bar-bg{background:var(--hair);border-radius:4px;height:7px;overflow:hidden}
-  .bar-fill{height:100%;border-radius:4px;transition:.6s ease}
-
-  .alert-banner{border-radius:10px;padding:11px 14px;font-size:12px;margin-bottom:16px;line-height:1.6;border:1px solid #F9D171;background:#FFF8E1;color:#7A5C00}
-
-  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:6px}
-  .btn-primary:hover{opacity:.9}
+  /* Aviso: lista de verdade no lugar de <br>, para o leitor de tela anunciar
+     quantas pendências existem. */
+  .alert-banner ul{margin:var(--e1) 0 0;padding-left:var(--e4)}
+  .alert-banner li+li{margin-top:var(--e1)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="sazonalidade.html">← Voltar</a>
-
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
-  <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='sazonalidade.html'"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
-    <div class="sline done"></div>
-    <div class="step active"><div class="sn">5</div><div class="sl">Indicad.</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
-  </div>
+  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge">
     <div>
@@ -111,66 +107,87 @@
     <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
   </div>
 
-  <h2 class="page-title">Indicadores do Negócio</h2>
-  <p class="page-sub">Resumo dos parâmetros cadastrados — revise antes de prosseguir para a precificação.</p>
+  <h1 class="title1 page-title">Indicadores do Negócio</h1>
+  <p class="page-sub">Resumo do que já foi cadastrado. Revise antes de prosseguir para a precificação.</p>
 
-  <div id="alertBanner" class="alert-banner" style="display:none"></div>
+  <div id="alertBanner" class="alert-banner" role="alert" aria-live="assertive" style="display:none"></div>
 
-  <!-- Card 1: Meta de Resultado -->
+  <!-- Cartão 1: Meta de Resultado -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-icon">🎯</div>
-      <h3>Meta de Resultado</h3>
-    </div>
-    <div class="card-body">
-      <div class="lucro-destaque">
-        <div class="lucro-pct" id="lucroValor">—</div>
-        <div class="lucro-hint">Margem de lucro desejada por projeto</div>
+    <h2 class="card-title">Meta de resultado</h2>
+    <p class="card-sub">Margem que precisa sobrar em cada projeto depois de custos e despesas.</p>
+    <div class="ind-row meta">
+      <div class="ind-left">
+        <div class="ind-label">Lucro desejado</div>
+        <div class="ind-sub" id="lucroOrigem">—</div>
       </div>
+      <div class="ind-right"><div class="cifra ind-val meta-val" id="lucroValor">—</div></div>
     </div>
   </div>
 
-  <!-- Card 2: Estrutura de Custos Diretos -->
+  <!-- Cartão 2: Custos Diretos -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-icon">🔧</div>
-      <h3>Estrutura de Custos Diretos</h3>
-    </div>
-    <div class="card-body" id="custosBody"></div>
+    <h2 class="card-title">Custos diretos</h2>
+    <p class="card-sub">O que entra no custo de cada projeto, além do kit.</p>
+    <div id="custosBody"></div>
   </div>
 
-  <!-- Card 3: Despesas Variáveis -->
+  <!-- Cartão 3: Despesas Variáveis -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-icon">📊</div>
-      <h3>Despesas Variáveis</h3>
-    </div>
-    <div class="card-body" id="despVarBody"></div>
+    <h2 class="card-title">Despesas variáveis</h2>
+    <p class="card-sub">Percentuais que acompanham o volume de vendas.</p>
+    <div id="despVarBody"></div>
   </div>
 
-  <!-- Card 4: Despesas Fixas -->
+  <!-- Cartão 4: Despesas Fixas -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-icon">📋</div>
-      <h3>Despesas Fixas</h3>
-    </div>
-    <div class="card-body" id="despFixaBody"></div>
+    <h2 class="card-title">Despesas fixas</h2>
+    <p class="card-sub">Custo mensal da estrutura, independente do volume de projetos.</p>
+    <div id="despFixaBody"></div>
   </div>
 
-  <button class="btn-primary" onclick="location.href='projeto.html'">Continuar → Dados do Projeto</button>
+  <div class="nav-row">
+    <a class="btn-nav" href="sazonalidade.html">← Voltar</a>
+    <button class="btn-nav primary" onclick="location.href='projeto.html'">Continuar →</button>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const integrador   = JSON.parse(localStorage.getItem('integrador')   || 'null');
-const configCustos = JSON.parse(localStorage.getItem('configCustos') || '{}');
-const custosExtras = JSON.parse(localStorage.getItem('custosExtras') || '[]');
-const despesas     = JSON.parse(localStorage.getItem('despesas')     || '{}');
-const sazon        = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+// Esta tela passou a consultar o banco (C-9): quando o configCustos local está
+// vazio, ela busca em integradores.configs em vez de mostrar zeros.
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
+
+AppCore.renderStepper('stepper', 'indicadores');
+
+// safeParse no lugar de JSON.parse cru: localStorage corrompido derrubava a tela.
+const integrador   = AppCore.safeParse('integrador', null);
+let configCustos   = AppCore.safeParse('configCustos', {});
+let custosExtras   = AppCore.safeParse('custosExtras', []);
+const despesas     = AppCore.safeParse('despesas', {});
+const sazon        = AppCore.safeParse('sazonalidade', {});
 
 if (!integrador?.nome_empresa) { location.href = 'cadastro.html'; }
 
-document.getElementById('empresaNome').textContent   = integrador?.nome_empresa        || '—';
-document.getElementById('empresaRegime').textContent = integrador?.regime_tributario   || '—';
+document.getElementById('empresaNome').textContent   = integrador?.nome_empresa      || '—';
+document.getElementById('empresaRegime').textContent = integrador?.regime_tributario || '—';
+
+// C-9: se configCustos vazio no localStorage e db disponível, buscar do DB (aninhado: configs.campos / configs.extras).
+async function hidratarCustosDoDB() {
+  const vazio = !configCustos || Object.keys(configCustos).length === 0;
+  if (!vazio || !db || !integrador?.id) return;
+  const { data } = await AppCore.dbTry(
+    db.from('integradores').select('configs').eq('id', integrador.id).single()
+  );
+  if (data?.configs?.campos) {
+    configCustos = data.configs.campos;
+    if (Array.isArray(data.configs.extras)) custosExtras = data.configs.extras;
+    renderCustos();
+  }
+}
 
 function brl(v) {
   return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -179,21 +196,31 @@ function fmtPct(v) {
   return Number(v || 0).toFixed(1).replace('.', ',') + '%';
 }
 
-function indRow(label, sub, valHtml) {
+// Uma única fábrica de linha para os três cartões de lista: rótulo (+ nota)
+// à esquerda, valor à direita. `classe` escolhe o tratamento do valor —
+// '' para número, 'txt' para texto, 'vazio' para ausência de dado.
+function linha(rotulo, nota, valor, classe = '') {
   return `<div class="ind-row">
     <div class="ind-left">
-      <div class="ind-label">${label}</div>
-      ${sub ? `<div class="ind-sub">${sub}</div>` : ''}
+      <div class="ind-label">${rotulo}</div>
+      ${nota ? `<div class="ind-sub">${nota}</div>` : ''}
     </div>
-    <div class="ind-right">${valHtml}</div>
+    <div class="ind-right"><div class="cifra ind-val ${classe}">${valor}</div></div>
   </div>`;
 }
+// Sem dado: quando a nota já explica a ausência, o valor vira só um traço —
+// repetir "Não configurado" ao lado de "Não informada" é dizer duas vezes.
+const linhaVazia = (rotulo, nota) => linha(rotulo, nota, nota ? '—' : 'Não configurado', 'vazio');
 
-// ── Card 1: Meta de Resultado ─────────────────────────────────────────
+// ── Cartão 1: Meta de Resultado ───────────────────────────────────────
+const lucroDefinido = integrador?.lucro_alvo != null;
 const lucroAlvo = integrador?.lucro_alvo ?? 12;
-document.getElementById('lucroValor').textContent = fmtPct(lucroAlvo);
+document.getElementById('lucroValor').textContent  = fmtPct(lucroAlvo);
+document.getElementById('lucroOrigem').textContent = lucroDefinido
+  ? 'Definido na etapa Empresa'
+  : 'Não definido — usando 12% como padrão';
 
-// ── Card 2: Custos Diretos ────────────────────────────────────────────
+// ── Cartão 2: Custos Diretos ──────────────────────────────────────────
 const CAMPOS = {
   ca:    'Material adicional CA',
   inst:  'Instalação',
@@ -202,113 +229,123 @@ const CAMPOS = {
   art:   'ART do Projeto',
 };
 
-function cfgInfo(cfg) {
-  if (!cfg?.modo) return null;
-  if (cfg.modo === 'fixo')   return { val: brl(cfg.taxa),           tag: 'Valor fixo' };
-  if (cfg.modo === 'modulo') return { val: brl(cfg.taxa) + ' / mod', tag: 'Por módulo' };
-  if (cfg.modo === 'kwp')    return { val: brl(cfg.taxa) + ' / kWp', tag: 'Por kWp' };
-  if (cfg.modo === 'faixa')  return { val: 'Por faixa',             tag: 'Faixa configurada' };
-  return null;
+// O modo de cobrança passou a viver na NOTA, à esquerda, e não mais numa
+// etiqueta sob o número: assim a coluna da direita fica só de algarismos,
+// alinhados e comparáveis de cima a baixo.
+const MODOS = {
+  fixo:   'Valor fixo',
+  modulo: 'Por módulo',
+  kwp:    'Por kWp',
+  faixa:  'Escalonado por faixa',
+};
+
+function linhaCusto(rotulo, cfg, sufixoNota = '') {
+  const nota = MODOS[cfg?.modo];
+  if (!nota) return linhaVazia(rotulo, sufixoNota || null);
+  const notaFinal = sufixoNota ? `${nota} · ${sufixoNota}` : nota;
+  // Faixa não tem valor único: mostrar um número aqui seria mentira.
+  return cfg.modo === 'faixa'
+    ? linha(rotulo, notaFinal, 'Por faixa', 'txt')
+    : linha(rotulo, notaFinal, brl(cfg.taxa));
 }
 
-let custosHtml = '';
-for (const [id, label] of Object.entries(CAMPOS)) {
-  const info = cfgInfo(configCustos[id]);
-  const valHtml = info
-    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
-    : `<div class="ind-val empty">Não configurado</div>`;
-  custosHtml += indRow(label, null, valHtml);
+function renderCustos() {
+  let html = '';
+  for (const [id, rotulo] of Object.entries(CAMPOS)) {
+    html += linhaCusto(rotulo, configCustos[id]);
+  }
+  for (const extra of custosExtras) {
+    if (!extra.label) continue;
+    html += linhaCusto(AppCore.escapeHtml(extra.label), extra, 'custo adicional');
+  }
+  if (!html) html = linhaVazia('Nenhum custo configurado', 'Acesse a etapa Custos para configurar');
+  document.getElementById('custosBody').innerHTML = html;
 }
-for (const extra of custosExtras) {
-  if (!extra.label) continue;
-  const info    = cfgInfo(extra);
-  const valHtml = info
-    ? `<div class="ind-val">${info.val}</div><div class="ind-tag">${info.tag}</div>`
-    : `<div class="ind-val empty">Não configurado</div>`;
-  custosHtml += indRow(extra.label, 'Custo adicional configurado', valHtml);
-}
-if (!custosHtml) custosHtml = indRow('Nenhum custo configurado', 'Acesse a tela Custos para configurar', '<div class="ind-val empty">—</div>');
-document.getElementById('custosBody').innerHTML = custosHtml;
+renderCustos();
+hidratarCustosDoDB();
 
-// ── Card 3: Despesas Variáveis ────────────────────────────────────────
+// ── Cartão 3: Despesas Variáveis ──────────────────────────────────────
 function baseLabel(b) { return b === 'servico' ? 'Sobre serviços' : 'Sobre venda total'; }
 
 const comissao = despesas.comissao;
 const tributo  = despesas.tributo;
 const dvExtras = Array.isArray(despesas.extras) ? despesas.extras : [];
-let dvHtml = '';
 
-dvHtml += indRow(
-  'Comissão de vendas',
-  comissao?.valor ? baseLabel(comissao.base) : 'Não informada',
-  comissao?.valor
-    ? `<div class="ind-val pct">${fmtPct(comissao.valor)}</div>`
-    : `<div class="ind-val empty">0,0%</div>`
-);
+const comissaoInformada = comissao?.valor != null && comissao?.valor !== '';
+const tributoInformado  = tributo?.valor != null && tributo?.valor !== '';
 
-dvHtml += indRow(
-  'Carga tributária',
-  tributo?.valor ? baseLabel(tributo.base) : 'Não informada',
-  tributo?.valor
-    ? `<div class="ind-val pct">${fmtPct(tributo.valor)}</div>`
-    : `<div class="ind-val empty">0,0%</div>`
-);
+function linhaVariavel(rotulo, informado, dado) {
+  return informado
+    ? linha(rotulo, baseLabel(dado.base), fmtPct(dado.valor))
+    : linhaVazia(rotulo, 'Não informada');
+}
+
+let dvHtml = linhaVariavel('Comissão de vendas', comissaoInformada, comissao)
+           + linhaVariavel('Carga tributária',   tributoInformado,  tributo);
 
 for (const e of dvExtras) {
   if (!e.nome) continue;
-  dvHtml += indRow(
-    e.nome,
-    baseLabel(e.base),
-    `<div class="ind-val pct">${fmtPct(e.valor)}</div>`
-  );
+  dvHtml += linha(AppCore.escapeHtml(e.nome), baseLabel(e.base), fmtPct(e.valor));
 }
 
 document.getElementById('despVarBody').innerHTML = dvHtml;
 
-// ── Card 4: Despesas Fixas ────────────────────────────────────────────
-const despFixa = parseFloat(despesas.despFixa) || 0;
+// ── Cartão 4: Despesas Fixas ──────────────────────────────────────────
+const despFixa = AppCore.parseNum(despesas.despFixa);
 
 const mesesData = sazon.meses || {};
-const totalValorAnual = Object.values(mesesData).reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
+const totalValorAnual = Object.values(mesesData).reduce((s, m) => s + AppCore.parseNum(m.valor), 0);
 const fatMedioMensal  = totalValorAnual / 12;
 const despPct         = fatMedioMensal > 0 ? (despFixa / fatMedioMensal) * 100 : 0;
 
-let dfHtml = indRow(
-  'Despesas fixas mensais',
-  'Valor total cadastrado na tela Despesas',
-  `<div class="ind-val">${brl(despFixa)}</div>`
-);
+// Mesmos cortes de antes (20% e 30%), agora com cor que corresponde ao
+// recado: --solar é verde e pintava de verde justamente a faixa de alerta.
+// Âmbar avisa, telha reprova — é a semântica de cor do sistema.
+const FAIXAS = [
+  { ate: 20,       rotulo: 'Saudável', cor: 'var(--verde)', tinta: 'var(--verde-t)' },
+  { ate: 30,       rotulo: 'Atenção',  cor: 'var(--ambar)', tinta: 'var(--ambar-t)' },
+  { ate: Infinity, rotulo: 'Crítico',  cor: 'var(--telha)', tinta: 'var(--telha-t)' },
+];
+const faixa = FAIXAS.find(f => despPct <= f.ate);
+// O entalhe do trilho e a legenda saem do mesmo corte: um número só.
+const REFERENCIA_PCT = FAIXAS[0].ate;
+
+let dfHtml = linha('Despesas fixas mensais', 'Total cadastrado na etapa Despesas', brl(despFixa));
 
 if (fatMedioMensal > 0) {
-  const cor = despPct > 30 ? 'var(--negative)' : despPct > 20 ? 'var(--solar)' : 'var(--teal)';
-  const fillClass = despPct > 30 ? 'background:var(--negative)' : despPct > 20 ? 'background:var(--solar)' : 'background:var(--teal)';
-  dfHtml += indRow(
-    '% sobre faturamento médio mensal',
-    `Faturamento médio: ${brl(fatMedioMensal)} / mês`,
-    `<div class="ind-val pct" style="color:${cor}">${fmtPct(despPct)}</div>`
+  dfHtml += linha(
+    '% sobre faturamento médio',
+    `Faturamento médio de ${brl(fatMedioMensal)} por mês`,
+    `<span style="color:${faixa.cor}">${fmtPct(despPct)}</span>`
   );
-  dfHtml += `<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(despPct, 100).toFixed(1)}%;${fillClass}"></div></div></div>`;
+  dfHtml += `<div class="medidor">
+    <div class="medidor-trilho" role="img" aria-label="Despesas fixas em ${fmtPct(despPct)} do faturamento médio: ${faixa.rotulo}">
+      <div class="medidor-preenche" style="width:${Math.min(despPct, 100).toFixed(1)}%;background:${faixa.cor}"></div>
+      <div class="medidor-marca" style="left:${REFERENCIA_PCT}%"></div>
+    </div>
+    <div class="medidor-legenda">
+      <span class="selo" style="--st:${faixa.tinta};--sc:${faixa.cor}">${faixa.rotulo}</span>
+      <span>Referência: até ${REFERENCIA_PCT}% do faturamento</span>
+    </div>
+  </div>`;
 } else {
-  dfHtml += indRow(
-    '% sobre faturamento médio mensal',
-    'Preencha o Diagnóstico de Sazonalidade para calcular',
-    `<div class="ind-val empty">—</div>`
-  );
+  dfHtml += linhaVazia('% sobre faturamento médio', 'Preencha o Diagnóstico de Sazonalidade para calcular');
 }
 
 document.getElementById('despFixaBody').innerHTML = dfHtml;
 
 // ── Alertas ───────────────────────────────────────────────────────────
 const alertas = [];
-if (!lucroAlvo)  alertas.push('Lucro desejado não definido — acesse a tela <strong>Empresa</strong> para configurar.');
+if (!lucroDefinido)  alertas.push('Lucro desejado não definido — acesse a tela <strong>Empresa</strong> para configurar.');
 if (!despFixa)   alertas.push('Despesas fixas zeradas — verifique a tela <strong>Despesas</strong>.');
-if (!comissao?.valor && !tributo?.valor) alertas.push('Despesas variáveis não configuradas — acesse a tela <strong>Despesas</strong>.');
+if (!comissaoInformada && !tributoInformado) alertas.push('Despesas variáveis não configuradas — acesse a tela <strong>Despesas</strong>.');
 if (fatMedioMensal === 0) alertas.push('Diagnóstico de Sazonalidade não preenchido — os indicadores estarão incompletos na precificação.');
 
 const banner = document.getElementById('alertBanner');
 if (alertas.length) {
   banner.style.display = 'block';
-  banner.innerHTML = '<strong>⚠ Atenção:</strong><br>' + alertas.map(a => '· ' + a).join('<br>');
+  banner.innerHTML = '<strong>Falta preencher</strong><ul>'
+    + alertas.map(a => `<li>${a}</li>`).join('') + '</ul>';
 }
 
 function trocarEmpresa() {

@@ -1,179 +1,421 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório de Diagnóstico · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --teal-accent:#40C1AC;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Exclusivo desta página. Tokens, base, .cifra e botões vêm do shared.css.
+
+     O relatório é DOCUMENTO, não formulário: a página inteira é a peça e
+     precisa sobreviver à impressão. Por isso mantém layout próprio —
+     largura de papel, capítulos empilhados e as regras de @media print.
+
+     SEMÂNTICA DE COR (regra do sistema, não decoração):
+       --mata = o que fica com a empresa → veredito, lucro, cenário recomendado
+       --mint = informação               → nota de apoio, coluna sugerida
+       --mel  = custo                    → premissas, negociação de fornecedor
+     Verde saturado só em CONTROLE (botão/valor pontual), nunca em área grande.
+
+     RITMO: capa densa e escura → tira de KPIs → cartões narrativos soltos no
+     creme → tabela técnica → gráfico respirado → anexo de premissas (mel) →
+     recomendação. Blocos com e sem superfície se alternam de propósito: seis
+     cartões brancos iguais é dump de dados, não laudo. */
+
+  body{display:block;padding:0}
+
+  /* counter-reset: a numeração dos capítulos sai de contador CSS — o JS não
+     precisa saber em que posição cada seção caiu. */
+  .report{
+    max-width:820px;margin:0 auto;padding:var(--e6) var(--e5) var(--e7);
+    display:flex;flex-direction:column;gap:var(--e6);counter-reset:cap;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  /* O .report é uma coluna flex: sem min-width:0 as seções esticam para
+     caber a tabela e a rolagem lateral vaza para a página inteira. */
+  .report>*{min-width:0}
 
-  .report{max-width:820px;margin:0 auto;padding:28px 22px;display:flex;flex-direction:column;gap:20px}
+  /* ── Barra de ações (não imprime) ─────────────────────────────────── */
+  .rpt-actions{display:flex;gap:var(--e3);align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .rpt-actions .btn-back{margin-bottom:0}
+  .btn-print{
+    display:inline-flex;align-items:center;gap:var(--e1);
+    font-family:var(--sans);font-size:var(--subhead);font-weight:620;letter-spacing:-.01em;
+    color:var(--fundo-2);background:var(--verde);border:none;border-radius:var(--r-ctrl);
+    padding:var(--e2) var(--e4);min-height:40px;cursor:pointer;
+    transition:background var(--rapido) var(--mola);
+  }
+  .btn-print:hover{background:#009435}
 
-  /* Ações (ocultas na impressão) */
-  .rpt-actions{display:flex;gap:8px}
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);padding:8px 12px;background:var(--surface);border:1px solid var(--hair);border-radius:8px;cursor:pointer;font-family:var(--sans);text-decoration:none}
-  .btn-back:hover{color:var(--ink)}
-  .btn-print{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:#fff;padding:8px 16px;background:var(--solar);border:none;border-radius:8px;cursor:pointer;font-family:var(--sans)}
-  .btn-print:hover{opacity:.9}
+  /* ── Cabeçalho do documento ───────────────────────────────────────── */
+  .rpt-header{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:var(--e4);
+    padding-bottom:var(--e3);border-bottom:2px solid var(--mata);
+  }
+  .rpt-brand{display:flex;align-items:center;gap:var(--e2)}
+  .rpt-brand-name{font-size:var(--footnote);font-weight:650;color:var(--label);letter-spacing:-.005em}
+  .rpt-meta{text-align:right;font-size:var(--caption);color:var(--label-3);line-height:1.5}
+  .rpt-meta strong{
+    display:block;font-size:var(--subhead);font-weight:650;
+    color:var(--label);letter-spacing:-.012em;
+  }
 
-  /* Cabeçalho do relatório */
-  .rpt-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:18px;border-bottom:2px solid var(--teal)}
-  .rpt-brand{display:flex;align-items:center;gap:10px}
-  .rpt-brand-name{font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.3px}
-  .rpt-brand-sub{font-size:10px;color:var(--teal-accent);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
-  .rpt-meta{text-align:right;font-size:11px;color:var(--muted);line-height:1.8}
-  .rpt-meta strong{display:block;font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+  /* ── Identificação: metadado, não argumento ───────────────────────────
+     Precisa vir cedo (o leitor confere de quem é o laudo) mas não pode
+     disputar a dobra com o veredito. Vira tira de rótulos finos, sem cartão. */
+  .rpt-ident{display:flex;flex-wrap:wrap;gap:var(--e3) var(--e6);padding:0 var(--e1)}
+  .ident-item{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .ident-item .lbl{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--label-3);
+  }
+  .ident-item .val{font-size:var(--footnote);font-weight:600;color:var(--label);letter-spacing:-.004em}
 
-  /* Seção */
-  .sec{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:22px}
-  .sec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
+  /* ── CAPA: veredito + KPIs, a resposta do documento ───────────────── */
+  .capa{display:flex;flex-direction:column;gap:var(--e3)}
 
-  /* Identificação */
-  .capa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .capa-item .lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
-  .capa-item .val{font-size:14px;font-weight:700}
+  /* Área grande colorida usa --mata (regra nº 1 do sistema). O painel escuro
+     é o que faz o veredito dominar a primeira dobra sem precisar de fonte
+     gigante. As classes .cartao.mata vêm do shared.css — só o recheio é daqui. */
+  .hero{padding:var(--e6);display:flex;flex-direction:column;gap:var(--e4);break-inside:avoid}
+  .hero-selo{
+    align-self:flex-start;font-size:var(--caption2);font-weight:650;
+    letter-spacing:.08em;text-transform:uppercase;padding:5px 12px;border-radius:var(--r-cap);
+  }
+  .hero-selo.ok{background:var(--mint);color:var(--mata)}
+  .hero-selo.bad{background:var(--mel);color:var(--mata)}
 
-  /* Veredito */
-  .veredito{text-align:center;padding:6px 0 18px}
-  .v-badge{display:inline-block;font-size:12px;font-weight:700;padding:5px 18px;border-radius:20px;margin-bottom:14px;letter-spacing:.4px}
-  .v-badge.ok{background:#E9F7EF;color:var(--positive)}
-  .v-badge.bad{background:#FDECEA;color:var(--negative)}
-  .v-precos{display:flex;align-items:center;gap:22px;justify-content:center;margin-bottom:12px}
-  .v-col{text-align:center}
-  .v-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
-  .v-price{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1}
-  .v-arrow{font-size:22px;color:var(--muted);padding:0 4px}
-  .v-msg{font-size:13px;color:var(--muted);line-height:1.5;text-align:justify}
-  .v-sub{font-size:12px;color:var(--teal);background:#E9F7EF;border:1px solid #B7E5C9;border-radius:8px;padding:9px 14px;margin-top:8px;line-height:1.6;text-align:justify}
+  .hero-precos{display:flex;align-items:flex-end;gap:var(--e5);flex-wrap:wrap}
+  .hero-col{min-width:0}
+  .hero-lbl{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.08em;opacity:.6;margin-bottom:var(--e1);
+  }
+  /* .cifra (shared) já traz mono + tabular-nums; aqui só o corpo do título. */
+  .hero-preco{font-size:var(--largeTitle);font-weight:700;line-height:1}
+  .hero-preco.atual{opacity:.62}
+  /* No painel escuro o vermelho de alerta ficaria ilegível: quem carrega o
+     status é o selo, não a cor do número. */
+  .hero-preco.sug{color:var(--verde-vivo)}
+  .hero-seta{font-size:var(--title2);opacity:.4;padding-bottom:2px}
 
-  /* KPIs */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
-  .kpi{border:1px solid var(--hair);border-radius:10px;padding:14px;border-top:3px solid currentColor}
-  .kpi .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;font-weight:700}
-  .kpi .v{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1}
-  .kpi .s{font-size:11px;color:var(--muted);margin-top:5px}
+  .hero-msg{font-size:var(--subhead);line-height:1.5;opacity:.84;max-width:64ch;margin:0}
+  .hero-msg strong{font-weight:650;opacity:1}
 
-  /* Tabela comparativa */
-  .cmp-wrap{overflow-x:auto}
-  .cmp-table{width:100%;border-collapse:collapse;font-size:13px}
-  .cmp-table th{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:0 12px 12px;text-align:right;white-space:nowrap}
-  .cmp-table th:first-child{text-align:left;padding-left:0;width:38%}
-  .cmp-table td{padding:9px 12px;border-top:1px solid var(--hair);font-family:var(--mono);font-size:13px;text-align:right;vertical-align:middle}
-  .cmp-table td:first-child{font-family:var(--sans);font-size:12px;color:var(--muted);text-align:left;padding-left:0;font-family:var(--sans)}
-  .cmp-table .fw{font-weight:800;color:var(--ink)}
-  .cmp-table .sug-col{background:#F0FAF5}
-  .cmp-table .pos{color:var(--positive)}
-  .cmp-table .neg{color:var(--negative)}
-  .cmp-table .mu{color:var(--muted)}
-  .cmp-badge{display:inline-block;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:2px 7px;border-radius:8px;margin-top:5px;white-space:nowrap}
-  .cmp-badge.green{background:#E9F7EF;color:var(--positive)}
-  .cmp-badge.orange{background:#FFF3E0;color:#C05A00}
-  .cmp-table th.sug-th{background:#F0FAF5;border-top:3px solid var(--positive)}
+  /* O "e daí?" do veredito: quanto o ajuste vira de lucro no ano. É o número
+     que decide a conversa — por isso mora na capa, e não escondido no cartão
+     do meio (de onde ele foi movido, sem duplicar o texto). */
+  .hero-ganho{
+    display:flex;flex-direction:column;gap:var(--e1);
+    border-top:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-top:var(--e4);
+  }
+  .hero-ganho-num{font-size:var(--title1);font-weight:700;line-height:1.05;color:var(--verde-vivo)}
+  .hero-ganho-txt{font-size:var(--footnote);line-height:1.55;opacity:.8;max-width:66ch}
+  .hero-ganho-txt strong{font-weight:650;opacity:1}
+  .hero-nota{
+    font-size:var(--caption);line-height:1.6;opacity:.74;
+    border-left:2px solid color-mix(in srgb,currentColor 28%,transparent);padding-left:var(--e3);
+  }
 
-  /* Cards narrativos */
-  .narr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .narr-card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;break-inside:avoid;page-break-inside:avoid}
-  .narr-card.rec{border:2px solid var(--positive)}
-  .narr-card.alerta{border-color:#D9663B}
-  .narr-card.inviavel{border-color:var(--negative)}
-  .narr-badge{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;padding:3px 9px;border-radius:10px}
-  .narr-badge.green{background:#E9F7EF;color:var(--positive)}
-  .narr-badge.orange{background:#FFF3E0;color:#C05A00}
-  .narr-badge.red{background:#FDECEA;color:var(--negative)}
-  .narr-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
-  .narr-number{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1.1}
-  .narr-sub{font-size:11px;color:var(--muted);text-align:justify}
-  .narr-text{font-size:12px;color:var(--muted);line-height:1.6;flex:1;text-align:justify}
-  .narr-sep{height:1px;background:var(--hair);margin:2px 0}
-  .narr-meta{font-size:11px;color:var(--muted)}
-  @media(max-width:640px){.narr-grid{grid-template-columns:1fr}}
+  /* ── Tira de KPIs ─────────────────────────────────────────────────── */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--e3)}
+  /* Sem borda: o chão (--fundo) é mais escuro que a superfície (--fundo-2) e
+     é isso que faz o bloco flutuar. A régua superior é a única cor, e ela
+     herda o currentColor semântico do próprio indicador. */
+  .kpi{
+    background:var(--fundo-2);border-radius:var(--r-lista);padding:var(--e4);
+    border-top:3px solid currentColor;display:flex;flex-direction:column;gap:var(--e1);
+    break-inside:avoid;page-break-inside:avoid;min-width:0;
+  }
+  /* min-height de duas linhas: com rótulos de comprimentos diferentes, é o
+     que mantém os quatro valores na MESMA linha de base. Sem isso a tira
+     fica com os números em degraus. */
+  .kpi .k{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--label-3);line-height:1.3;min-height:2.6em;
+  }
+  .kpi .v{font-size:var(--headline);font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+  .kpi .s{font-size:var(--caption);color:var(--label-2);line-height:1.45}
+  /* margin-top:auto encosta a nota no rodapé do cartão: com quatro textos de
+     comprimentos diferentes, é o que mantém a linha de base da tira. */
+  .kpi-tip{
+    font-size:var(--caption);color:var(--label-2);line-height:1.45;
+    border-top:1px solid var(--separador);padding-top:var(--e2);margin-top:auto;
+  }
 
-  /* Gráfico */
-  .chart-wrap{overflow-x:auto;margin-bottom:12px}
-  .chart-legend{display:flex;gap:18px;font-size:12px;flex-wrap:wrap;color:var(--muted)}
-  .leg-item{display:flex;align-items:center;gap:7px}
-  .leg-line{width:22px;height:3px;border-radius:2px;flex-shrink:0}
-  .leg-dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+  /* ── Capítulos ────────────────────────────────────────────────────── */
+  .sec{
+    background:var(--fundo-2);border-radius:var(--r-cartao);padding:var(--e5);
+    break-inside:avoid;page-break-inside:avoid;counter-increment:cap;
+  }
+  /* .faixa é capítulo SEM superfície: os cartões flutuam direto no creme.
+     Alternar com .sec é o que quebra a monotonia de seis caixas iguais. */
+  .faixa{display:flex;flex-direction:column;gap:var(--e3);counter-increment:cap}
+  .sec-title{
+    display:flex;align-items:baseline;gap:var(--e2);
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--label-3);padding-bottom:var(--e2);margin-bottom:var(--e4);
+    border-bottom:1px solid var(--separador);
+  }
+  .faixa>.sec-title{margin-bottom:var(--e1)}
+  .sec-title::before{
+    content:counter(cap,decimal-leading-zero);
+    font-family:var(--mono);font-weight:700;letter-spacing:0;color:var(--verde);
+  }
 
-  /* Premissas */
-  .prem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .prem-item .k{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
-  .prem-item .v{font-size:13px;font-weight:700}
+  /* ── Cartões narrativos ───────────────────────────────────────────── */
+  .narr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--e3)}
+  /* Anatomia idêntica nos três: rótulo, número, leitura, nota de equilíbrio.
+     Só o --acc muda — o cenário recomendado ganha a régua verde, os outros
+     recuam. Era isso ou três cartões brigando pela mesma atenção. */
+  .narr-card{
+    --acc:var(--label-4);
+    background:var(--fundo-2);border-radius:var(--r-lista);padding:var(--e5);
+    border-top:3px solid var(--acc);display:flex;flex-direction:column;gap:var(--e2);
+    break-inside:avoid;page-break-inside:avoid;min-width:0;
+  }
+  .narr-card.rec{--acc:var(--verde);box-shadow:0 0 0 1px var(--verde-t)}
+  .narr-card.alerta{--acc:var(--ambar)}
+  .narr-card.inviavel{--acc:var(--telha)}
+  .narr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--e1) var(--e2);flex-wrap:wrap}
+  .narr-title{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--label-3);
+  }
+  .narr-badge{
+    font-size:var(--caption2);font-weight:650;letter-spacing:.02em;
+    padding:3px 9px;border-radius:var(--r-cap);white-space:nowrap;flex:none;
+  }
+  .narr-badge.green{background:var(--verde-t);color:var(--verde)}
+  .narr-badge.orange{background:var(--ambar-t);color:var(--ambar)}
+  .narr-badge.red{background:var(--telha-t);color:var(--telha)}
+  .narr-number{font-size:var(--title2);font-weight:700;line-height:1.1;overflow-wrap:anywhere}
+  .narr-sub{font-size:var(--caption);color:var(--label-2)}
+  /* Sem text-align:justify: em coluna de ~200px o justificado abre rios
+     brancos no meio do parágrafo e derruba a leitura. */
+  .narr-text{font-size:var(--footnote);color:var(--label-2);line-height:1.6;flex:1}
+  .narr-meta{
+    font-size:var(--caption);color:var(--label-3);
+    border-top:1px solid var(--separador);padding-top:var(--e2);margin-top:auto;
+  }
 
-  /* Rodapé */
-  .rpt-footer{text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--hair);padding-top:14px}
+  /* ── Aside de elasticidade: INFORMAÇÃO, campo mint ────────────────── */
+  .elast{
+    background:var(--mint);border-radius:var(--r-lista);padding:var(--e4) var(--e5);
+    display:flex;gap:var(--e3);align-items:flex-start;break-inside:avoid;page-break-inside:avoid;
+  }
+  .elast-icon{
+    width:26px;height:26px;flex:none;border-radius:50%;background:var(--mata);color:var(--mint);
+    font-size:var(--footnote);font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+  .elast-title{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--mata);margin-bottom:var(--e1);
+  }
+  .elast-body{font-size:var(--footnote);color:var(--label-2);line-height:1.6}
+  .elast-alert{color:var(--telha);font-weight:650}
 
-  /* Loading */
-  #loading{display:flex;align-items:center;justify-content:center;min-height:70vh;flex-direction:column;gap:12px;color:var(--muted);font-size:14px}
+  /* ── Tabela comparativa ───────────────────────────────────────────────
+     max-width:100% para o contêiner NÃO crescer junto com a tabela: sem
+     isso o overflow-x nunca entra em ação e quem rola é a página. */
+  .cmp-wrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+  .cmp-table{width:100%;min-width:520px;border-collapse:collapse;font-size:var(--footnote)}
+  .cmp-table th{
+    font-weight:650;text-align:right;vertical-align:bottom;
+    padding:0 var(--e3) var(--e3);color:var(--label-3);
+  }
+  .cmp-h{display:block;font-size:var(--footnote);color:var(--label);letter-spacing:-.004em}
+  .cmp-sub{display:block;font-size:var(--caption2);font-weight:400;color:var(--label-3);margin-top:2px;line-height:1.35}
+  .cmp-badge{
+    display:inline-block;font-size:var(--caption2);font-weight:650;
+    padding:3px 8px;border-radius:var(--r-cap);margin-top:var(--e2);line-height:1.3;
+  }
+  .cmp-badge.green{background:var(--verde-t);color:var(--verde)}
+  .cmp-badge.orange{background:var(--ambar-t);color:var(--ambar)}
+  .cmp-table thead th:first-child{width:34%;padding-left:0}
+  /* Dinheiro: mono tabular (.cifra) e SEMPRE à direita — é o alinhamento que
+     deixa as ordens de grandeza empilhadas e comparáveis de relance. */
+  .cmp-table td{
+    padding:var(--e2) var(--e3);border-top:1px solid var(--separador);
+    text-align:right;vertical-align:middle;white-space:nowrap;
+  }
+  .cmp-table td.txt{font-family:var(--sans);letter-spacing:0}
+  .cmp-table tbody th{
+    font-family:var(--sans);font-size:var(--caption);font-weight:500;color:var(--label-2);
+    text-align:left;padding:var(--e2) var(--e3) var(--e2) 0;border-top:1px solid var(--separador);
+    white-space:normal;vertical-align:middle;
+  }
+  /* Zebra em tinta mínima: em 10 linhas × 4 colunas é a faixa que impede o
+     olho de pular de linha. 6% para não competir com a coluna sugerida. */
+  .cmp-table tbody tr:nth-child(even) th,
+  .cmp-table tbody tr:nth-child(even) td{background:var(--preenche)}
+  /* A coluna sugerida é a RESPOSTA da tabela: campo mint contínuo do
+     cabeçalho ao rodapé, com régua verde no topo. */
+  .cmp-table .sug-col,.cmp-table th.sug-th{background:var(--mint)}
+  .cmp-table tbody tr:nth-child(even) td.sug-col{background:color-mix(in srgb,var(--label) 6%,var(--mint))}
+  .cmp-table th.sug-th{border-top:3px solid var(--verde)}
+  .cmp-table .fw{font-weight:700;color:var(--label)}
+  .cmp-table .pos{color:var(--verde)}
+  .cmp-table .neg{color:var(--telha)}
+  .cmp-table .mu{color:var(--label-4)}
 
-  @media (max-width:640px){
+  /* ── Gráfico ──────────────────────────────────────────────────────── */
+  .chart-wrap{overflow-x:auto;max-width:100%;margin-bottom:var(--e3)}
+  .chart-legend{display:flex;gap:var(--e5);font-size:var(--caption);flex-wrap:wrap;color:var(--label-2)}
+  .leg-item{display:flex;align-items:center;gap:var(--e2)}
+  .leg-line{width:22px;height:3px;border-radius:2px;flex:none}
+  .leg-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--fundo-2);flex:none}
+
+  /* ── Premissas: são CUSTO e base de cálculo → campo mel ─────────────
+     Densidade baixa de propósito: é anexo de conferência, não argumento. */
+  .sec.mel{background:var(--mel)}
+  .prem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--e3) var(--e5)}
+  .prem-item{
+    display:flex;flex-direction:column;gap:1px;padding-bottom:var(--e2);min-width:0;
+    border-bottom:1px solid color-mix(in srgb,var(--label) 10%,transparent);
+  }
+  .prem-item .k{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--label-3);
+  }
+  .prem-item .v{font-size:var(--subhead);font-weight:600;color:var(--label);overflow-wrap:anywhere}
+
+  /* ── Recomendações ────────────────────────────────────────────────── */
+  .rec-intro{font-size:var(--footnote);color:var(--label-2);line-height:1.6;margin:0 0 var(--e4)}
+  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--e3);margin-bottom:var(--e4)}
+  .opt-card{border-radius:var(--r-lista);padding:var(--e4);break-inside:avoid;page-break-inside:avoid}
+  .opt-a{background:var(--mint)}   /* mexe em PREÇO → informação/receita */
+  .opt-b{background:var(--mel)}    /* mexe em CUSTO → campo mel */
+  .opt-label{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--label-3);
+  }
+  .opt-title{font-size:var(--callout);font-weight:650;letter-spacing:-.01em;margin:var(--e1) 0 var(--e2)}
+  .opt-text{font-size:var(--footnote);color:var(--label-2);line-height:1.6}
+  .opt-nota{
+    font-size:var(--caption);color:var(--telha);line-height:1.5;margin-top:var(--e3);
+    padding-top:var(--e2);border-top:1px solid color-mix(in srgb,var(--label) 10%,transparent);
+  }
+  .impl-block{
+    background:var(--fundo-3);border-radius:var(--r-lista);padding:var(--e4) var(--e5);
+    margin-bottom:var(--e4);break-inside:avoid;page-break-inside:avoid;
+  }
+  .impl-title{
+    font-size:var(--caption2);font-weight:650;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--label-3);margin-bottom:var(--e2);
+  }
+  .impl-list{margin:0;padding-left:var(--e4)}
+  .impl-list li{font-size:var(--footnote);color:var(--label-2);line-height:1.6;margin-bottom:var(--e1)}
+  .cta-row{display:flex;gap:var(--e3);flex-wrap:wrap;align-items:center}
+  .cta-btn-primary,.cta-btn-secondary{
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:var(--sans);font-size:var(--subhead);font-weight:620;letter-spacing:-.01em;
+    padding:var(--e3) var(--e5);min-height:44px;border-radius:var(--r-ctrl);text-decoration:none;
+    transition:background var(--rapido) var(--mola);
+  }
+  .cta-btn-primary{background:var(--verde);color:var(--fundo-2)}
+  .cta-btn-primary:hover{background:#009435}
+  .cta-btn-secondary{background:var(--preenche);color:var(--label);font-weight:600}
+  .cta-btn-secondary:hover{background:var(--verde-t);color:var(--verde)}
+
+  .rpt-footer{
+    text-align:center;font-size:var(--caption);color:var(--label-3);
+    border-top:1px solid var(--separador);padding-top:var(--e4);line-height:1.6;
+  }
+  #loading{
+    display:flex;align-items:center;justify-content:center;min-height:70vh;
+    flex-direction:column;gap:var(--e3);color:var(--label-2);font-size:var(--subhead);
+  }
+
+  p,li{orphans:3;widows:3}
+
+  /* ── Estreito ─────────────────────────────────────────────────────── */
+  @media (max-width:860px){
     .kpis{grid-template-columns:1fr 1fr}
-    .capa-grid{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:640px){
+    .narr-grid{grid-template-columns:1fr}
     .prem-grid{grid-template-columns:1fr 1fr}
     .opt-grid{grid-template-columns:1fr}
-    .elast-block{flex-direction:column}
+    .rpt-ident{gap:var(--e3) var(--e5)}
+  }
+  @media (max-width:560px){
+    .report{padding:var(--e5) var(--e4) var(--e6);gap:var(--e5)}
+    .hero{padding:var(--e5)}
+    /* Dois preços de 34px não cabem lado a lado em 390px: empilham e a seta
+       gira, mantendo a leitura "de X para Y". */
+    .hero-precos{flex-direction:column;align-items:flex-start;gap:var(--e2)}
+    .hero-seta{transform:rotate(90deg);padding:0}
+    .hero-preco{font-size:var(--title1)}
+    .kpi .v{font-size:var(--callout)}
+    .rpt-header{flex-direction:column;align-items:flex-start;gap:var(--e2)}
+    .rpt-meta{text-align:left}
+    .sec{padding:var(--e4)}
+    .narr-card{padding:var(--e4)}
+    .cta-btn-primary,.cta-btn-secondary{width:100%}
   }
 
-  /* P4 — KPI tip */
-  .kpi-tip{font-size:10px;color:var(--muted);font-style:italic;margin-top:8px;line-height:1.5;text-align:justify}
-  .kpi .s{text-align:justify}
-
-  /* P1 — Lucro adicional */
-  .narr-delta{background:#E9F7EF;border-radius:8px;padding:10px 12px;margin:4px 0;text-align:justify}
-  .narr-delta-num{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--positive);display:block;line-height:1.1;margin-bottom:3px}
-
-  /* P2 — Elasticidade */
-  .elast-block{background:#F0FAF5;border:1px solid #B7E5C9;border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;margin-top:12px}
-  .elast-icon{font-size:14px;font-weight:900;color:var(--teal);flex-shrink:0;width:28px;height:28px;background:#C6E9D6;border-radius:50%;display:flex;align-items:center;justify-content:center}
-  .elast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:6px}
-  .elast-body{font-size:12px;color:var(--teal);line-height:1.7;text-align:justify}
-  .elast-alert{color:var(--negative);font-weight:700}
-
-  /* P5 — Recomendações */
-  .rec-intro{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;text-align:justify}
-  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-  .opt-card{border:1px solid var(--hair);border-radius:10px;padding:16px}
-  .opt-a{border-top:3px solid var(--teal)}
-  .opt-b{border-top:3px solid var(--teal-accent)}
-  .opt-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
-  .opt-title{font-size:13px;font-weight:700;margin-bottom:8px}
-  .opt-text{font-size:12px;color:var(--muted);line-height:1.6;text-align:justify}
-  .opt-nota{font-size:11px;color:var(--negative);margin-top:8px;font-style:italic;line-height:1.5;text-align:justify}
-  .impl-block{border:1px solid var(--hair);border-radius:10px;padding:14px 16px;margin-bottom:16px;background:#FAFCFB}
-  .impl-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px}
-  .impl-list{margin:0 0 0 18px;padding:0}
-  .impl-list li{font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.5;text-align:justify}
-  .cta-row{display:flex;gap:10px;flex-wrap:wrap;padding-top:4px}
-  .cta-btn-primary{display:inline-flex;align-items:center;padding:10px 20px;background:var(--solar);color:#fff;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;font-family:var(--sans)}
-  .cta-btn-primary:hover{opacity:.9}
-  .cta-btn-secondary{display:inline-flex;align-items:center;padding:10px 18px;background:var(--surface);color:var(--teal);border:1px solid var(--teal);border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;font-family:var(--sans)}
-  .cta-btn-secondary:hover{background:#E9F7EF}
-
+  /* ── Impressão ────────────────────────────────────────────────────────
+     O Chrome imprime SEM "gráficos de fundo" por padrão. Tudo que dependia
+     só de preenchimento ganha borda ou régua aqui, senão vira texto claro
+     sobre papel branco. E nada de mancha escura: o painel do veredito
+     inverte em vez de gastar meio cartucho. */
   @media print{
-    .rpt-actions{display:none!important}
-    body{background:#fff}
-    .report{padding:8px}
-    .sec{border-radius:6px;break-inside:avoid;page-break-inside:avoid}
-    .chart-wrap svg{max-width:100%}
     @page{size:A4;margin:14mm 12mm}
+    .rpt-actions{display:none!important}
+    body{background:none}
+    /* Os campos de luz do shared.css (body::before/::after) só gastariam tinta. */
+    body::before,body::after{display:none!important}
+    .report{max-width:none;padding:0;gap:var(--e5)}
+
+    .capa,.hero,.kpi,.sec,.faixa,.narr-card,.elast,.opt-card,.impl-block{
+      break-inside:avoid;page-break-inside:avoid;
+    }
+    .sec{border:1px solid var(--separador);border-radius:var(--r-ctrl);padding:var(--e4)}
+    .sec.mel{border-color:var(--ambar)}
+    .hero{
+      background:none!important;color:var(--label)!important;
+      border:2px solid var(--mata);border-radius:var(--r-ctrl);padding:var(--e4);
+    }
+    .hero-selo{border:1px solid var(--mata);color:var(--mata)}
+    .hero-preco.atual{opacity:1;color:var(--label-2)}
+    .hero-preco.sug,.hero-ganho-num{color:var(--verde)}
+    .hero-msg,.hero-ganho-txt,.hero-nota{opacity:1;color:var(--label-2)}
+    .hero-ganho{border-top-color:var(--separador)}
+    .hero-nota{border-left-color:var(--separador)}
+    .kpi{border:1px solid var(--separador);border-top:3px solid currentColor}
+    .narr-card{border:1px solid var(--separador);border-top:3px solid var(--acc)}
+    .elast{border:1px solid var(--verde-t)}
+    .impl-block,.opt-card{border:1px solid var(--separador)}
+    .opt-b{border-color:var(--ambar)}
+
+    /* Cabeçalho repetido se a tabela cair em duas páginas, e nenhuma linha
+       partida ao meio. */
+    thead{display:table-header-group}
+    tr{break-inside:avoid;page-break-inside:avoid}
+    .cmp-wrap{overflow:visible}
+    .cmp-table{min-width:0;font-size:var(--caption)}
+    .cmp-table tbody tr:nth-child(even) th,
+    .cmp-table tbody tr:nth-child(even) td{background:none}
+    .cmp-table td.sug-col{border-left:1px solid var(--verde);border-right:1px solid var(--verde)}
+
+    .chart-wrap{overflow:visible}
+    .chart-wrap svg{max-width:100%}
+    .leg-line,.leg-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+    /* Botão verde chapado sem fundo impresso = texto branco invisível. */
+    .cta-btn-primary{background:none!important;color:var(--verde);border:1.5px solid var(--verde)}
+    .cta-btn-secondary{background:none!important;border:1px solid var(--separador)}
   }
 </style>
 </head>
 <body>
 
 <div id="loading">
-  <svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/>
-    <path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/>
-  </svg>
+  <img src="img/logo-favo-horizontal.svg" alt="FAVO Educação" style="height:26px;width:auto">
   <span>Carregando relatório…</span>
 </div>
 
@@ -181,12 +423,11 @@
 
 <script src="js/cenarios.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
 const brl   = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2}) : '—';
 const pct   = v => isFinite(v) ? (v*100).toFixed(1).replace('.',',')+' %' : '—';
@@ -195,14 +436,26 @@ const num0  = v => isFinite(v) ? Math.round(v).toLocaleString('pt-BR') : '—';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+// O SVG do gráfico é montado em JS e não herda CSS: em vez de repetir hex no
+// código, lemos os tokens do :root uma única vez. Trocar a paleta no
+// shared.css continua trocando o gráfico junto.
+const TOKEN = (() => {
+  const cs = getComputedStyle(document.documentElement);
+  const cache = {};
+  return nome => cache[nome] ?? (cache[nome] = cs.getPropertyValue(nome).trim());
+})();
+
 const CTA_URL_ANALISE  = 'index.html';
 const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
 
 (async () => {
-  // 1. Auth
+  // 1. Sessão (OPCIONAL). O relatório/PDF é aberto sem login por decisão de
+  //    produto: o conteúdo já vem do estado calculado no index.html e não
+  //    depende do banco. Quando existe sessão, mantemos o comportamento antigo
+  //    (identidade no cabeçalho/rodapé e snapshot gravado); sem ela, seguimos
+  //    com authUser = null e o relatório renderiza igual.
   const { data: { session } } = await db.auth.getSession();
-  if (!session?.user) { window.location.href = 'login.html?returnTo=relatorio.html'; return; }
-  const authUser = session.user;
+  const authUser = session?.user || null;
 
   // 2. Estado salvo por abrirRelatorio() no index.html
   let state;
@@ -229,12 +482,14 @@ const CTA_URL_CONTEUDO = 'https://grupofavo.com/consultoria';
 // ─────────────────────────────────────────────────────────────────────
 
 function renderRelatorio(result, d, precoSugerido, integ, proj, authUser, cbBase, tbBase, V12, extras) {
+  // Ordem = ordem de leitura de um laudo: quem assina, sobre o quê, o
+  // veredito, e só então a memória de cálculo que sustenta o veredito.
   document.getElementById('report').innerHTML = [
     secAcoes(),
-    secHeader(integ, proj, authUser),
+    secHeader(authUser),
     secIdentificacao(integ, proj),
-    secDiagnostico(result, d, precoSugerido, V12),
-    secNarrativa(result, d, precoSugerido, V12),
+    secCapa(result, d, precoSugerido, V12),
+    secCenarios(result, d, precoSugerido, V12),
     secComparativa(result, d),
     secChart(result),
     secPremissas(d, cbBase, tbBase, V12, extras),
@@ -255,27 +510,21 @@ function secAcoes() {
 }
 
 // ── Cabeçalho do relatório ────────────────────────────────────────────
-function secHeader(integ, proj, authUser) {
+function secHeader(authUser) {
   const data = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
   return `<div class="rpt-header">
     <div class="rpt-brand">
-      <svg viewBox="0 0 509 534" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-        <path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/>
-        <path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/>
-      </svg>
-      <div style="margin-left:8px">
-        <div class="rpt-brand-name">Auditor de Precificação</div>
-        <div class="rpt-brand-sub">FAVO Educação</div>
-      </div>
+      <img src="img/logo-favo-horizontal.svg" alt="FAVO Educação" style="height:26px;width:auto;flex-shrink:0">
+      <div class="rpt-brand-name">Auditor de Precificação</div>
     </div>
     <div class="rpt-meta">
       <strong>Relatório de Diagnóstico</strong>
-      ${data}<br>${authUser.email}
+      ${data}${authUser?.email ? `<br>${authUser.email}` : ''}
     </div>
   </div>`;
 }
 
-// ── Seção 1: Identificação ────────────────────────────────────────────
+// ── Identificação: tira de metadados, logo abaixo do cabeçalho ────────
 function secIdentificacao(integ, proj) {
   const items = [
     {k:'Empresa',  v: integ?.nome_empresa        || '—'},
@@ -285,84 +534,127 @@ function secIdentificacao(integ, proj) {
     {k:'Módulos',  v: proj?.quantidade_modulos    ? proj.quantidade_modulos+' un' : '—'},
     {k:'Custo KIT',v: proj?.custo_kit             ? brl(proj.custo_kit)         : '—'},
   ];
-  return `<div class="sec">
-    <div class="sec-title">Identificação</div>
-    <div class="capa-grid">
-      ${items.map(i=>`<div class="capa-item"><div class="lbl">${i.k}</div><div class="val">${i.v}</div></div>`).join('')}
-    </div>
+  return `<div class="rpt-ident">
+    ${items.map(i=>`<div class="ident-item">
+      <span class="lbl">${i.k}</span>
+      <span class="val${i.k==='Custo KIT'?' cifra':''}">${i.v}</span>
+    </div>`).join('')}
   </div>`;
 }
 
-// ── Seção 2: Diagnóstico (veredito + KPIs) ───────────────────────────
-function secDiagnostico(result, d, precoSugerido, V12) {
-  const { atual } = result;
+// ── Capa: veredito (painel escuro) + tira de KPIs ─────────────────────
+function secCapa(result, d, precoSugerido, V12) {
+  return `<section class="capa">
+    ${_veredito(result, d, precoSugerido)}
+    ${_kpis(result, V12)}
+  </section>`;
+}
+
+function _veredito(result, d, precoSugerido) {
+  const { atual, sugerido } = result;
   const valido   = isFinite(precoSugerido) && precoSugerido > 0;
   const isAbaixo = valido && (precoSugerido - d.ticket) > 50;
 
-  const badge = valido
+  const selo = valido
     ? (isAbaixo
-        ? '<span class="v-badge bad">Preço abaixo do ideal</span>'
-        : '<span class="v-badge ok">Precificação saudável</span>')
-    : '<span class="v-badge bad">Parâmetros insuficientes</span>';
+        ? '<span class="hero-selo bad">Preço abaixo do ideal</span>'
+        : '<span class="hero-selo ok">Precificação saudável</span>')
+    : '<span class="hero-selo bad">Parâmetros insuficientes</span>';
 
-  const priceColor = isAbaixo ? 'var(--negative)' : 'var(--positive)';
   const msg = valido
     ? (isAbaixo
         ? `Preço atual está <strong>${brl(precoSugerido - d.ticket)}</strong> abaixo do mínimo para ${d.lucroAlvo}% de lucro.`
         : `Preço atual está <strong>${brl(d.ticket - precoSugerido)}</strong> acima do mínimo para ${d.lucroAlvo}% de lucro.`)
     : 'Ajuste os parâmetros na tela de análise para gerar o preço sugerido.';
 
-  const veredito = `<div class="veredito">
-    ${badge}
-    <div class="v-precos">
-      <div class="v-col">
-        <div class="v-lbl">Preço atual</div>
-        <div class="v-price" style="color:${priceColor}">${brl(d.ticket)}</div>
+  // O ganho anual é a resposta que o integrador leva para a decisão. Ele vinha
+  // dentro do cartão "Preço sugerido"; foi movido (não duplicado) para cá.
+  const deltaPct = valido && d.ticket > 0 ? (precoSugerido - d.ticket) / d.ticket * 100 : null;
+  const deltaStr = deltaPct === null ? '—'
+    : (deltaPct >= 0 ? '+' : '−') + Math.abs(deltaPct).toFixed(1).replace('.',',') + '%';
+  const ganho = sugerido ? `<div class="hero-ganho">
+      <span class="hero-ganho-num cifra">+${brlAbrev(sugerido.lucroAnual - atual.lucroAnual)}</span>
+      <span class="hero-ganho-txt">de lucro por ano com o mesmo volume de vendas. Reajuste de <strong>${deltaStr}</strong> no ticket, sem contratar, sem vender mais, sem aumentar despesa fixa.</span>
+    </div>` : '';
+
+  const nota = valido && isAbaixo
+    ? `<p class="hero-nota">Ao aumentar seu ticket médio em <strong>${brl(precoSugerido - d.ticket)}</strong>, você atinge a meta de <strong>${d.lucroAlvo}%</strong> de lucro sem precisar aumentar sua equipe de vendas ou o volume de instalações.</p>`
+    : '';
+
+  return `<div class="cartao mata hero">
+    ${selo}
+    <div class="hero-precos">
+      <div class="hero-col">
+        <div class="hero-lbl">Preço atual</div>
+        <div class="hero-preco cifra atual">${brl(d.ticket)}</div>
       </div>
-      <div class="v-arrow">→</div>
-      <div class="v-col">
-        <div class="v-lbl">Preço sugerido</div>
-        <div class="v-price" style="color:var(--positive)">${valido ? brl(precoSugerido) : '—'}</div>
+      <div class="hero-seta" aria-hidden="true">→</div>
+      <div class="hero-col">
+        <div class="hero-lbl">Preço sugerido</div>
+        <div class="hero-preco cifra sug">${valido ? brl(precoSugerido) : '—'}</div>
       </div>
     </div>
-    <p class="v-msg">${msg}</p>
-    ${valido && isAbaixo ? `<p class="v-sub">Ao aumentar seu ticket médio em <strong>${brl(precoSugerido - d.ticket)}</strong>, você atinge a meta de <strong>${d.lucroAlvo}%</strong> de lucro sem precisar aumentar sua equipe de vendas ou o volume de instalações.</p>` : ''}
+    <p class="hero-msg">${msg}</p>
+    ${ganho}
+    ${nota}
   </div>`;
+}
 
+function _kpis(result, V12) {
+  const { atual } = result;
   const lucrativo = atual.lucroAnual >= 0;
   const mcUnitAtual = atual.mcPct * atual.ticket;
+
+  // A cor de cada indicador entra por currentColor: a régua superior e o valor
+  // herdam dela, e nenhuma regra precisa repetir a cor duas vezes.
   const kpis = [
-    {k:'Faturamento anual',      v:brl(atual.fatAnual),  s:`${num0(Math.ceil(V12))} projetos apurados anualmente`, c:'var(--ink)'},
+    {k:'Faturamento anual',      v:brl(atual.fatAnual),  s:`${num0(Math.ceil(V12))} projetos apurados anualmente`, c:'var(--label)'},
     {k:'Margem de contribuição', v:pct(atual.mcPct),     s:brl(atual.mcAnual)+' no ano',
      tip:`De cada venda, sobram <strong>${brl(mcUnitAtual)}</strong> para cobrir as despesas fixas. Só depois disso começa o lucro.`,
-     c:'var(--positive)'},
+     c:'var(--teal-marca)'},
     {k:lucrativo?'Lucro anual':'Prejuízo anual',
      v:brl(Math.abs(atual.lucroAnual)),                  s:pct(atual.lucroPct)+' do faturamento',
      tip:'Projetado em cima das despesas apuradas nas etapas anteriores.',
-     c:lucrativo?'var(--positive)':'var(--negative)'},
+     c:lucrativo?'var(--verde)':'var(--telha)'},
     {k:'Equilíbrio financeiro',
      v:atual.mePE ? MESES[atual.mePE-1] : 'Não atingido',
      s: atual.mePE
        ? `A partir de ${MESES[atual.mePE-1]}, as vendas acumuladas já cobriram todas as despesas fixas do ano. Tudo que entra depois vira lucro.`
        : 'A margem de contribuição acumulada não cobre as despesas fixas do ano.',
-     c:atual.mePE?'var(--teal)':'var(--muted)'},
+     c:atual.mePE?'var(--mata)':'var(--label-3)'},
   ];
 
-  const kpisHtml = `<div class="kpis">
+  return `<div class="kpis">
     ${kpis.map(x=>`<div class="kpi" style="color:${x.c}">
       <div class="k">${x.k}</div>
-      <div class="v">${x.v}</div>
+      <div class="v cifra">${x.v}</div>
       <div class="s">${x.s}</div>
       ${x.tip?`<div class="kpi-tip">${x.tip}</div>`:''}
     </div>`).join('')}
   </div>`;
+}
 
-  return `<div class="sec">${veredito}${kpisHtml}</div>`;
+// ── Capítulo: cenários lado a lado ────────────────────────────────────
+function secCenarios(result, d, precoSugerido, V12) {
+  const { atual, sugerido, necessario } = result;
+  // Capítulo sem superfície: os cartões flutuam no creme e quebram a
+  // sequência de caixas brancas que vem antes e depois.
+  return `<section class="faixa">
+    <div class="sec-title">Cenários em detalhe</div>
+    <div class="narr-grid">
+      ${_cardAtual(atual, d)}
+      ${_cardSugerido(sugerido, atual, d, precoSugerido, V12)}
+      ${_cardNecessario(atual, necessario, d, V12)}
+    </div>
+    ${sugerido ? _blocoElasticidade(atual, sugerido, V12) : ''}
+  </section>`;
 }
 
 // ── Seção 3: Projeção comparativa ─────────────────────────────────────
 function secComparativa(result, d) {
   const { atual, sugerido, necessario, FixasAno } = result;
+
+  const pctVolNec = necessario ? Math.round((necessario.VnecProj / atual.totalProj - 1) * 100) : null;
 
   const cols = [
     {h:'Atual',      sub:`${num0(Math.ceil(atual.totalProj))} proj/ano ao preço atual`,              sc:atual},
@@ -370,6 +662,8 @@ function secComparativa(result, d) {
     {h:'Necessário', sub:necessario?`${num0(Math.ceil(necessario.VnecProj||0))} proj/ano ao preço atual`:'',  sc:necessario},
   ];
 
+  // txt:true = a célula não é dinheiro; sai da fonte mono para não fingir
+  // precisão numérica onde só há um rótulo.
   const rows = [
     {lbl:'Preço de venda',         fn:sc=>brl(sc.ticket)},
     {lbl:'Volume anual',           fn:sc=>num0(sc.nome==='necessario'&&sc.VnecProj?Math.ceil(sc.VnecProj):Math.ceil(sc.totalProj))+' proj'},
@@ -381,60 +675,56 @@ function secComparativa(result, d) {
      cls:sc=>sc.lucroAnual>=0?'pos':'neg'},
     {lbl:'Lucro %',                fn:sc=>pct(sc.lucroPct),
      cls:sc=>sc.lucroPct>=0?'pos':'neg'},
-    {lbl:'Mês de equilíbrio',      fn:sc=>sc.mePE?MESES[sc.mePE-1]+' (mês '+sc.mePE+')':'—'},
-    {lbl:'Depende de crescimento?',
+    {lbl:'Mês de equilíbrio',      txt:true, fn:sc=>sc.mePE?MESES[sc.mePE-1]+' (mês '+sc.mePE+')':'—'},
+    {lbl:'Depende de crescimento?', txt:true,
      fn: sc => sc.nome==='necessario'&&pctVolNec!==null
-       ? `Sim <em style="font-size:10px;color:var(--muted)">(+${pctVolNec}%)</em>`
-       : '<span style="color:var(--positive)">Não</span>'},
+       ? `Sim <em style="font-size:var(--caption2);color:var(--label-3);font-style:normal">(+${pctVolNec}%)</em>`
+       : '<span style="color:var(--verde)">Não</span>'},
   ];
 
-  const pctVolNec = necessario ? Math.round((necessario.VnecProj / atual.totalProj - 1) * 100) : null;
   const cmpBadge = {
-    'Sugerido':   `<div><span class="cmp-badge green">Menor Esforço / Maior Retorno</span></div>`,
-    'Necessário': `<div><span class="cmp-badge orange">Depende de Crescimento</span></div>`,
+    'Sugerido':   `<span class="cmp-badge green">Menor Esforço / Maior Retorno</span>`,
+    'Necessário': `<span class="cmp-badge orange">Depende de Crescimento</span>`,
   };
-  const head = `<tr><th></th>${cols.map(c=>`<th${c.h==='Sugerido'?' class="sug-th"':''}>
-    ${c.h}<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:2px;white-space:normal">${c.sub}</div>
-    ${cmpBadge[c.h]||''}
-  </th>`).join('')}</tr>`;
+
+  const head = `<tr>
+    <th scope="col"><span class="sr-only">Indicador</span></th>
+    ${cols.map(c=>{
+      const sug = c.h === 'Sugerido';
+      return `<th scope="col"${sug?' class="sug-th"':''}>
+        <span class="cmp-h">${c.h}</span>
+        <span class="cmp-sub">${c.sub}</span>
+        ${cmpBadge[c.h]||''}
+      </th>`;
+    }).join('')}
+  </tr>`;
 
   const body = rows.map(r=>`<tr>
-    <td>${r.lbl}</td>
+    <th scope="row">${r.lbl}</th>
     ${cols.map(c=>{
-      if(!c.sc) return '<td class="mu">—</td>';
-      const val=r.fn(c.sc);
-      const extra=(r.cls?r.cls(c.sc):'')+(r.fw?' fw':'')+(c.h==='Sugerido'?' sug-col':'');
-      return `<td class="${extra.trim()}">${val}</td>`;
+      if(!c.sc) return `<td class="mu${c.h==='Sugerido'?' sug-col':''}">—</td>`;
+      const cls = [r.txt ? 'txt' : 'cifra', r.cls?r.cls(c.sc):'', r.fw?'fw':'',
+                   c.h==='Sugerido'?'sug-col':''].filter(Boolean).join(' ');
+      return `<td class="${cls}">${r.fn(c.sc)}</td>`;
     }).join('')}
   </tr>`).join('');
 
-  return `<div class="sec">
+  return `<section class="sec">
     <div class="sec-title">Projeção Anual — 3 Cenários</div>
     <div class="cmp-wrap">
       <table class="cmp-table"><thead>${head}</thead><tbody>${body}</tbody></table>
     </div>
-  </div>`;
+  </section>`;
 }
 
 // ── Helpers cards narrativos ──────────────────────────────────────────
 function brlAbrev(v) {
   if (!isFinite(v)) return '—';
   const abs = Math.abs(v), neg = v < 0;
-  const pre = neg ? '−R$ ' : 'R$ ';
-  if (abs >= 1e6) return pre + (abs/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' mi';
-  if (abs >= 1e3) return pre + Math.round(abs/1e3).toLocaleString('pt-BR') + ' mil';
+  const pre = neg ? '−R$ ' : 'R$ ';
+  if (abs >= 1e6) return pre + (abs/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' mi';
+  if (abs >= 1e3) return pre + Math.round(abs/1e3).toLocaleString('pt-BR') + ' mil';
   return pre + abs.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-
-// ── Seção 2b: Cards narrativos ────────────────────────────────────────
-function secNarrativa(result, d, precoSugerido, V12) {
-  const { atual, sugerido, necessario } = result;
-  return `<div class="narr-grid">
-    ${_cardAtual(atual, d)}
-    ${_cardSugerido(sugerido, atual, d, precoSugerido, V12)}
-    ${_cardNecessario(atual, necessario, d, V12)}
-  </div>
-  ${sugerido ? _blocoElasticidade(atual, sugerido, V12) : ''}`;
 }
 
 function _blocoElasticidade(atual, sugerido, V12) {
@@ -467,20 +757,20 @@ function _blocoElasticidade(atual, sugerido, V12) {
     }
   }
 
-  return `<div class="elast-block">
-    <div class="elast-icon">?</div>
+  return `<aside class="elast">
+    <div class="elast-icon" aria-hidden="true">?</div>
     <div>
       <div class="elast-title">E se eu perder vendas com o aumento?</div>
       <div class="elast-body">${texto}</div>
     </div>
-  </div>`;
+  </aside>`;
 }
 
 function _cardAtual(atual, d) {
   const meta      = atual.fatAnual * (d.lucroAlvo / 100);
   const lucrativo = atual.lucroAnual >= 0;
   const acimaMeta = atual.lucroAnual >= meta - 0.01;
-  const numColor  = lucrativo ? 'var(--positive)' : 'var(--negative)';
+  const numColor  = lucrativo ? 'var(--verde)' : 'var(--telha)';
 
   let texto;
   if (atual.lucroAnual < 0) {
@@ -495,73 +785,70 @@ function _cardAtual(atual, d) {
     ? `Equilíbrio em <strong>${MESES[atual.mePE-1]} (mês ${atual.mePE})</strong>`
     : '<strong>Não atinge equilíbrio</strong> no ano corrente';
 
-  return `<div class="narr-card">
-    <div class="narr-title">Situação atual</div>
-    <div class="narr-number" style="color:${numColor}">${brlAbrev(atual.lucroAnual)}</div>
+  return `<article class="narr-card">
+    <div class="narr-head"><div class="narr-title">Situação atual</div></div>
+    <div class="narr-number cifra" style="color:${numColor}">${brlAbrev(atual.lucroAnual)}</div>
     <div class="narr-sub">${pct(atual.lucroPct)} de lucro líquido</div>
-    <div class="narr-sep"></div>
     <div class="narr-text">${texto}</div>
     <div class="narr-meta">${peTexto}</div>
-  </div>`;
+  </article>`;
 }
 
 function _cardSugerido(sugerido, atual, d, precoSugerido, V12) {
   if (!sugerido) {
-    return `<div class="narr-card rec">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+    return `<article class="narr-card rec">
+      <div class="narr-head">
         <div class="narr-title">Preço sugerido</div>
         <div class="narr-badge green">Recomendado</div>
       </div>
-      <div class="narr-number" style="color:var(--muted)">—</div>
-      <div class="narr-sep"></div>
+      <div class="narr-number cifra" style="color:var(--label-4)">—</div>
       <div class="narr-text">Não foi possível calcular o preço sugerido. Verifique a meta de lucro e as despesas variáveis.</div>
-    </div>`;
+    </article>`;
   }
 
   const deltaPct      = (precoSugerido - d.ticket) / d.ticket * 100;
   const deltaStr      = (deltaPct >= 0 ? '+' : '−') + Math.abs(deltaPct).toFixed(1).replace('.',',') + '%';
-  const lucroAdicional = sugerido.lucroAnual - atual.lucroAnual;
 
   const peTexto = sugerido.mePE
     ? `Equilíbrio em <strong>${MESES[sugerido.mePE-1]} (mês ${sugerido.mePE})</strong>`
     : 'Equilíbrio não atingido no ano';
 
-  return `<div class="narr-card rec">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+  // O bloco do ganho anual saiu daqui para a capa: os três cartões passam a
+  // ter a MESMA anatomia (rótulo, número, leitura, equilíbrio) e a comparação
+  // entre eles fica direta.
+  return `<article class="narr-card rec">
+    <div class="narr-head">
       <div class="narr-title">Preço sugerido (${deltaStr})</div>
       <div class="narr-badge green">Recomendado</div>
     </div>
-    <div class="narr-delta">
-      <span class="narr-delta-num">+${brlAbrev(lucroAdicional)}</span>
-      de lucro por ano com o mesmo volume de vendas. Reajuste de <strong>${deltaStr}</strong> no ticket, sem contratar, sem vender mais, sem aumentar despesa fixa.
-    </div>
-    <div class="narr-number" style="color:var(--positive);margin-top:2px">${brlAbrev(sugerido.lucroAnual)}</div>
+    <div class="narr-number cifra" style="color:var(--verde)">${brlAbrev(sugerido.lucroAnual)}</div>
     <div class="narr-sub">${pct(sugerido.lucroPct)} de lucro líquido</div>
-    <div class="narr-sep"></div>
     <div class="narr-text">Reajuste de <strong>${brl(d.ticket)}</strong> para <strong>${brl(precoSugerido)}</strong> mantendo ${Math.ceil(V12).toLocaleString('pt-BR')} proj/ano. Meta de ${d.lucroAlvo}% atingida.</div>
     <div class="narr-meta">${peTexto}</div>
-  </div>`;
+  </article>`;
 }
 
 function _cardNecessario(atual, necessario, d, V12) {
   if (atual.mcPct <= 0) {
-    return `<div class="narr-card inviavel">
-      <div class="narr-badge red">Inviável</div>
-      <div class="narr-title" style="margin-top:6px">Volume necessário</div>
-      <div class="narr-number" style="color:var(--negative)">—</div>
-      <div class="narr-sep"></div>
+    return `<article class="narr-card inviavel">
+      <div class="narr-head">
+        <div class="narr-title">Volume necessário</div>
+        <div class="narr-badge red">Inviável</div>
+      </div>
+      <div class="narr-number cifra" style="color:var(--telha)">—</div>
       <div class="narr-text">Com margem de contribuição negativa, nenhum aumento de volume atinge a meta. <strong>A correção passa pelo preço:</strong> revise os custos ou ajuste o ticket para obter MC positiva.</div>
-    </div>`;
+    </article>`;
   }
 
   if (!necessario) {
-    return `<div class="narr-card inviavel">
-      <div class="narr-badge orange">Indisponível</div>
-      <div class="narr-title" style="margin-top:6px">Volume necessário</div>
-      <div class="narr-number" style="color:var(--negative)">—</div>
-      <div class="narr-sep"></div>
+    return `<article class="narr-card inviavel">
+      <div class="narr-head">
+        <div class="narr-title">Volume necessário</div>
+        <div class="narr-badge orange">Indisponível</div>
+      </div>
+      <div class="narr-number cifra" style="color:var(--telha)">—</div>
       <div class="narr-text">A MC atual (${pct(atual.mcPct)}) não supera o lucro alvo (${d.lucroAlvo}%) com margem suficiente. <strong>A correção passa pelo preço.</strong></div>
-    </div>`;
+    </article>`;
   }
 
   const projNec     = Math.ceil(necessario.VnecProj);
@@ -578,15 +865,16 @@ function _cardNecessario(atual, necessario, d, V12) {
 
   const textoExpl = `Este cenário lucra mais no papel, mas exige <strong>+${deltaProj.toLocaleString('pt-BR')} projetos (${pctVolStr}% a mais)</strong> com a premissa de despesas fixas constantes, o que raramente se sustenta: mais volume tende a exigir mais equipe, mais capital de giro e mais investimento em captação. O cenário Sugerido entrega a meta de ${d.lucroAlvo}% sem depender de nenhum crescimento.`;
 
-  return `<div class="narr-card${isAlerta ? ' alerta' : ''}">
-    <div class="narr-badge orange">${isAlerta ? 'Atenção — Capacidade' : 'Depende de Crescimento'}</div>
-    <div class="narr-title" style="margin-top:6px">Volume necessário</div>
-    <div class="narr-number" style="color:var(--teal)">${numStr}</div>
+  return `<article class="narr-card${isAlerta ? ' alerta' : ''}">
+    <div class="narr-head">
+      <div class="narr-title">Volume necessário</div>
+      <div class="narr-badge orange">${isAlerta ? 'Atenção — Capacidade' : 'Depende de Crescimento'}</div>
+    </div>
+    <div class="narr-number cifra" style="color:var(--mata)">${numStr}</div>
     <div class="narr-sub">${projNec.toLocaleString('pt-BR')} proj/ano · +${projMesAdic.toLocaleString('pt-BR')}/mês</div>
-    <div class="narr-sep"></div>
     <div class="narr-text">${textoExpl}</div>
     <div class="narr-meta">${peTexto}</div>
-  </div>`;
+  </article>`;
 }
 
 // ── Seção 4: Gráfico Break-Even ───────────────────────────────────────
@@ -595,6 +883,14 @@ function secChart(result) {
 
   const PL=72, PR=24, PT=22, PB=46, W=660, H=280;
   const CW=W-PL-PR, CH=H-PT-PB;
+
+  // Paleta do gráfico, toda vinda dos tokens (ver TOKEN no topo).
+  const cGrade  = TOKEN('--separador');
+  const cRotulo = TOKEN('--label-3');
+  const cAtual  = TOKEN('--mata');
+  const cSug    = TOKEN('--verde');
+  const cFixo   = TOKEN('--telha');
+  const cPapel  = TOKEN('--fundo-2');
 
   const cumOf = mesesCalc => {
     let s=0; return mesesCalc.map(m=>{s+=m.mcMes;return s;});
@@ -616,77 +912,83 @@ function secChart(result) {
   const grid = Array.from({length:nTick+1},(_,i)=>minY+(rng*i/nTick)).map(v=>{
     const y=yOf(v).toFixed(1);
     const lab=Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1000?(v/1000).toFixed(0)+'K':v.toFixed(0);
-    return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#DFF0E8" stroke-width="1"/>
-            <text x="${PL-6}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#736F64">${lab}</text>`;
+    return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="${cGrade}" stroke-width="1"/>
+            <text x="${PL-8}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="10" fill="${cRotulo}">${lab}</text>`;
   }).join('');
 
   const xLabels = MESES.map((m,i)=>
-    `<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="10" fill="#736F64">${m}</text>`
+    `<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="10" fill="${cRotulo}">${m}</text>`
   ).join('');
 
   const yFix = yOf(FixasAno).toFixed(1);
-  const fixLine = `<line x1="${PL}" y1="${yFix}" x2="${W-PR}" y2="${yFix}" stroke="#B23A2E" stroke-width="1.5" stroke-dasharray="6,4"/>
-    <text x="${W-PR-2}" y="${parseFloat(yFix)-5}" text-anchor="end" font-size="9" fill="#B23A2E" font-weight="700">Custo Fixo Total</text>`;
+  const fixLine = `<line x1="${PL}" y1="${yFix}" x2="${W-PR}" y2="${yFix}" stroke="${cFixo}" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <text x="${W-PR-2}" y="${parseFloat(yFix)-6}" text-anchor="end" font-size="10" fill="${cFixo}" font-weight="700">Custo Fixo Total</text>`;
 
-  const zeroLine = minY<0 ? `<line x1="${PL}" y1="${yOf(0).toFixed(1)}" x2="${W-PR}" y2="${yOf(0).toFixed(1)}" stroke="#C0D9CC" stroke-width="1"/>` : '';
+  const zeroLine = minY<0 ? `<line x1="${PL}" y1="${yOf(0).toFixed(1)}" x2="${W-PR}" y2="${yOf(0).toFixed(1)}" stroke="${cGrade}" stroke-width="1"/>` : '';
 
   let markers='';
   if(atual.mePE!==null)
-    markers+=`<circle cx="${xOf(atual.mePE-1).toFixed(1)}" cy="${yFix}" r="5" fill="#183029" stroke="#fff" stroke-width="1.5"/>`;
+    markers+=`<circle cx="${xOf(atual.mePE-1).toFixed(1)}" cy="${yFix}" r="5" fill="${cAtual}" stroke="${cPapel}" stroke-width="1.5"/>`;
   if(sugerido?.mePE!=null){
     const xSug = xOf(sugerido.mePE-1);
     const yFixN = parseFloat(yFix);
     const anchor = xSug > W*0.7 ? 'end' : 'middle';
     const dx = anchor==='end' ? -8 : 0;
-    markers+=`<circle cx="${xSug.toFixed(1)}" cy="${yFix}" r="5" fill="#00B140" stroke="#fff" stroke-width="1.5"/>
-      <line x1="${xSug.toFixed(1)}" y1="${(yFixN-7).toFixed(1)}" x2="${(xSug+dx).toFixed(1)}" y2="${(yFixN-20).toFixed(1)}" stroke="#00B140" stroke-width="1" stroke-dasharray="2,2"/>
-      <text x="${(xSug+dx).toFixed(1)}" y="${(yFixN-24).toFixed(1)}" text-anchor="${anchor}" font-size="8.5" fill="#00B140" font-weight="700">Início do Lucro</text>`;
+    markers+=`<circle cx="${xSug.toFixed(1)}" cy="${yFix}" r="5" fill="${cSug}" stroke="${cPapel}" stroke-width="1.5"/>
+      <line x1="${xSug.toFixed(1)}" y1="${(yFixN-7).toFixed(1)}" x2="${(xSug+dx).toFixed(1)}" y2="${(yFixN-20).toFixed(1)}" stroke="${cSug}" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="${(xSug+dx).toFixed(1)}" y="${(yFixN-24).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${cSug}" font-weight="700">Início do Lucro</text>`;
   }
 
-  const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img"
+    aria-label="Margem de contribuição acumulada mês a mês contra o custo fixo total do ano"
+    style="width:100%;height:auto;display:block">
     ${grid}${zeroLine}${xLabels}${fixLine}
-    <path d="${mkPath(cumA)}" fill="none" stroke="#183029" stroke-width="2.5" stroke-linejoin="round"/>
-    ${cumS?`<path d="${mkPath(cumS)}" fill="none" stroke="#00B140" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
+    <path d="${mkPath(cumA)}" fill="none" stroke="${cAtual}" stroke-width="2.5" stroke-linejoin="round"/>
+    ${cumS?`<path d="${mkPath(cumS)}" fill="none" stroke="${cSug}" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
     ${markers}
   </svg>`;
 
   const legend=`<div class="chart-legend">
-    <div class="leg-item"><div class="leg-line" style="background:#183029"></div>MC acumulada — Atual</div>
-    ${sugerido?`<div class="leg-item"><div class="leg-line" style="background:#00B140"></div>MC acumulada — Sugerido</div>`:''}
+    <div class="leg-item"><div class="leg-line" style="background:var(--mata)"></div>MC acumulada — Atual</div>
+    ${sugerido?`<div class="leg-item"><div class="leg-line" style="background:var(--verde)"></div>MC acumulada — Sugerido</div>`:''}
     <div class="leg-item">
-      <div style="width:22px;height:3px;background:repeating-linear-gradient(90deg,#B23A2E 0,#B23A2E 6px,transparent 6px,transparent 10px)"></div>
+      <div class="leg-line" style="background:repeating-linear-gradient(90deg,var(--telha) 0,var(--telha) 6px,transparent 6px,transparent 10px)"></div>
       Custo Fixo Total (${brl(FixasAno)})
     </div>
-    <div class="leg-item"><div class="leg-dot" style="background:#183029"></div>Mês de equilíbrio</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--mata)"></div>Mês de equilíbrio</div>
   </div>`;
 
-  return `<div class="sec">
+  return `<section class="sec">
     <div class="sec-title">Break-Even Acumulado · Margem de Contribuição vs Despesas Fixas</div>
     <div class="chart-wrap">${svg}</div>
     ${legend}
-  </div>`;
+  </section>`;
 }
 
 // ── Seção 5: Premissas ────────────────────────────────────────────────
 function secPremissas(d, cbBase, tbBase, V12, extras) {
+  // mono:true → o valor é dinheiro e vai em .cifra (mono tabular).
   const items = [
-    {k:'Preço de venda atual',    v:brl(d.ticket)},
-    {k:'Custo direto total',      v:brl(d.cdt)},
-    {k:'Custo KIT',               v:brl(d.kit)},
+    {k:'Preço de venda atual',    v:brl(d.ticket),   mono:true},
+    {k:'Custo direto total',      v:brl(d.cdt),      mono:true},
+    {k:'Custo KIT',               v:brl(d.kit),      mono:true},
     {k:'Comissão de vendas',      v:d.comissao+'% — base '+(cbBase==='total'?'venda total':'serviço')},
     {k:'Carga tributária',        v:d.tributo+'% — base '+(tbBase==='total'?'venda total':'serviço')},
     {k:'Outras despesas var.',    v:d.outras>0?d.outras+'%':'Não aplicável'},
-    {k:'Despesas fixas / mês',    v:brl(d.despFixa)},
+    {k:'Despesas fixas / mês',    v:brl(d.despFixa), mono:true},
     {k:'Lucro alvo',              v:d.lucroAlvo+'%'},
     {k:'Projetos por ano',        v:num0(Math.ceil(V12))+' projetos'},
     ...(extras?.length?[{k:'Despesas extras',v:extras.map(e=>(e.nome||'Extra')+' '+e.valor+'%').join(' · ')}]:[]),
   ];
-  return `<div class="sec">
+  return `<section class="sec mel">
     <div class="sec-title">Premissas Utilizadas</div>
     <div class="prem-grid">
-      ${items.map(i=>`<div class="prem-item"><div class="k">${i.k}</div><div class="v">${i.v}</div></div>`).join('')}
+      ${items.map(i=>`<div class="prem-item">
+        <span class="k">${i.k}</span>
+        <span class="v${i.mono?' cifra':''}">${i.v}</span>
+      </div>`).join('')}
     </div>
-  </div>`;
+  </section>`;
 }
 
 // ── Seção 6: Recomendações do Auditor ────────────────────────────────
@@ -731,7 +1033,7 @@ function secRecomendacoes(result, d, precoSugerido, V12) {
       ${guardaKit ? `<div class="opt-nota">Uma redução dessa magnitude dificilmente será obtida apenas via negociação. Considere combinar as opções A + B: reajuste parcial de preço e redução parcial de custo.</div>` : ''}
     </div>`;
 
-  return `<div class="sec">
+  return `<section class="sec">
     <div class="sec-title">Recomendações do Auditor</div>
     <p class="rec-intro">Os itens abaixo são as principais sugestões para atingir a meta de <strong>${d.lucroAlvo}%</strong> de lucro:</p>
     <div class="opt-grid">${optA}${optB}</div>
@@ -747,19 +1049,29 @@ function secRecomendacoes(result, d, precoSugerido, V12) {
       <a class="cta-btn-primary" href="${CTA_URL_ANALISE}">Refaça a análise com seus custos reais</a>
       <a class="cta-btn-secondary" href="${CTA_URL_CONTEUDO}" target="_blank" rel="noopener">Ver conteúdo e consultoria da FAVO</a>
     </div>
-  </div>`;
+  </section>`;
 }
 
 // ── Rodapé ────────────────────────────────────────────────────────────
 function secFooter(authUser) {
   const ts = new Date().toLocaleString('pt-BR');
+  // Sem sessão não há identidade a exibir. Em vez de deixar um separador vazio
+  // (ou inventar um usuário), o rodapé fica só com data e marca.
+  const creditos = [`Gerado em ${ts}`, authUser?.email, 'FAVO Educação — Auditor de Precificação Solar']
+    .filter(Boolean).join(' · ');
   return `<div class="rpt-footer">
-    Gerado em ${ts} · ${authUser.email} · FAVO Educação — Auditor de Precificação Solar
+    ${creditos}
   </div>`;
 }
 
 // ── Snapshot para diagnosticos ────────────────────────────────────────
 async function salvarSnapshot(result, d, integ, proj, authUser, cbBase, tbBase) {
+  // `diagnosticos` tem RLS por auth.uid() e o papel anônimo sequer tem GRANT:
+  // sem sessão o insert só devolveria 401 e sujaria o console a cada relatório.
+  // O snapshot é histórico do usuário logado, não requisito do relatório —
+  // então, sem sessão, apenas pulamos.
+  if (!authUser) return;
+
   try {
     const snap = sc => sc ? {
       ticket:sc.ticket, totalProj:sc.totalProj, fatAnual:sc.fatAnual,

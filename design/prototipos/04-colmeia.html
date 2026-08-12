@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colmeia · Design System FAVO · Protótipo 04</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   COLMEIA — Design System FAVO · Protótipo 04 (rodada 2)
+
+   IDEIA: a colmeia vista de perto não é uma grade de linhas — é um campo
+   de células cheias, cada uma com uma cor diferente conforme o que guarda.
+   Então este sistema abandona o "card branco sobre fundo cinza". Aqui não
+   existe branco: TODO bloco é um campo de cor macio, e os blocos se
+   encostam com 8px de folga. Essa folga é a parede de cera. O resultado é
+   uma tela cromática e quente, que é exatamente o oposto do card branco
+   com sombra suave que todo gerador produz.
+
+   O canto é generoso e contínuo (28px), e obedece à regra concêntrica:
+   o raio de dentro é sempre o de fora menos o respiro. É o detalhe que a
+   Apple nunca erra e que quase todo mundo erra.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. TOKENS ─────────────────────────────────────────────────────── */
+:root{
+  /* Campos de cor. Nenhum é branco — branco é ausência, e aqui toda
+     superfície guarda alguma coisa. */
+  --creme:#FBF8F1;        /* o chão da colmeia */
+  --nata:#FFFDF8;         /* campo mais claro, para formulário */
+  --mint:#DFF2E8;         /* campo de leitura, informação neutra */
+  --mint-f:#C9E9DA;       /* mint fundo, para barras e estados */
+  --mel:#FBEACB;          /* campo de custo — o que sai */
+  --mel-f:#F5D9A4;
+  --areia:#EFE7D8;        /* campo inerte */
+  --mata:#0E3A28;         /* campo profundo — o que fica */
+  --mata-2:#154A34;
+
+  --verde:#00B140;
+  --verde-esc:#00913A;
+  --teal:#2FA894;
+  --tinta:#12241D;
+  --tinta-70:rgba(18,36,29,.70);
+  --tinta-45:rgba(18,36,29,.45);
+  --tinta-12:rgba(18,36,29,.12);
+
+  --ambar:#B0700C;
+  --telha:#B3452C;
+
+  /* Raio — escala concêntrica. A regra: raio interno = externo − respiro.
+     Quebrar isso é o que faz cantos parecerem "quase certos". */
+  --r-xl:28px; --r-lg:20px; --r-md:14px; --r-sm:10px; --r-pil:999px;
+  --parede:8px;            /* a folga entre células — a parede de cera */
+
+  --t-micro:11px; --t-min:12.5px; --t-corpo:14.5px; --t-md:16px;
+  --t-lg:20px; --t-xl:26px; --t-2xl:36px; --t-num:clamp(40px,7.5vw,60px);
+
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px; --e7:48px; --e8:72px;
+
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',Inter,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,'Roboto Mono',monospace;
+
+  /* Uma curva só: sai com vontade, chega macio. Sem bounce — bounce em
+     interface de dinheiro parece brinquedo. */
+  --macio:cubic-bezier(.32,.72,.24,1);
+  --rapido:200ms; --medio:460ms; --lento:820ms;
+  --toque:44px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:var(--sans);background:var(--creme);color:var(--tinta);
+  line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+
+/* ─── 2. FUNDO ──────────────────────────────────────────────────────── */
+/* Sem tesselação desenhada, sem gradiente de malha. O fundo é UM campo
+   creme com dois halos de cor muito abertos e muito fracos, que fazem o
+   creme variar de temperatura pela página. Você não vê os halos; você vê
+   que o fundo "não é chapado". */
+.chao{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.chao::before,.chao::after{content:'';position:absolute;border-radius:50%}
+.chao::before{
+  width:90vmax;height:90vmax;left:-25vmax;top:-40vmax;
+  background:radial-gradient(circle,rgba(64,193,172,.16),transparent 62%);
+  animation:vaga 26s ease-in-out infinite alternate;
+}
+.chao::after{
+  width:80vmax;height:80vmax;right:-30vmax;bottom:-35vmax;
+  background:radial-gradient(circle,rgba(251,234,203,.55),transparent 60%);
+  animation:vaga 32s ease-in-out infinite alternate-reverse;
+}
+@keyframes vaga{to{transform:translate3d(8%,5%,0) scale(1.12)}}
+
+/* ─── 3. A CÉLULA ───────────────────────────────────────────────────── */
+/* O bloco fundamental. Sem borda e sem sombra: o que separa uma célula da
+   outra é a cor e a parede de 8px. Isso elimina de uma vez o visual de
+   "caixa branca flutuando" e é o que dá o caráter do sistema. */
+.cel{
+  border-radius:var(--r-xl);
+  padding:var(--e5);
+  background:var(--nata);
+  position:relative;
+}
+.cel.mint{background:var(--mint)}
+.cel.mel{background:var(--mel)}
+.cel.areia{background:var(--areia)}
+.cel.mata{background:var(--mata);color:#EAF6EF}
+.cel.mata h2,.cel.mata h3{color:#fff}
+.cel.mata p{color:rgba(234,246,239,.72)}
+.cel.mata .rotulo{color:rgba(234,246,239,.5)}
+.cel.verde{background:var(--verde);color:#fff}
+.cel.verde p{color:rgba(255,255,255,.85)}
+
+/* Célula aninhada — aplica a regra concêntrica automaticamente:
+   raio interno = raio externo − padding do pai. */
+.cel .cel-int{border-radius:calc(var(--r-xl) - var(--e5));padding:var(--e4)}
+
+/* Colmeia: a grade em que as células se encostam com a parede de cera */
+.favo{display:grid;gap:var(--parede)}
+.favo.f2{grid-template-columns:repeat(2,1fr)}
+.favo.f3{grid-template-columns:repeat(3,1fr)}
+.favo.f4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.favo.f3,.favo.f4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.favo.f2,.favo.f3,.favo.f4{grid-template-columns:1fr}}
+
+/* ─── 4. TIPOGRAFIA ─────────────────────────────────────────────────── */
+.rotulo{
+  font-family:var(--mono);font-size:var(--t-micro);font-weight:500;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--tinta-45);
+}
+h1,.h1{font-size:var(--t-2xl);font-weight:640;letter-spacing:-.03em;line-height:1.08;text-wrap:balance}
+h2,.h2{font-size:var(--t-lg);font-weight:640;letter-spacing:-.02em;line-height:1.25}
+h3{font-size:var(--t-md);font-weight:620;letter-spacing:-.012em}
+p{font-size:var(--t-corpo);color:var(--tinta-70);line-height:1.65}
+.cifra{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.cifra-heroi{font-size:var(--t-num);line-height:.96;letter-spacing:-.05em;font-weight:550}
+
+/* ─── 5. GOTA — o recipiente da cifra ───────────────────────────────── */
+/* A assinatura de forma. O símbolo da FAVO é uma célula alongada com as
+   pontas arredondadas; aqui ela vira o recipiente do número herói: um
+   retângulo com raio quase total no eixo vertical. Não é pílula (pílula é
+   genérica) e não é hexágono duro — é o meio-termo que só existe porque a
+   marca tem essa forma. */
+.gota{
+  display:inline-flex;flex-direction:column;align-items:flex-start;
+  padding:var(--e4) var(--e5);
+  border-radius:var(--r-xl) var(--r-xl) var(--r-xl) 6px;
+  background:rgba(255,255,255,.14);
+}
+
+/* ─── 6. FILA DE CÉLULAS — progresso ───────────────────────────────── */
+/* Células que enchem. Iguais em forma, diferentes em preenchimento — como
+   quadros de uma colmeia em construção. A ativa é a única com rótulo
+   visível no celular. */
+.fila{display:flex;gap:var(--parede)}
+.passo{
+  flex:1;border-radius:var(--r-lg);padding:var(--e3) var(--e4);
+  background:var(--areia);min-height:62px;position:relative;overflow:hidden;
+  transition:background var(--medio) var(--macio);
+}
+.passo .n{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--tinta-45);position:relative;z-index:1}
+.passo .t{display:block;font-size:var(--t-min);font-weight:620;color:var(--tinta-70);margin-top:3px;position:relative;z-index:1}
+.passo.feito{background:var(--mint-f)}
+.passo.feito .t{color:var(--tinta)}
+.passo.agora{background:var(--verde-esc)}
+.passo.agora .n{color:rgba(255,255,255,.6)}
+.passo.agora .t{color:#fff}
+.passo.agora::before{
+  content:'';position:absolute;inset:0;background:var(--verde);border-radius:inherit;
+  transform-origin:bottom;animation:enche var(--lento) var(--macio) both;z-index:0;
+}
+@keyframes enche{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media(max-width:600px){
+  .passo{flex:0 0 auto;min-width:52px}
+  .passo .t{display:none}
+  .passo.agora{flex:1}.passo.agora .t{display:block}
+}
+
+/* ─── 7. CAMPOS ─────────────────────────────────────────────────────── */
+/* O campo é uma célula pequena, cheia — nunca uma caixa vazada com borda
+   cinza. Fundo creme sobre superfície nata: contraste por tom, não por
+   contorno. No foco a célula ganha um anel externo, nunca um outline
+   colado, para não brigar com o raio. */
+.campo{display:block;margin-bottom:var(--e4)}
+.campo>.rotulo{display:block;margin-bottom:var(--e2)}
+.caixa{
+  display:flex;align-items:stretch;background:var(--creme);
+  border-radius:var(--r-md);border:1.5px solid transparent;
+  transition:border-color var(--rapido) var(--macio),box-shadow var(--rapido) var(--macio),
+             background var(--rapido) var(--macio);
+}
+.caixa:focus-within{
+  background:#fff;border-color:var(--verde);
+  box-shadow:0 0 0 4px rgba(0,177,64,.14);
+}
+.caixa .un{
+  display:flex;align-items:center;padding:0 var(--e3);flex:none;
+  font-family:var(--mono);font-size:var(--t-min);color:var(--tinta-45);
+}
+.caixa input,.caixa select{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--tinta);
+  padding:var(--e3);min-height:var(--toque);
+  font-family:var(--mono);font-size:var(--t-md);font-weight:550;font-variant-numeric:tabular-nums;
+}
+.caixa.texto input,.caixa select{font-family:var(--sans);font-weight:500}
+.campo .nota{display:block;font-size:var(--t-min);color:var(--tinta-45);margin-top:var(--e2);line-height:1.5}
+
+/* ─── 8. BOTÕES ─────────────────────────────────────────────────────── */
+/* Pílula plena. O primário é verde chapado, sem gradiente e sem sombra
+   colorida. Ao pressionar ele encolhe 1,5% — o gesto de apertar algo
+   macio. É a única deformação do sistema. */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--e2);
+  font-family:var(--sans);font-size:var(--t-corpo);font-weight:620;letter-spacing:-.008em;
+  padding:var(--e3) var(--e5);min-height:var(--toque);border-radius:var(--r-pil);
+  border:1.5px solid transparent;cursor:pointer;text-decoration:none;
+  transition:transform var(--rapido) var(--macio),background var(--rapido) var(--macio),
+             border-color var(--rapido) var(--macio),color var(--rapido) var(--macio);
+}
+.btn:active{transform:scale(.985)}
+.btn-1{background:var(--verde);color:#fff;width:100%}
+.btn-1:hover{background:var(--verde-esc)}
+.btn-2{background:transparent;color:var(--tinta);border-color:var(--tinta-12)}
+.btn-2:hover{border-color:var(--tinta);background:rgba(255,255,255,.5)}
+.btn-3{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.24)}
+.btn-3:hover{background:rgba(255,255,255,.26)}
+.nav{display:flex;gap:var(--e3)}
+.nav .btn{flex:1}
+
+/* ─── 9. SELO ───────────────────────────────────────────────────────── */
+.selo{
+  display:inline-flex;align-items:center;gap:var(--e2);border-radius:var(--r-pil);
+  font-size:var(--t-min);font-weight:620;padding:6px var(--e3) 6px var(--e2);
+  background:var(--sfundo);color:var(--scor);
+}
+.selo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--scor);flex:none;margin-left:4px}
+
+/* ─── 10. CASCATA ───────────────────────────────────────────────────── */
+/* Cada fatia é uma linha com uma barra em pílula. As barras usam a família
+   mel→telha (o que sai) e verde (o que fica): cor com significado, não
+   paleta decorativa. */
+.fatia{padding:var(--e3) 0;border-bottom:1px solid var(--tinta-12)}
+.fatia:last-child{border-bottom:none}
+.fatia .topo{display:flex;justify-content:space-between;align-items:baseline;gap:var(--e3);margin-bottom:var(--e2)}
+.fatia .nome{font-size:var(--t-corpo);font-weight:520}
+.fatia .nome small{display:block;font-size:var(--t-min);color:var(--tinta-45);font-weight:400}
+.fatia .val{font-family:var(--mono);font-size:var(--t-corpo);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trilho{height:8px;border-radius:var(--r-pil);background:rgba(18,36,29,.07);overflow:hidden}
+.trilho i{
+  display:block;height:100%;border-radius:var(--r-pil);background:var(--c);
+  transform-origin:left;animation:cresce var(--lento) var(--macio) both;animation-delay:var(--d,0ms);
+}
+@keyframes cresce{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.fatia.resto{margin-top:var(--e2);padding-top:var(--e4);border-top:2px solid var(--tinta-12);border-bottom:none}
+.fatia.resto .nome{font-weight:700;font-size:var(--t-md)}
+.fatia.resto .val{font-size:var(--t-lg);color:var(--verde-esc)}
+
+/* ─── 11. TABELA E AVISO ────────────────────────────────────────────── */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--t-min)}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+   color:var(--tinta-45);font-weight:500;text-align:right;padding:0 var(--e3) var(--e2) var(--e3)}
+th:first-child{text-align:left;padding-left:var(--e3)}
+td{padding:var(--e2) var(--e3);text-align:right;font-family:var(--mono);
+   font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--tinta-70)}
+td:first-child{text-align:left;font-family:var(--sans)}
+/* Linha destacada com raio pleno — tabela sem grade, com a linha virando
+   uma célula. Coerente com o resto do sistema. */
+tr.hoje td{background:var(--mint);color:var(--tinta);font-weight:700}
+tr.hoje td:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+tr.hoje td:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+.aviso{
+  border-radius:var(--r-md);padding:var(--e3) var(--e4);font-size:var(--t-min);
+  line-height:1.6;background:var(--mel);color:#6B4400;
+}
+
+/* ─── 12. MOVIMENTO ─────────────────────────────────────────────────── */
+/* As células assentam na colmeia: sobem 10px e crescem de 0.97 até 1.
+   A escala minúscula é o que dá a sensação de encaixe. Escalonamento de
+   50 ms entre irmãs. */
+[data-assenta]{opacity:0;animation:assenta var(--medio) var(--macio) both;animation-delay:var(--atraso,0ms)}
+@keyframes assenta{from{opacity:0;transform:translateY(10px) scale(.975)}to{opacity:1;transform:none}}
+.cifra-heroi{animation:sobe-num 720ms var(--macio) both;animation-delay:200ms}
+@keyframes sobe-num{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+}
+
+/* ─── 13. DOC ───────────────────────────────────────────────────────── */
+.doc{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:var(--e8) var(--e5)}
+.cabeca{max-width:680px;margin-bottom:var(--e8)}
+.cabeca .rotulo{display:block;margin-bottom:var(--e4)}
+.cabeca h1{margin-bottom:var(--e4)}
+.cabeca p{font-size:var(--t-md);line-height:1.7}
+.secao{margin-bottom:var(--e8)}
+.secao>.rotulo{display:block;margin-bottom:var(--e5);padding-bottom:var(--e3);border-bottom:1px solid var(--tinta-12)}
+.amostra{height:88px;border-radius:var(--r-lg);position:relative}
+.amostra span{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:10px}
+.tela{max-width:520px}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:var(--e3)}
+@media(max-width:460px){.par{grid-template-columns:1fr}}
+.marca{display:flex;align-items:center;gap:var(--e3);margin-bottom:var(--e6)}
+.marca .n{font-size:var(--t-min);font-weight:640}
+.marca .s{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);font-weight:500}
+.voltar{position:fixed;left:var(--e4);top:var(--e4);z-index:9;border-radius:var(--r-pil);
+  background:var(--nata);padding:8px 16px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--tinta)}
+@media(max-width:560px){.doc{padding:var(--e6) var(--e4)}}
+</style>
+</head>
+<body>
+<div class="chao"></div>
+<a class="voltar" href="index.html">← protótipos</a>
+
+<main class="doc">
+
+  <header class="cabeca">
+    <div class="marca">
+      <svg viewBox="0 0 509 534" width="34" height="34"><path fill="#2FA894" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg>
+      <div><div class="n">Auditor de Precificação</div><div class="s">FAVO Educação</div></div>
+    </div>
+    <span class="rotulo">Protótipo 04 · rodada 2 · claro e arredondado</span>
+    <h1>Colmeia</h1>
+    <p>Uma colmeia vista de perto não é uma grade de linhas: é um campo de células cheias, cada uma com uma cor conforme o que guarda. Então aqui <b>não existe card branco</b>. Todo bloco é um campo de cor macio, e os blocos se encostam com 8 px de folga — essa folga é a parede de cera. A tela fica cromática e quente, que é o oposto exato da caixa branca com sombra suave que todo gerador produz.</p>
+  </header>
+
+  <!-- COR -->
+  <section class="secao">
+    <span class="rotulo">01 · Campos de cor</span>
+    <p style="max-width:640px;margin-bottom:var(--e5)">A paleta não separa "fundo" de "destaque": separa <b>o que guarda o quê</b>. Mint é informação, mel é custo (o que sai), mata é o que fica com a empresa, areia é inerte. A cor carrega o significado antes de qualquer rótulo ser lido.</p>
+    <div class="favo f4">
+      <div><div class="amostra" style="background:var(--creme)"><span>#FBF8F1</span></div><span class="rotulo" style="display:block;margin-top:8px">Creme · chão</span></div>
+      <div><div class="amostra" style="background:var(--nata)"><span>#FFFDF8</span></div><span class="rotulo" style="display:block;margin-top:8px">Nata · formulário</span></div>
+      <div><div class="amostra" style="background:var(--mint)"><span>#DFF2E8</span></div><span class="rotulo" style="display:block;margin-top:8px">Mint · informação</span></div>
+      <div><div class="amostra" style="background:var(--mel)"><span>#FBEACB</span></div><span class="rotulo" style="display:block;margin-top:8px">Mel · custo</span></div>
+      <div><div class="amostra" style="background:var(--areia)"><span>#EFE7D8</span></div><span class="rotulo" style="display:block;margin-top:8px">Areia · inerte</span></div>
+      <div><div class="amostra" style="background:var(--mata)"><span style="color:#EAF6EF">#0E3A28</span></div><span class="rotulo" style="display:block;margin-top:8px">Mata · o que fica</span></div>
+      <div><div class="amostra" style="background:var(--verde)"><span style="color:#fff">#00B140</span></div><span class="rotulo" style="display:block;margin-top:8px">Verde · ação</span></div>
+      <div><div class="amostra" style="background:var(--telha)"><span style="color:#fff">#B3452C</span></div><span class="rotulo" style="display:block;margin-top:8px">Telha · perda</span></div>
+    </div>
+  </section>
+
+  <!-- O CANTO -->
+  <section class="secao">
+    <span class="rotulo">02 · O canto e a regra concêntrica</span>
+    <div class="favo f2" style="align-items:start">
+      <div class="cel">
+        <h2 style="margin-bottom:var(--e3)">Raio generoso, nunca aleatório</h2>
+        <p style="margin-bottom:var(--e4)">Quatro raios: 28 px em células, 20 px em blocos internos, 14 px em campos, pílula plena em botões. Nenhum valor fora dessa escala.</p>
+        <div class="cel mint cel-int">
+          <span class="rotulo" style="display:block;margin-bottom:6px">Célula aninhada</span>
+          <p style="font-size:var(--t-min);margin:0">Raio interno = raio externo − respiro do pai. 28 − 24 = 4… então o aninhado usa 20 e o pai ganha respiro maior. É o cálculo que faz cantos parecerem "certos" em vez de "quase certos" — e quase ninguém faz.</p>
+        </div>
+      </div>
+      <div class="cel mata">
+        <h2 style="margin-bottom:var(--e3)">A parede de cera</h2>
+        <p style="margin-bottom:var(--e4)">Células se encostam com 8 px de folga, sempre o mesmo valor. Sem borda, sem sombra: o que separa dois blocos é a cor de cada um e a parede entre eles.</p>
+        <div class="favo f3" style="gap:var(--parede)">
+          <div style="height:56px;border-radius:14px;background:var(--mint)"></div>
+          <div style="height:56px;border-radius:14px;background:var(--mel)"></div>
+          <div style="height:56px;border-radius:14px;background:var(--verde)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIPOGRAFIA -->
+  <section class="secao">
+    <span class="rotulo">03 · Duas vozes e o dinheiro</span>
+    <div class="favo f3">
+      <div class="cel"><span class="rotulo">Rótulo</span><p style="margin-top:var(--e3);font-size:var(--t-min)">Mono em caixa alta, tracking .13em. Só metadados: nome de seção, unidade, estado. Nunca conteúdo.</p></div>
+      <div class="cel"><h3 style="margin-bottom:var(--e2)">Texto</h3><p style="font-size:var(--t-min)">Sans do sistema em 500/640. Títulos com tracking −.03em: em escala grande, letra folgada parece amadora.</p></div>
+      <div class="cel mint"><div class="cifra" style="font-size:var(--t-xl);margin-bottom:var(--e2)">R$ 18.420</div><p style="font-size:var(--t-min)">Mono tabular em 600 — nunca 700. Peso alto em número grande vira mancha escura no meio da tela.</p></div>
+    </div>
+  </section>
+
+  <!-- FILA -->
+  <section class="secao">
+    <span class="rotulo">04 · Fila de células — progresso</span>
+    <p style="max-width:620px;margin-bottom:var(--e5)">Quadros de uma colmeia em construção: mesma forma, preenchimento diferente. A célula ativa enche de baixo para cima em 820 ms.</p>
+    <div class="fila" style="max-width:600px">
+      <div class="passo feito"><span class="n">01</span><span class="t">Empresa</span></div>
+      <div class="passo feito"><span class="n">02</span><span class="t">Projeto</span></div>
+      <div class="passo agora"><span class="n">03</span><span class="t">Custos</span></div>
+      <div class="passo"><span class="n">04</span><span class="t">Diagnóstico</span></div>
+    </div>
+  </section>
+
+  <!-- ELEMENTOS -->
+  <section class="secao">
+    <span class="rotulo">05 · Elementos</span>
+    <div class="favo f2" style="align-items:start">
+      <div class="cel">
+        <span class="rotulo" style="display:block;margin-bottom:var(--e4)">Campos</span>
+        <label class="campo"><span class="rotulo">Despesa fixa mensal</span>
+          <div class="caixa"><span class="un">R$</span><input value="42.800,00"></div></label>
+        <label class="campo"><span class="rotulo">Comissão de vendas</span>
+          <div class="caixa"><input value="4,0"><span class="un">%</span></div>
+          <span class="nota">O campo é uma célula cheia, não uma caixa vazada. Contraste por tom, não por contorno.</span></label>
+        <label class="campo" style="margin-bottom:0"><span class="rotulo">Nome do projeto</span>
+          <div class="caixa texto"><input value="Residencial Vila Nova"></div></label>
+      </div>
+      <div class="cel">
+        <span class="rotulo" style="display:block;margin-bottom:var(--e4)">Botões, selos, avisos</span>
+        <button class="btn btn-1" style="margin-bottom:var(--e3)">Ver meu diagnóstico</button>
+        <div class="nav" style="margin-bottom:var(--e4)">
+          <button class="btn btn-2">Voltar</button><button class="btn btn-2">Salvar</button>
+        </div>
+        <div style="display:flex;gap:var(--e2);flex-wrap:wrap;margin-bottom:var(--e4)">
+          <span class="selo" style="--sfundo:#DFF2E8;--scor:#00713A">Sobra</span>
+          <span class="selo" style="--sfundo:#FBEACB;--scor:#8A5600">Aperto</span>
+          <span class="selo" style="--sfundo:#F7E1DA;--scor:#9B3A24">Falta</span>
+        </div>
+        <div class="aviso">Diagnóstico gerencial, não consultoria contábil. Confirme a alíquota com seu contador.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOVIMENTO -->
+  <section class="secao">
+    <span class="rotulo">06 · Movimento</span>
+    <div class="favo f3">
+      <div class="cel areia"><span class="rotulo">Assentar</span><p style="margin-top:var(--e3);font-size:var(--t-min)">Células sobem 10 px e crescem de 0,975 a 1. A escala minúscula é o que dá sensação de encaixe — sem ela vira "fade in".</p></div>
+      <div class="cel areia"><span class="rotulo">Sem bounce</span><p style="margin-top:var(--e3);font-size:var(--t-min)">A curva <code>cubic-bezier(.32,.72,.24,1)</code> não volta. Bounce em interface de dinheiro parece brinquedo.</p></div>
+      <div class="cel areia"><span class="rotulo">Apertar</span><p style="margin-top:var(--e3);font-size:var(--t-min)">O botão encolhe 1,5% ao toque. É a única deformação permitida no sistema inteiro.</p></div>
+    </div>
+  </section>
+
+  <!-- APLICADO: FUNIL -->
+  <section class="secao">
+    <span class="rotulo">07 · Aplicado · Passo 03 — Custos</span>
+    <div class="tela">
+      <div class="fila" style="margin-bottom:var(--parede)">
+        <div class="passo feito"><span class="n">01</span><span class="t">Empresa</span></div>
+        <div class="passo feito"><span class="n">02</span><span class="t">Projeto</span></div>
+        <div class="passo agora"><span class="n">03</span><span class="t">Custos</span></div>
+        <div class="passo"><span class="n">04</span><span class="t">Diagnóstico</span></div>
+      </div>
+
+      <div class="cel mata" style="padding:var(--e3) var(--e4);margin-bottom:var(--parede);display:flex;justify-content:space-between;align-items:center;gap:var(--e3)">
+        <div><div style="font-weight:620;font-size:var(--t-min)">Solar Vale Engenharia</div><div class="rotulo">Simples Nacional</div></div>
+        <button class="btn btn-3" style="padding:8px 14px;font-size:var(--t-micro);min-height:0">Trocar</button>
+      </div>
+
+      <div class="cel" data-assenta style="--atraso:50ms;margin-bottom:var(--parede)">
+        <h2>Quanto você faz por mês</h2>
+        <p style="margin:var(--e2) 0 var(--e5)">É o que permite dividir o custo fixo entre os projetos.</p>
+        <div class="par">
+          <label class="campo"><span class="rotulo">Projetos / mês</span><div class="caixa"><input value="6"><span class="un">un</span></div></label>
+          <label class="campo"><span class="rotulo">Despesa fixa</span><div class="caixa"><span class="un">R$</span><input value="42.800"></div></label>
+        </div>
+      </div>
+
+      <div class="cel" data-assenta style="--atraso:100ms;margin-bottom:var(--parede)">
+        <h2>Quanto sai de cada venda</h2>
+        <p style="margin:var(--e2) 0 var(--e5)">Percentuais sobre o valor vendido.</p>
+        <div class="par">
+          <label class="campo"><span class="rotulo">Comissão</span><div class="caixa"><input value="4,0"><span class="un">%</span></div></label>
+          <label class="campo"><span class="rotulo">Impostos</span><div class="caixa"><input value="8,5"><span class="un">%</span></div></label>
+        </div>
+        <label class="campo" style="margin-bottom:0"><span class="rotulo">Quem emite a nota do kit</span>
+          <div class="caixa texto"><select><option>A distribuidora fatura direto ao cliente</option><option>Sai no meu CNPJ</option></select></div>
+          <span class="nota">Muda bastante a conta: no seu CNPJ, o imposto incide sobre o valor cheio.</span></label>
+      </div>
+
+      <button class="btn btn-1" data-assenta style="--atraso:150ms">Ver meu diagnóstico →</button>
+    </div>
+  </section>
+
+  <!-- APLICADO: DIAGNÓSTICO -->
+  <section class="secao">
+    <span class="rotulo">08 · Aplicado · Diagnóstico</span>
+    <div class="tela">
+      <span class="rotulo" style="display:block;margin-bottom:var(--e2)">Solar Vale · Residencial Vila Nova · 8,4 kWp</span>
+      <h1 style="margin-bottom:var(--e5)">Seu diagnóstico de preço</h1>
+
+      <div class="cel mata" style="padding:var(--e6) var(--e5);margin-bottom:var(--parede)">
+        <span class="selo" style="--sfundo:rgba(255,255,255,.15);--scor:#7FE3A8;margin-bottom:var(--e4)">Seu preço cobre tudo e ainda sobra</span>
+        <div class="gota" style="margin:var(--e4) 0 var(--e3)">
+          <div class="cifra cifra-heroi" style="color:#5FE08F">R$&nbsp;7.140</div>
+          <div style="font-size:var(--t-min);color:rgba(234,246,239,.7);margin-top:6px">sobram por projeto</div>
+        </div>
+        <p>R$ 42.840 por mês, somando os 6 projetos que você faz. É o que fica com a empresa depois do kit, da instalação, do projeto, da comissão, do imposto e da fatia do mês em estrutura.</p>
+        <div class="cel-int" style="background:rgba(255,255,255,.07);margin-top:var(--e5);border-radius:var(--r-lg)">
+          <p style="color:rgba(234,246,239,.82);font-size:var(--t-corpo);line-height:1.7;margin:0">
+            Seu <b style="color:#fff">preço mínimo</b> para lucrar 12% é <b class="cifra" style="color:#fff">R$ 48.900</b>. Você cobra <b class="cifra" style="color:#fff">R$ 56.040</b> — <b class="cifra" style="color:#fff">R$ 7.140</b> acima do mínimo.
+            <span style="display:block;margin-top:var(--e2);color:#7FE3A8;font-weight:620">Isso é folga de margem, não convite a dar desconto.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="cel" data-assenta style="--atraso:60ms;margin-bottom:var(--parede)">
+        <h2>Para onde vai cada R$ 56.040 que entram</h2>
+        <p style="margin:var(--e2) 0 var(--e4)">É o mesmo projeto, fatiado. A última linha é o que fica com a empresa.</p>
+        <div class="fatia"><div class="topo"><div class="nome">Kit<small>faturado pela distribuidora</small></div><div class="val">R$ 28.400</div></div><div class="trilho"><i style="--c:#D9C9A8;--d:0ms;width:50.7%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Instalação</div><div class="val">R$ 8.200</div></div><div class="trilho"><i style="--c:#E8C88A;--d:60ms;width:14.6%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Projeto, ART e homologação</div><div class="val">R$ 2.900</div></div><div class="trilho"><i style="--c:#EFBB6A;--d:120ms;width:5.2%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Comissão do vendedor</div><div class="val">R$ 2.242</div></div><div class="trilho"><i style="--c:#E0A050;--d:180ms;width:4%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Imposto<small>sobre a parte de serviço</small></div><div class="val">R$ 2.351</div></div><div class="trilho"><i style="--c:#D08748;--d:240ms;width:4.2%"></i></div></div>
+        <div class="fatia"><div class="topo"><div class="nome">Sua estrutura<small>a fatia do mês que cabe a este projeto</small></div><div class="val">R$ 4.807</div></div><div class="trilho"><i style="--c:#C06B3E;--d:300ms;width:8.6%"></i></div></div>
+        <div class="fatia resto"><div class="topo"><div class="nome">Sobra pra você</div><div class="val">R$ 7.140</div></div><div class="trilho"><i style="--c:var(--verde);--d:400ms;width:12.7%"></i></div></div>
+      </div>
+
+      <div class="favo f2" style="margin-bottom:var(--parede)">
+        <div class="cel mint" data-assenta style="--atraso:100ms">
+          <span class="rotulo" style="display:block;margin-bottom:var(--e3)">Ponto de equilíbrio</span>
+          <div class="cifra" style="font-size:var(--t-xl);color:var(--mata)">3,4 projetos</div>
+          <p style="margin-top:var(--e2);font-size:var(--t-min)">é o mínimo por mês só para não ter prejuízo. Você vende 6.</p>
+        </div>
+        <div class="cel mel" data-assenta style="--atraso:140ms">
+          <span class="rotulo" style="display:block;margin-bottom:var(--e3)">Custo de 1% de desconto</span>
+          <div class="cifra" style="font-size:var(--t-xl);color:#8A5600">R$ 3.362</div>
+          <p style="margin-top:var(--e2);font-size:var(--t-min)">por mês — 7,8 vezes o que você deu de desconto.</p>
+        </div>
+      </div>
+
+      <div class="cel" data-assenta style="--atraso:180ms;margin-bottom:var(--parede)">
+        <h2>Quanto custa cada desconto que você dá</h2>
+        <p style="margin:var(--e2) 0 var(--e4)">O desconto sai inteiro da margem — por isso some do lucro num múltiplo do que foi dado no preço.</p>
+        <table>
+          <thead><tr><th>Desconto</th><th>Preço</th><th>Sobra no mês</th><th>Deixa de ganhar</th></tr></thead>
+          <tbody>
+            <tr class="hoje"><td>Preço de hoje</td><td>R$ 56.040</td><td>R$ 42.840</td><td>—</td></tr>
+            <tr><td>−2%</td><td>R$ 54.919</td><td>R$ 36.116</td><td style="color:var(--telha);font-weight:600">− R$ 6.724</td></tr>
+            <tr><td>−5%</td><td>R$ 53.238</td><td>R$ 26.030</td><td style="color:var(--telha);font-weight:600">− R$ 16.810</td></tr>
+            <tr><td>−10%</td><td>R$ 50.436</td><td>R$ 9.220</td><td style="color:var(--telha);font-weight:600">− R$ 33.620</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Verde chapado em área grande brilha e ainda rouba a atenção do
+           botão. O fecho usa mata (profundo) e deixa o verde onde há ação. -->
+      <div class="cel mata" data-assenta style="--atraso:220ms;padding:var(--e6) var(--e5);text-align:center">
+        <h2 style="color:#fff;margin-bottom:var(--e2)">Sobram R$ 7.140 por projeto.<br>Dá para sobrar mais.</h2>
+        <p style="margin-bottom:var(--e5)">Em uma conversa a gente mostra onde está a margem que o seu preço ainda não captura.</p>
+        <button class="btn btn-1" style="width:auto;padding:var(--e3) var(--e6)">Quero conversar sobre esses números</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGRAS -->
+  <section class="secao">
+    <span class="rotulo">09 · Regras que mantêm o sistema vivo</span>
+    <div class="favo f2">
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">01 — Nenhuma sombra em lugar nenhum. Separação vem de cor e da parede de 8 px.</p></div>
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">02 — Nenhum bloco branco puro. Se um bloco não tem cor, ele não deveria ser um bloco.</p></div>
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">03 — Raio interno sempre menor que o externo. Cantos concêntricos, sempre calculados.</p></div>
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">04 — Mel é custo, mint é informação, mata é o que fica. Cor nunca é decoração.</p></div>
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">05 — Célula mata ou verde no máximo duas vezes por tela: veredito e fecho.</p></div>
+      <div class="cel areia"><p style="font-size:var(--t-min);margin:0">06 — Toda quantia em mono tabular, peso 600. Nunca 700 em corpo grande.</p></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

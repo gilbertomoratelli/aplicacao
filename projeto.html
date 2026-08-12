@@ -1,95 +1,65 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dados do Projeto · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Exclusivo desta página. Tokens, base, marca, stepper, faixa da empresa,
+     cartão, formulário e botões vêm do shared.css. */
+
+  /* Os custos fixos são injetados por JS dentro de um contêiner. Sem esta
+     regra o contêiner seria UM item da grade do desktop: a lista inteira
+     empilhava numa coluna só, ao lado de um buraco vazio deixado pelo campo
+     do KIT. display:contents apaga a caixa e entrega os campos direto à
+     grade do cartão, que então os distribui nas duas colunas como faz com
+     os campos estáticos. No celular não há grade e a regra é inócua. */
+  #custosFixosContainer{display:contents}
+
+  /* Estado vazio. Antes a seção simplesmente sumia e não havia como saber se
+     faltava configurar algo ou se era assim mesmo. grid-column só tem efeito
+     dentro da grade (desktop); no celular é ignorado, daí não precisar de
+     media query. */
+  .nota-vazia{
+    grid-column:1/-1;margin:0;padding:var(--e3) var(--e4);
+    background:var(--fundo-3);border-radius:var(--r-ctrl);
+    font-size:var(--footnote);color:var(--label-3);line-height:1.5;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
-  .wrap{width:100%;max-width:480px}
 
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
-  .btn-back:hover{color:var(--ink)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
-  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
-  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+  /* Valor de venda: é o número que a etapa seguinte audita, então é o maior
+     da tela. O tamanho sai da rampa tipográfica (--title2), não de um 22px
+     solto, e o campo continua sendo o mesmo .inwrap preenchido dos demais —
+     o destaque é de tipografia, não de uma segunda caixa com borda, que é
+     justamente o visual que o sistema nega.
+     A especificidade precisa passar de `label.fld .lbl` (0,2,1) do
+     shared.css: por isso `.fld.fld-preco` e não só `.fld-preco`. */
+  .fld.fld-preco .lbl{font-size:var(--callout);font-weight:600;color:var(--label)}
+  .fld-preco .inwrap input{font-size:var(--title2);font-weight:650;letter-spacing:-.018em}
+  .fld-preco .inwrap .affix{font-size:var(--callout)}
 
-  .stepper{display:flex;align-items:center;margin-bottom:28px}
-  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
-  .sn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--hair);color:var(--muted)}
-  .sl{font-size:10px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .step.active .sn{background:var(--solar);color:#fff}
-  .step.active .sl{color:var(--solar)}
-  .step.done .sn{background:var(--teal);color:#fff}
-  .step.done .sl{color:var(--teal)}
-  .sline{flex:1;height:2px;background:var(--hair);margin:0 8px;margin-bottom:16px}
-  .sline.done{background:var(--teal)}
-  .step[onclick]{cursor:pointer}
-  .step[onclick]:hover .sn{opacity:.7}
-
-  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .empresa-badge .nome{font-weight:700;font-size:14px}
-  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
-  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
-  .btn-trocar:hover{background:rgba(255,255,255,.25)}
-
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px}
-  .card-title{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
-  .card-sub{font-size:13px;color:var(--muted);margin:0 0 24px}
-
-  label.fld{display:block;margin-bottom:16px}
-  label.fld .lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
-  label.fld .req{color:var(--solar)}
-  label.fld .hint{display:block;font-size:11px;color:var(--muted);margin-top:4px}
-  .inwrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:9px;background:var(--surface);overflow:hidden}
-  .inwrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
-  .inwrap .affix{padding:0 11px;color:var(--muted);font-size:13px;font-family:var(--mono)}
-  .inwrap .affix.l{border-right:1px solid var(--hair)}
-  .inwrap .affix.r{border-left:1px solid var(--hair)}
-  .inwrap input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%}
-  input.plain{width:100%;border:1px solid var(--hair);border-radius:9px;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--surface)}
-  input.plain:focus{outline:2px solid var(--solar);outline-offset:1px}
-  .err{font-size:11px;color:var(--negative);margin-top:4px;display:none}
-
-  .btn-primary{width:100%;background:var(--solar);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;margin-top:4px}
-  .btn-primary:hover{opacity:.9}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  /* No celular, "Analisar precificação →" não cabe na metade da largura e o
+     rótulo quebrava em duas linhas. O Voltar passa a ocupar só o que precisa
+     e o botão de avançar fica com a sobra. No desktop o rodapé segue meio a
+     meio, igual ao das outras etapas. min-width:0 para o item flexível nunca
+     empurrar a página além da viewport. */
+  @media (max-width:560px){
+    .nav-row .btn-nav{flex:0 0 auto}
+    .nav-row .btn-nav.primary{flex:1 1 auto;min-width:0}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="indicadores.html">← Voltar</a>
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
-  <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='sazonalidade.html'"><div class="sn">✓</div><div class="sl">Sazonal.</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='indicadores.html'"><div class="sn">✓</div><div class="sl">Indicad.</div></div>
-    <div class="sline done"></div>
-    <div class="step active"><div class="sn">6</div><div class="sl">Projeto</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
-  </div>
+  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge" id="empresaBadge">
     <div>
@@ -99,72 +69,94 @@
     <button class="btn-trocar" onclick="trocarEmpresa()">Trocar empresa</button>
   </div>
 
-  <div class="card">
-    <h2 class="card-title">Dados do Projeto</h2>
-    <p class="card-sub">Informe os dados técnicos do sistema fotovoltaico, de acordo com o ticket médio apurado.</p>
+  <!-- Um <form> por página, envolvendo os cartões: o Enter e o submit seguem
+       valendo, e cada cartão continua sendo um .card.form (a grade de duas
+       colunas do desktop é do cartão, não do form). -->
+  <form id="form" onsubmit="salvar(event)">
 
-    <form id="form" onsubmit="salvar(event)">
-      <label class="fld">
+    <div class="card form">
+      <h2 class="card-title">Dados do Projeto</h2>
+      <p class="card-sub">Dados técnicos do sistema fotovoltaico, de acordo com o ticket médio apurado.</p>
+
+      <label class="fld fld-full">
         <span class="lbl">Nome do Projeto <span class="req">*</span></span>
-        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva">
-        <span class="err" id="errNome">Campo obrigatório</span>
+        <input class="plain" type="text" id="nome_projeto" placeholder="Ex: Residencial João Silva" aria-required="true">
+        <span class="err" id="errNome" role="alert" aria-live="assertive">Campo obrigatório</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Quantidade de Módulos <span class="req">*</span></span>
         <div class="inwrap">
-          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1">
+          <input type="number" id="qtd_modulos" placeholder="0" min="1" step="1" aria-required="true">
           <span class="affix r">un</span>
         </div>
-        <span class="err" id="errModulos">Informe a quantidade</span>
+        <span class="err" id="errModulos" role="alert" aria-live="assertive">Informe a quantidade</span>
       </label>
 
       <label class="fld">
         <span class="lbl">Potência do Sistema <span class="req">*</span></span>
         <div class="inwrap">
-          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01">
+          <input type="number" id="kwp_sistema" placeholder="0,00" min="0.01" step="0.01" aria-required="true">
           <span class="affix r">kWp</span>
         </div>
         <span class="hint">Potência total instalada em quilowatt-pico</span>
-        <span class="err" id="errKwp">Informe a potência</span>
+        <span class="err" id="errKwp" role="alert" aria-live="assertive">Informe a potência</span>
       </label>
+    </div>
 
-      <label class="fld">
+    <div class="card form">
+      <h2 class="card-title">Custos do Projeto</h2>
+      <p class="card-sub">Os valores já vêm do padrão da etapa Custos — ajuste se este projeto for diferente.</p>
+
+      <!-- O KIT ocupa a linha inteira: é o maior custo do projeto e o único
+           com nota explicativa, o que desalinharia a linha se dividisse
+           espaço com um campo curto ao lado. -->
+      <label class="fld fld-full">
         <span class="lbl">Custo KIT Distribuidora <span class="req">*</span></span>
         <div class="inwrap">
           <span class="affix l">R$</span>
-          <input type="text" inputmode="decimal" id="custo_kit" placeholder="0,00">
+          <input type="text" inputmode="decimal" id="custo_kit" data-moeda placeholder="0,00" aria-required="true">
         </div>
         <span class="hint">Valor faturado pela distribuidora para este projeto</span>
-        <span class="err" id="errKit">Informe o custo do KIT</span>
+        <span class="err" id="errKit" role="alert" aria-live="assertive">Informe o custo do KIT</span>
       </label>
 
       <div id="custosFixosContainer"></div>
+    </div>
 
-      <label class="fld">
-        <span class="lbl" style="font-size:14px;font-weight:700;color:var(--ink)">Valor de Venda Atual</span>
-        <div class="inwrap" style="border-width:2px;border-color:var(--teal)">
-          <span class="affix l" style="font-size:16px;font-weight:700">R$</span>
-          <input type="text" inputmode="decimal" id="valor_venda" placeholder="0,00" style="font-size:22px;font-weight:700;padding:14px 12px">
+    <div class="card form">
+      <h2 class="card-title">Preço Praticado</h2>
+      <p class="card-sub">Quanto este projeto está sendo vendido hoje, KIT + serviço — é o número que a próxima etapa audita.</p>
+
+      <label class="fld fld-full fld-preco">
+        <span class="lbl">Valor de venda atual</span>
+        <div class="inwrap">
+          <span class="affix l">R$</span>
+          <input type="text" inputmode="decimal" id="valor_venda" data-moeda placeholder="0,00">
         </div>
-        <span class="hint">Preço praticado hoje (KIT + serviço). Preenche o campo de análise automaticamente.</span>
       </label>
+    </div>
 
-      <button class="btn-primary" type="submit" id="btnSalvar">Analisar precificação →</button>
-    </form>
-  </div>
+    <!-- Rodapé de navegação igual ao das demais etapas do funil: voltar à
+         esquerda, avançar à direita. -->
+    <div class="nav-row">
+      <a class="btn-nav" href="indicadores.html">← Voltar</a>
+      <button class="btn-nav primary" type="submit" id="btnSalvar">Analisar precificação →</button>
+    </div>
+  </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
-const projetoAtual = JSON.parse(localStorage.getItem('projeto')||'null');
+AppCore.renderStepper('stepper', 'projeto');
+
+const integrador = AppCore.safeParse('integrador', null);
+const projetoAtual = AppCore.safeParse('projeto', null);
 
 const LABEL_CUSTO = {
   ca:    'Material adicional CA',
@@ -175,22 +167,39 @@ const LABEL_CUSTO = {
 };
 
 function renderCustosFixos() {
-  const cfgMap = JSON.parse(localStorage.getItem('configCustos') || '{}');
+  // safeParse no lugar de JSON.parse cru: configCustos corrompido derrubava a tela.
+  const cfgMap = AppCore.safeParse('configCustos', {});
   const container = document.getElementById('custosFixosContainer');
+
+  // Só entram aqui os custos configurados como valor FIXO. Os demais modos
+  // (R$/módulo, R$/kWp, faixa) são derivados dos dados do sistema e calculados
+  // na etapa de preço — pedi-los aqui seria pedir a mesma informação duas vezes.
   const camposFixos = Object.keys(LABEL_CUSTO).filter(k => cfgMap[k]?.modo === 'fixo');
-  if (!camposFixos.length) { container.innerHTML = ''; return; }
+
+  if (!camposFixos.length) {
+    container.innerHTML = '<p class="nota-vazia">Nenhum custo direto com valor fixo foi configurado na etapa Custos. Os custos por módulo, por kWp ou por faixa entram automaticamente no cálculo do preço.</p>';
+    return;
+  }
+
   const salvos = projetoAtual?.custos_diretos || {};
-  let html = '<div style="border-top:1px solid var(--hair);margin:8px 0 16px;padding-top:16px"><span class="lbl" style="display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Custos do projeto</span>';
+  container.innerHTML = camposFixos.map(k => `
+    <label class="fld">
+      <span class="lbl">${LABEL_CUSTO[k]}</span>
+      <div class="inwrap">
+        <span class="affix l">R$</span>
+        <input type="text" inputmode="decimal" id="cd_${k}" data-moeda placeholder="0,00">
+      </div>
+    </label>`).join('');
+
+  // O valor entra pelo escritor oficial de dinheiro, nunca por toFixed/replace:
+  // é o que garante o separador de milhar igual ao que a máscara produz enquanto
+  // o usuário digita. Vale o valor salvo no projeto; na falta dele, o padrão da
+  // empresa. `!== undefined` porque zero é um valor legítimo.
   camposFixos.forEach(k => {
-    const taxa = cfgMap[k]?.taxa ?? 0;
-    const val  = salvos[k] !== undefined ? salvos[k] : taxa;
-    html += `<label class="fld"><span class="lbl">${LABEL_CUSTO[k]}</span>
-      <div class="inwrap"><span class="affix l">R$</span>
-        <input type="text" inputmode="decimal" id="cd_${k}" value="${Number(val).toFixed(2).replace('.',',')}" placeholder="0,00">
-      </div></label>`;
+    const salvo = salvos[k];
+    AppCore.escreverMoeda('cd_' + k, salvo !== undefined ? salvo : (cfgMap[k]?.taxa ?? 0));
   });
-  html += '</div>';
-  container.innerHTML = html;
+  AppCore.ligarMoeda(container);   // campos de custo criados agora
 }
 
 function init() {
@@ -205,8 +214,8 @@ function init() {
     document.getElementById('nome_projeto').value    = projetoAtual.nome_projeto        || '';
     document.getElementById('qtd_modulos').value     = projetoAtual.quantidade_modulos  || '';
     document.getElementById('kwp_sistema').value     = projetoAtual.kwp_sistema         || '';
-    document.getElementById('custo_kit').value       = projetoAtual.custo_kit != null ? Number(projetoAtual.custo_kit).toFixed(2).replace('.',',') : '';
-    document.getElementById('valor_venda').value     = projetoAtual.valor_venda != null ? Number(projetoAtual.valor_venda).toFixed(2).replace('.',',') : '';
+    AppCore.escreverMoeda('custo_kit', projetoAtual.custo_kit);
+    AppCore.escreverMoeda('valor_venda', projetoAtual.valor_venda);
     document.getElementById('btnSalvar').textContent = 'Atualizar projeto →';
   }
   renderCustosFixos();
@@ -221,9 +230,9 @@ function validar() {
   let ok=true;
   const campos=[
     {id:'nome_projeto',err:'errNome',check:v=>v.trim().length>1},
-    {id:'qtd_modulos',err:'errModulos',check:v=>parseFloat(v)>0},
+    {id:'qtd_modulos',err:'errModulos',check:v=>{const n=AppCore.parseNum(v);return Number.isInteger(n)&&n>0;}},
     {id:'kwp_sistema',err:'errKwp',check:v=>parseFloat(v)>0},
-    {id:'custo_kit',err:'errKit',check:v=>!isNaN(parseFloat(v.replace(',','.')))},
+    {id:'custo_kit',err:'errKit',check:v=>v.trim().length>0 && AppCore.parseNum(v)>0},
   ];
   campos.forEach(c=>{
     const v=document.getElementById(c.id).value;
@@ -241,45 +250,57 @@ async function salvar(e) {
   const btn=document.getElementById('btnSalvar');
   btn.disabled=true; btn.textContent='Salvando…';
 
+  const valorVenda = AppCore.parseNum(document.getElementById('valor_venda').value) || null;
+
   const payload={
     integrador_id: integrador.id||null,
     nome_projeto: document.getElementById('nome_projeto').value.trim(),
-    quantidade_modulos: parseInt(document.getElementById('qtd_modulos').value),
+    quantidade_modulos: AppCore.parseNum(document.getElementById('qtd_modulos').value),
     kwp_sistema: parseFloat(document.getElementById('kwp_sistema').value),
-    custo_kit: parseFloat(document.getElementById('custo_kit').value.replace(',','.')) || 0,
+    custo_kit: AppCore.parseNum(document.getElementById('custo_kit').value),
+    valor_venda: valorVenda,
   };
-  const valorVenda = parseFloat(document.getElementById('valor_venda').value.replace(',','.')) || null;
 
+  // Custos diretos editáveis desta tela — parte do payload local desde julho.
+  const custos_diretos = {};
+  Object.keys(LABEL_CUSTO).forEach(k => {
+    const el = document.getElementById('cd_' + k);
+    if (el) custos_diretos[k] = AppCore.parseNum(el.value);
+  });
+
+  // Grava no localStorage ANTES da rede: falha de sync não pode custar o que
+  // o usuário digitou. O id real do banco sobrescreve o local quando vier.
+  const localId = projetoAtual?.id || AppCore.uuid();
+  localStorage.setItem('projeto', JSON.stringify({...payload, id: localId, valor_venda: valorVenda, custos_diretos}));
+
+  // Sync com o banco. Quem já tem projeto é ATUALIZADO; se a linha não existe
+  // na base atual (id de outro ambiente), cai para insert.
   let data = null, error = null;
-  try {
+  if (db) {
     if (projetoAtual?.id) {
-      ({data,error} = await db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single());
-      // Registro não existe na base atual (ID de outro ambiente) — tenta inserir
+      ({data,error} = await AppCore.dbTry(db.from('projetos').update(payload).eq('id', projetoAtual.id).select().single()));
       if (!data || error?.code === 'PGRST116') {
         error = null;
-        ({data,error} = await db.from('projetos').insert(payload).select().single());
+        ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
       }
     } else {
-      ({data,error} = await db.from('projetos').insert(payload).select().single());
+      ({data,error} = await AppCore.dbTry(db.from('projetos').insert(payload).select().single()));
     }
-  } catch(err) {
-    console.error('Supabase salvar projeto:', err);
   }
 
   btn.disabled=false; btn.textContent= projetoAtual?.id ? 'Atualizar projeto →' : 'Analisar precificação →';
 
-  // Salva localmente independente do resultado da rede e avança
-  const projetoId = data?.id ?? projetoAtual?.id ?? null;
-  const custos_diretos = {};
-  Object.keys(LABEL_CUSTO).forEach(k => {
-    const el = document.getElementById('cd_' + k);
-    if (el) custos_diretos[k] = parseFloat(el.value.replace(',', '.')) || 0;
-  });
-  localStorage.setItem('projeto', JSON.stringify({...payload, id: projetoId, valor_venda: valorVenda, custos_diretos}));
+  if (error) { alert('Salvo localmente. Erro ao sincronizar com o servidor: ' + error.message); }
+
+  if (data) {
+    localStorage.setItem('projeto', JSON.stringify({...payload, id: data.id, valor_venda: valorVenda, custos_diretos}));
+  }
+
   window.location.href='index.html';
 }
 
 init();
+AppCore.ligarMoeda();   // custo_kit e valor_venda (estáticos)
 </script>
 </body>
 </html>

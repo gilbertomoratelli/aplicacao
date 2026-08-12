@@ -4,109 +4,149 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diagnóstico de Sazonalidade · Auditor de Precificação</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-  :root{
-    --bg:#F2F9F5;--surface:#FFFFFF;--ink:#1B1A16;--muted:#736F64;--hair:#DFF0E8;
-    --solar:#00B140;--teal:#183029;--positive:#00B140;--negative:#B23A2E;
-    --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
-    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Exclusivo desta página. Tokens, base, marca, stepper, faixa da empresa,
+     cartão e botões vêm do shared.css.
+
+     Esta é a tela mais ALTA do funil: doze linhas de mês, duas entradas e um
+     valor derivado em cada. Três decisões cuidam da altura e da bagunça sem
+     esconder informação nenhuma:
+
+       1. no desktop os meses vão DOIS por linha (Jan|Fev, Mar|Abr…). A grade
+          cai de doze para seis linhas e ocupa a largura que a coluna de
+          ticket desperdiçava vazia — sem mexer no renderTabela();
+       2. o campo vira superfície PREENCHIDA, como o .inwrap do sistema, em
+          versão baixa: caixa vazada de borda cinza, repetida 24 vezes, é
+          exatamente o visual que o shared.css existe para negar;
+       3. o resumo deixa de ser mais três linhas iguais às de cima e vira um
+          campo de cor (mint = informação) — fecha a leitura, não continua. */
+
+  /* Se a grade não couber (tela estreitíssima), quem rola é o BLOCO: a
+     página nunca anda de lado. min-width:0 deixa o bloco encolher dentro
+     do cartão em vez de empurrá-lo. */
+  .grade{overflow-x:auto;min-width:0}
+
+  /* Coluna de tabela é medida de CONTEÚDO, não da escala de espaçamento:
+     cada trilha guarda o que precisa caber — mês abreviado, dois dígitos de
+     projetos e "R$ 999.999,99" de ticket sem quebrar. O faturamento fica com
+     a sobra (1fr) e nunca abaixo de 7ch; é esse mínimo que faz .grade rolar
+     em vez de espremer o número.
+     gap:0 de propósito: o filete de separação é o border-top das células e
+     só fica contínuo se não houver falha de gap entre elas. */
+  .season-grid{
+    display:grid;gap:0;align-items:center;
+    grid-template-columns:36px 72px minmax(7ch,1fr) 96px;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;-webkit-font-smoothing:antialiased}
-  .wrap{width:100%;max-width:640px}
 
-  .btn-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:20px;padding:6px 0;background:none;border:none;cursor:pointer;font-family:var(--sans)}
-  .btn-back:hover{color:var(--ink)}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
-  .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand-name{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--ink)}
-  .brand-sub{font-size:11px;color:#40C1AC;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;font-weight:700}
-
-  .stepper{display:flex;align-items:center;margin-bottom:28px}
-  .step{display:flex;flex-direction:column;align-items:center;gap:5px}
-  .sn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--hair);color:var(--muted)}
-  .sl{font-size:9px;color:var(--muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
-  .step.active .sn{background:var(--solar);color:#fff}
-  .step.active .sl{color:var(--solar)}
-  .step.done .sn{background:var(--teal);color:#fff}
-  .step.done .sl{color:var(--teal)}
-  .sline{flex:1;height:2px;background:var(--hair);margin:0 5px;margin-bottom:16px}
-  .sline.done{background:var(--teal)}
-  .step[onclick]{cursor:pointer}
-  .step[onclick]:hover .sn{opacity:.7}
-
-  .empresa-badge{background:var(--teal);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .empresa-badge .nome{font-weight:700;font-size:14px}
-  .empresa-badge .regime{font-size:11px;opacity:.75;margin-top:2px}
-  .btn-trocar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
-  .btn-trocar:hover{background:rgba(255,255,255,.25)}
-
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:28px;margin-bottom:16px}
-  .card-title{font-size:17px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px}
-  .card-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
-
-  /* Tabela de sazonalidade */
-  .season-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:0}
   .sg-head{display:contents}
-  .sg-head span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px;text-align:right}
-  .sg-head span:first-child{text-align:left;padding-left:0}
-  .sg-row{display:contents}
-  .sg-row:hover .sg-cell{background:#FAFAF8}
-  .sg-cell{padding:5px 8px;border-top:1px solid var(--hair);display:flex;align-items:center}
+  .sg-head.par{display:none}            /* o segundo jogo de rótulos só existe no desktop */
+  /* align-self:end assenta todos os rótulos na MESMA linha de base: no
+     celular "Ticket médio" quebra em duas linhas e, centralizado, deixaria
+     os outros três flutuando no meio da altura dele. */
+  .sg-h{
+    font-size:var(--caption2);font-weight:650;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--label-3);padding:0 var(--e1) var(--e2);text-align:right;align-self:end;
+  }
+  .sg-h.rot{text-align:left;padding-left:0}
+
+  .sg-row-wrap{display:contents}        /* a linha é lógica; quem ocupa a grade são as células */
+  .sg-cell{
+    display:flex;align-items:center;min-width:0;
+    padding:var(--e1);border-top:1px solid var(--separador);
+  }
   .sg-cell:first-child{padding-left:0}
-  .sg-mes{font-size:13px;font-weight:600;color:var(--ink)}
-  .sg-inp-wrap{display:flex;align-items:center;border:1px solid var(--hair);border-radius:7px;overflow:hidden;background:var(--surface);width:100%}
-  .sg-inp-wrap:focus-within{outline:2px solid var(--solar);outline-offset:1px}
-  .sg-inp-wrap .pfx{padding:0 7px;font-size:12px;color:var(--muted);font-family:var(--mono);border-right:1px solid var(--hair);white-space:nowrap}
-  .sg-inp{border:none;outline:none;padding:7px 8px;font-size:13px;font-family:var(--mono);color:var(--ink);background:transparent;width:100%;text-align:right}
-  .sg-ticket{font-size:13px;font-family:var(--mono);font-weight:700;color:var(--teal);text-align:right;padding:7px 8px;width:100%}
-  .sg-ticket.vazio{color:var(--hair)}
+  .sg-cell:last-child{padding-right:0;justify-content:flex-end}
+  /* Enquanto se digita, a linha inteira do mês acende — mesmo recurso do
+     .linha:focus-within do sistema. Responde a "em que mês eu estou?" sem
+     inventar interação nenhuma. */
+  .sg-row-wrap:focus-within .sg-cell{background:var(--verde-t)}
 
-  .resumo{margin-top:20px;border-top:2px solid var(--hair);padding-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .resumo-item{background:var(--bg);border-radius:10px;padding:14px 16px}
-  .resumo-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
-  .resumo-val{font-size:22px;font-weight:800;font-family:var(--mono);color:var(--teal);line-height:1}
-  .resumo-hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .sg-mes{font-size:var(--footnote);font-weight:600;color:var(--label-2)}
 
-  .nav-row{display:flex;gap:10px;margin-top:4px}
-  .btn-nav{flex:1;border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.15s;text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
-  .btn-nav:hover{border-color:var(--teal)}
-  .btn-nav.primary{background:var(--solar);color:#fff;border-color:var(--solar)}
-  .btn-nav.primary:hover{opacity:.9}
-  .btn-nav:disabled{opacity:.5;cursor:not-allowed}
+  .sg-inp-wrap{
+    display:flex;align-items:center;width:100%;min-width:0;
+    background:var(--fundo-3);border:1.5px solid transparent;border-radius:var(--r-ctrl);
+    transition:border-color var(--rapido) var(--mola),box-shadow var(--rapido) var(--mola),
+               background var(--rapido) var(--mola);
+  }
+  .sg-inp-wrap:focus-within{background:var(--fundo-2);border-color:var(--verde);box-shadow:0 0 0 3px var(--verde-t)}
+  .sg-inp-wrap .pfx{padding-left:var(--e2);font-size:var(--caption);color:var(--label-3);font-family:var(--mono)}
+  /* .cifra (shared) entrega mono, tabular-nums e o peso; aqui fica só o que
+     é desta tabela: tamanho, respiro e alinhamento à direita. */
+  .sg-inp{
+    flex:1;min-width:0;width:100%;border:none;outline:none;background:transparent;
+    padding:var(--e2);font-size:var(--footnote);color:var(--label);text-align:right;min-height:38px;
+  }
+  .sg-inp::placeholder{color:var(--label-4)}
+  .sg-ticket{font-size:var(--caption);color:var(--teal);white-space:nowrap}
+  .sg-ticket.vazio{color:var(--label-4)}   /* ainda é marcador de lugar, não valor */
 
-  @media(max-width:480px){
-    .season-grid{grid-template-columns:80px 1fr 1fr 90px}
-    .resumo{grid-template-columns:1fr}
+  /* CELULAR ESTREITO — o dinheiro é quem manda no espaço.
+     Abaixo de 430px o que aperta é o campo de faturamento: um mês de
+     "R$ 152.000,50" não pode entrar cortado. As sobras vêm do respiro
+     interno do campo e das colunas laterais, nesta ordem — o ticket, que é
+     valor derivado, é o último a ceder porque não pode quebrar linha. */
+  @media (max-width:430px){
+    .season-grid{grid-template-columns:32px 66px minmax(9ch,1fr) 90px}
+    .sg-h{padding-left:0}                 /* o rótulo "Projetos" pede a coluna inteira */
+    .sg-inp{padding:var(--e2) var(--e1)}
+    .sg-inp-wrap .pfx{padding-left:var(--e1)}
+  }
+
+  /* RESUMO — o fechamento dos 12 meses. */
+  .resumo{
+    display:grid;background:var(--mint);border-radius:var(--r-lista);
+    padding:var(--e3) var(--e4);margin-top:var(--e5);
+  }
+  .resumo .sec-label{margin:0 0 var(--e1)}
+  .resumo-item{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--e3);
+    align-items:center;padding:var(--e2) 0;
+  }
+  .resumo-item+.resumo-item{border-top:1px solid var(--separador)}
+  .resumo-rot{grid-column:1;font-size:var(--subhead);font-weight:600;color:var(--label)}
+  .resumo-hint{grid-column:1;font-size:var(--caption);color:var(--label-2);line-height:1.4}
+  /* No celular o número fica à direita, atravessando rótulo e nota: é a
+     leitura de extrato, que é o que um fechamento deve parecer. */
+  .resumo-val{grid-column:2;grid-row:1/span 2;font-size:var(--title3);color:var(--teal);white-space:nowrap}
+
+  /* DESKTOP — os meses em dois pares por linha.
+     Oito trilhas: cada .sg-row-wrap ocupa quatro, então a colocação
+     automática já joga o mês par para a metade da direita. A 5ª trilha é
+     mais larga que a 1ª porque é ela que carrega a calha entre as metades. */
+  @media (min-width:900px){
+    .season-grid{grid-template-columns:40px 72px minmax(8ch,1fr) 104px 68px 72px minmax(8ch,1fr) 104px}
+    .sg-head.par{display:contents}
+    .sg-head.par .sg-h:first-child,
+    .sg-row-wrap:nth-of-type(even)>.sg-cell:first-child{padding-left:var(--e6)}
+    .sg-inp{min-height:34px}
+
+    /* Os três números do fechamento lado a lado, separados por régua: uma
+       faixa de conclusão, não três blocos empilhados. */
+    .resumo{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto repeat(3,auto);column-gap:var(--e5);padding:var(--e4) var(--e5)}
+    .resumo .sec-label{grid-column:1/-1;margin-bottom:var(--e2)}
+    /* subgrid alinha rótulo, número e nota dos TRÊS itens nas mesmas faixas:
+       basta um rótulo quebrar em duas linhas para os números desalinharem se
+       cada item tiver a sua própria altura de linha. Onde não houver suporte,
+       a declaração cai e o bloco volta ao empilhamento simples. */
+    .resumo-item{grid-template-columns:minmax(0,1fr);grid-row:span 3;grid-template-rows:subgrid;padding:0}
+    .resumo-item+.resumo-item{border-top:none;border-left:1px solid var(--separador);padding-left:var(--e5)}
+    .resumo-val{grid-column:1;grid-row:auto;font-size:var(--title2)}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="btn-back" href="despesas.html">← Voltar</a>
   <div class="brand">
-    <div class="logo"><svg viewBox="0 0 509 534" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><path fill="#40C1AC" d="M223,16L318,252c4,9,4,20,0,29L223,518c-4,10-13,16-24,16h-77c-11,0-20-6-24-16L3,282c-4-9-4-20,0-29L98,16C102,6,112,0,122,0h77C210,0,219,6,223,16z"/><path fill="#00B140" d="M386,0h-99l104,252c4,10,4,20,0,30L287,534h99c11,0,20-6,24-16l97-241c3-6,3-13,0-19L410,16C406,6,397,0,386,0z"/></svg></div>
-    <div>
-      <div class="brand-name">Auditor de Precificação</div>
-      <div class="brand-sub">FAVO Educação</div>
-    </div>
+    <img class="logo-h" src="img/logo-favo-horizontal.svg" alt="FAVO Educação">
+    <div class="brand-name">Auditor de Precificação</div>
   </div>
 
-  <div class="stepper">
-    <div class="step done" onclick="location.href='cadastro.html'"><div class="sn">✓</div><div class="sl">Empresa</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='configuracoes.html?onboarding=1'"><div class="sn">✓</div><div class="sl">Custos</div></div>
-    <div class="sline done"></div>
-    <div class="step done" onclick="location.href='despesas.html'"><div class="sn">✓</div><div class="sl">Despesas</div></div>
-    <div class="sline done"></div>
-    <div class="step active"><div class="sn">4</div><div class="sl">Sazonalid.</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='indicadores.html'"><div class="sn">5</div><div class="sl">Indicad.</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='projeto.html'"><div class="sn">6</div><div class="sl">Projeto</div></div>
-    <div class="sline"></div>
-    <div class="step" onclick="location.href='index.html'"><div class="sn">7</div><div class="sl">Preço</div></div>
-  </div>
+  <nav class="stepper" id="stepper"></nav>
 
   <div class="empresa-badge">
     <div>
@@ -120,33 +160,46 @@
     <h2 class="card-title">Diagnóstico de Sazonalidade</h2>
     <p class="card-sub">Informe os projetos convertidos nos últimos 12 meses. O ticket médio é calculado automaticamente linha a linha.</p>
 
-    <div class="season-grid" id="seasonGrid">
-      <span class="sg-head" style="display:contents">
-        <span style="text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding-bottom:10px">Mês</span>
-        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Nº Projetos</span>
-        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Faturamento</span>
-        <span style="text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:0 8px 10px">Ticket Médio</span>
-      </span>
+    <!-- O contêiner .grade existe só para prender uma eventual rolagem
+         horizontal ao bloco; a grade e os ids continuam os mesmos. -->
+    <div class="grade">
+      <div class="season-grid" id="seasonGrid">
+        <span class="sg-head">
+          <span class="sg-h rot">Mês</span>
+          <span class="sg-h">Projetos</span>
+          <span class="sg-h">Faturamento</span>
+          <span class="sg-h">Ticket médio</span>
+        </span>
+        <!-- Segundo jogo de rótulos: no desktop os meses vão dois por linha e
+             a metade da direita precisa dos seus próprios cabeçalhos. -->
+        <span class="sg-head par" aria-hidden="true">
+          <span class="sg-h rot">Mês</span>
+          <span class="sg-h">Projetos</span>
+          <span class="sg-h">Faturamento</span>
+          <span class="sg-h">Ticket médio</span>
+        </span>
+      </div>
     </div>
 
     <div class="resumo">
+      <span class="sec-label">Fechamento dos 12 meses</span>
+
       <div class="resumo-item">
-        <div class="resumo-label">Ticket médio mensal</div>
-        <div class="resumo-val" id="resumoTicket">—</div>
-        <div class="resumo-hint">Total faturado ÷ total projetos</div>
+        <span class="resumo-rot">Ticket médio</span>
+        <span class="resumo-val cifra" id="resumoTicket">—</span>
+        <span class="resumo-hint">Total faturado ÷ total de projetos</span>
       </div>
+
       <div class="resumo-item">
-        <div class="resumo-label">Faturamento médio mensal</div>
-        <div class="resumo-val" id="resumoFat">—</div>
-        <div class="resumo-hint">Total faturado ÷ 12 meses</div>
+        <span class="resumo-rot">Faturamento médio</span>
+        <span class="resumo-val cifra" id="resumoFat">—</span>
+        <span class="resumo-hint">Total faturado ÷ 12 meses</span>
       </div>
-      <div class="resumo-item" style="grid-column:1/-1">
-        <div class="resumo-label">Peso da Despesa Fixa sobre o Faturamento</div>
-        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-          <div class="resumo-val" id="resumoDespPct">—</div>
-          <div style="font-size:13px;color:var(--muted);font-family:var(--mono)" id="resumoDespFixa">—</div>
-        </div>
-        <div class="resumo-hint">Despesa fixa mensal (tela Despesas) ÷ faturamento médio mensal</div>
+
+      <div class="resumo-item">
+        <span class="resumo-rot">Peso da despesa fixa</span>
+        <span class="resumo-val cifra" id="resumoDespPct">—</span>
+        <span class="resumo-hint">Despesa fixa de <span class="cifra" id="resumoDespFixa">—</span> (tela Despesas) ÷ faturamento médio</span>
       </div>
     </div>
   </div>
@@ -158,21 +211,24 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app-core.js"></script>
 <script>
-const { createClient } = supabase;
-const db = createClient(
-  'https://dfsmwzmtainiclcwpigw.supabase.co',
-  'sb_publishable_trZuSsmSkPKN9Ry0WytyUg_xn7UYBo3'
-);
+// Endereço e chave vêm do config.js (local ou produção, conforme o host).
+const db = AppCore.getClient(AppConfig.supabaseUrl, AppConfig.supabaseKey);
 
-const integrador = JSON.parse(localStorage.getItem('integrador')||'null');
+AppCore.renderStepper('stepper', 'sazonalidade');
+
+const integrador = AppCore.safeParse('integrador', null);
 let dadosMeses  = {};
 let chavesMeses = [];
+const camposTocados = new Set(); // A-11: campos editados pelo usuário, não sobrescrever com dados remotos
 
 function getMeses12() {
+  const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   return Array.from({length:12}, (_,i) => ({
     key:   `m${String(i+1).padStart(2,'0')}`,
-    label: `${i+1} / 12`
+    label: nomesMeses[i]
   }));
 }
 
@@ -198,40 +254,41 @@ function init() {
 
 function renderTabela(meses) {
   const grid = document.getElementById('seasonGrid');
-  // remove rows if re-rendering
+  // limpa as linhas antigas: renderTabela pode ser chamada de novo
   grid.querySelectorAll('.sg-row-wrap').forEach(el => el.remove());
 
   meses.forEach(({ key, label }) => {
     const row = document.createElement('div');
-    row.className = 'sg-row-wrap';
-    row.style.display = 'contents';
+    row.className = 'sg-row-wrap';   // display:contents vem do CSS
     row.innerHTML =
       `<div class="sg-cell"><span class="sg-mes">${label}</span></div>` +
 
       `<div class="sg-cell">` +
         `<div class="sg-inp-wrap">` +
-          `<input class="sg-inp" type="number" min="0" step="1" placeholder="0"` +
+          `<input class="sg-inp cifra" type="number" min="0" step="1" placeholder="0" aria-label="Número de projetos em ${label}"` +
           ` id="proj_${key}" value="${dadosMeses[key]?.projetos||''}"` +
-          ` oninput="atualizar('${key}')">` +
+          ` oninput="camposTocados.add('${key}-projetos');atualizar('${key}')">` +
         `</div>` +
       `</div>` +
 
       `<div class="sg-cell">` +
         `<div class="sg-inp-wrap">` +
           `<span class="pfx">R$</span>` +
-          `<input class="sg-inp" type="text" inputmode="decimal" placeholder="0,00"` +
-          ` id="val_${key}" value="${dadosMeses[key]?.valor ? Number(dadosMeses[key].valor).toFixed(2).replace('.',',') : ''}"` +
-          ` oninput="atualizar('${key}')">` +
+          `<input class="sg-inp cifra" type="text" inputmode="decimal" placeholder="0,00" aria-label="Faturamento em ${label}"` +
+          ` id="val_${key}" data-moeda` +
+          ` oninput="camposTocados.add('${key}-valor');atualizar('${key}')">` +
         `</div>` +
       `</div>` +
 
-      `<div class="sg-cell" style="justify-content:flex-end">` +
-        `<span class="sg-ticket vazio" id="tick_${key}">—</span>` +
-      `</div>`;
+      `<div class="sg-cell"><span class="sg-ticket cifra vazio" id="tick_${key}">—</span></div>`;
 
     grid.appendChild(row);
-    atualizar(key); // calc ticket on render
+    // Dinheiro entra no campo pela API do AppCore. toFixed().replace() escreve
+    // "45000,00" — sem o ponto de milhar — e desfaz o que a máscara faz.
+    if (dadosMeses[key]?.valor) AppCore.escreverMoeda(`val_${key}`, dadosMeses[key].valor);
+    atualizar(key); // já pinta o ticket na primeira renderização
   });
+  AppCore.ligarMoeda(grid);   // os campos de valor nascem aqui
 }
 
 function atualizar(key) {
@@ -240,7 +297,7 @@ function atualizar(key) {
   const tickEl = document.getElementById(`tick_${key}`);
 
   const proj = parseInt(projEl.value) || 0;
-  const val  = parseFloat((valEl.value || '0').replace(',', '.')) || 0;
+  const val  = AppCore.parseNum(valEl.value);
 
   dadosMeses[key] = { projetos: proj, valor: val };
 
@@ -266,8 +323,8 @@ function calcResumo() {
   const ticketMedio = totalProjetos > 0 ? totalValor / totalProjetos : 0;
   const fatMedio    = totalValor / 12;
 
-  const despesas  = JSON.parse(localStorage.getItem('despesas') || '{}');
-  const despFixa  = parseFloat(despesas.despFixa) || 0;
+  const despesas  = AppCore.safeParse('despesas', {});
+  const despFixa  = AppCore.parseNum(despesas.despFixa);
   const despPct   = fatMedio > 0 ? (despFixa / fatMedio) * 100 : 0;
 
   document.getElementById('resumoTicket').textContent  = brl(ticketMedio);
@@ -275,8 +332,11 @@ function calcResumo() {
   document.getElementById('resumoDespFixa').textContent = brl(despFixa);
   document.getElementById('resumoDespPct').textContent  =
     fatMedio > 0 ? despPct.toFixed(1).replace('.', ',') + '%' : '—';
+  // O degrau do meio é ATENÇÃO, e atenção é âmbar: verde ali dizia "está bom"
+  // com a cor e "cuidado" com o número. Âmbar ainda tem contraste de leitura
+  // sobre o mint do bloco, que o verde de ação não tem.
   document.getElementById('resumoDespPct').style.color  =
-    despPct > 30 ? 'var(--negative)' : despPct > 20 ? 'var(--solar)' : 'var(--teal)';
+    despPct > 30 ? 'var(--negative)' : despPct > 20 ? 'var(--ambar)' : 'var(--teal)';
 }
 
 function trocarEmpresa() {
@@ -285,11 +345,11 @@ function trocarEmpresa() {
 }
 
 async function carregarDados() {
-  const local = JSON.parse(localStorage.getItem('sazonalidade') || '{}');
+  const local = AppCore.safeParse('sazonalidade', {});
   if (local.meses) aplicarDados(local.meses);
 
-  if (!integrador?.id) return;
-  const { data } = await db.from('integradores').select('sazonalidade').eq('id', integrador.id).single();
+  if (!integrador?.id || !db) return;
+  const { data } = await AppCore.dbTry(db.from('integradores').select('sazonalidade').eq('id', integrador.id).single());
   if (data?.sazonalidade?.meses) {
     localStorage.setItem('sazonalidade', JSON.stringify(data.sazonalidade));
     aplicarDados(data.sazonalidade.meses);
@@ -299,11 +359,19 @@ async function carregarDados() {
 function aplicarDados(meses) {
   Object.entries(meses).forEach(([key, v]) => {
     if (!chavesMeses.includes(key)) return;
-    dadosMeses[key] = { projetos: v.projetos || 0, valor: v.valor || 0 };
+    // A-11: não sobrescrever campos que o usuário já editou (ex.: durante o await do fetch remoto)
+    const tocouProj = camposTocados.has(`${key}-projetos`);
+    const tocouVal  = camposTocados.has(`${key}-valor`);
     const projEl = document.getElementById(`proj_${key}`);
     const valEl  = document.getElementById(`val_${key}`);
-    if (projEl) projEl.value = v.projetos || '';
-    if (valEl)  valEl.value  = v.valor ? Number(v.valor).toFixed(2).replace('.', ',') : '';
+    if (projEl && !tocouProj) projEl.value = v.projetos || '';
+    // escreverMoeda repõe o valor com o MESMO formato que a máscara produz
+    // (com ponto de milhar); toFixed().replace() perdia o agrupamento.
+    if (valEl  && !tocouVal)  AppCore.escreverMoeda(valEl, v.valor || '');
+    dadosMeses[key] = {
+      projetos: tocouProj ? (dadosMeses[key]?.projetos || 0) : (v.projetos || 0),
+      valor:    tocouVal  ? (dadosMeses[key]?.valor    || 0) : (v.valor    || 0)
+    };
     atualizar(key);
   });
 }
@@ -316,11 +384,15 @@ async function salvar() {
   const payload = { meses: dadosMeses };
   localStorage.setItem('sazonalidade', JSON.stringify(payload));
 
-  if (integrador?.id) {
-    await db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id);
+  try {
+    if (integrador?.id && db) {
+      await AppCore.dbTry(db.from('integradores').update({ sazonalidade: payload }).eq('id', integrador.id));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar →';
+    window.location.href = 'indicadores.html';
   }
-
-  window.location.href = 'indicadores.html';
 }
 
 init();
